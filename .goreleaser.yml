@@ -17,7 +17,7 @@ archives:
       - tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
-homebrew_casks:
+brews:
   - repository:
       owner: gregology
       name: homebrew-tap
