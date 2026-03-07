@@ -1,0 +1,18 @@
+context:
+  - content: "Adapters are thin translation layers. They read agent-specific input, map it to a ResolveRequest (path, action, timing), call core.Resolve, and format the output back. Keep them minimal."
+    on: [edit, create]
+    when: before
+
+  - content: "The Write tool gets special handling: check os.Stat to distinguish create (file doesn't exist) from edit (file exists). This matters because teams may want different context for new files vs existing files."
+    match: ["claude.go"]
+    on: edit
+    when: before
+
+decisions:
+  - decision: "Claude Code adapter reads from stdin, not CLI flags"
+    rationale: "Claude Code hooks pass JSON via stdin with tool_name, tool_input, and hook_event_name. Reading stdin directly is simpler and matches the hook contract. CLI flags (sctx context) exist separately for manual debugging."
+    date: 2026-03-06
+
+  - decision: "No output on no-match rather than empty JSON"
+    rationale: "Claude Code treats exit 0 with no stdout as a no-op. Outputting empty JSON would add unnecessary noise to the conversation context."
+    date: 2026-03-06

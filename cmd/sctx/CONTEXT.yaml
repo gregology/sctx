@@ -1,0 +1,15 @@
+context:
+  - content: "This is the CLI entry point. It dispatches to commands and handles user-facing output. Keep it thin; business logic belongs in internal/ packages."
+    on: [edit, create]
+    when: before
+
+  - content: "Use sentinel errors (var errFoo = errors.New(...)) for static error messages. The linter enforces this via err113."
+    match: ["**/*.go"]
+    on: [edit, create]
+    when: before
+
+decisions:
+  - decision: "No third-party CLI framework (cobra, urfave/cli)"
+    rationale: "Four commands with minimal flags. stdlib flag parsing and a switch statement is enough. Adding a framework would triple the dependency tree for no benefit."
+    revisit_when: "We have more than 6 commands or need nested subcommands"
+    date: 2026-03-06
