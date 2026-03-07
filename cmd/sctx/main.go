@@ -23,6 +23,8 @@ Usage:
   sctx decisions <path> [--json]           Query decisions for a file
   sctx validate [<dir>]                    Validate all context files in a directory tree
   sctx init                                Create a starter CONTEXT.yaml in the current directory
+  sctx claude enable                       Enable sctx hooks in Claude Code
+  sctx claude disable                      Disable sctx hooks in Claude Code
   sctx version                             Print version
 
 Actions: read, edit, create, all (default: all)
@@ -32,10 +34,11 @@ Timing:  before, after (default: before)
 var (
 	version = "dev"
 
-	errMissingPath    = errors.New("missing required <path> argument")
-	errOnNeedsValue   = errors.New("--on requires a value")
-	errWhenNeedsValue = errors.New("--when requires a value")
-	errFileExists     = errors.New("file already exists")
+	errMissingPath      = errors.New("missing required <path> argument")
+	errOnNeedsValue     = errors.New("--on requires a value")
+	errWhenNeedsValue   = errors.New("--when requires a value")
+	errFileExists       = errors.New("file already exists")
+	errClaudeSubcommand = errors.New("usage: sctx claude <enable|disable>")
 )
 
 func main() {
@@ -59,6 +62,8 @@ func main() {
 		err = cmdInit()
 	case "version":
 		fmt.Println("sctx", version)
+	case "claude":
+		err = cmdClaude()
 	case "help", "--help", "-h":
 		fmt.Print(usage)
 	default:
@@ -289,4 +294,19 @@ decisions:
 	fmt.Printf("Created %s\n", filename)
 
 	return nil
+}
+
+func cmdClaude() error {
+	if len(os.Args) < 3 {
+		return errClaudeSubcommand
+	}
+
+	switch os.Args[2] {
+	case "enable":
+		return adapter.EnableClaude()
+	case "disable":
+		return adapter.DisableClaude()
+	default:
+		return errClaudeSubcommand
+	}
 }
