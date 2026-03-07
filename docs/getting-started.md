@@ -3,7 +3,7 @@
 ## Install
 
 ```bash
-go install github.com/gregology/structuredcontext/cmd/sctx@latest
+go install github.com/gregology/sctx/cmd/sctx@latest
 ```
 
 Make sure `~/go/bin` is in your PATH:

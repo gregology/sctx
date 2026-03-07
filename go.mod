@@ -1,4 +1,4 @@
-module github.com/gregology/structuredcontext
+module github.com/gregology/sctx
 
 go 1.25.1
 

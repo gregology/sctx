@@ -1,0 +1,38 @@
+version: 2
+
+builds:
+  - main: ./cmd/sctx
+    binary: sctx
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+brews:
+  - repository:
+      owner: gregology
+      name: homebrew-tap
+    homepage: "https://sctx.dev"
+    description: "Structured Context CLI — scoped context for AI agents"
+    license: "MIT"
+    install: |
+      bin.install "sctx"
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"

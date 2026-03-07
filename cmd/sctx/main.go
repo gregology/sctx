@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gregology/structuredcontext/internal/adapter"
-	"github.com/gregology/structuredcontext/internal/core"
-	"github.com/gregology/structuredcontext/internal/validator"
+	"github.com/gregology/sctx/internal/adapter"
+	"github.com/gregology/sctx/internal/core"
+	"github.com/gregology/sctx/internal/validator"
 )
 
 const usage = `sctx — Structured Context CLI
@@ -254,7 +254,7 @@ func cmdInit() error {
 	}
 
 	content := strings.TrimSpace(`
-# Structured Context — https://github.com/gregology/structuredcontext
+# Structured Context — https://sctx.dev
 #
 # This file provides scoped context to AI agents during file operations.
 # Place CONTEXT.yaml files anywhere in your codebase. Context is inherited
