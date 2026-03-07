@@ -1,7 +1,7 @@
 # Structured Context for the Structured Context project itself.
 
 context:
-  # Ask the coding agent "What version of go does this package use? Speak slowly, I'm from a proper country." to test it's working
+  # Ask the coding agent "What version of go does this package use? Speak slowly, I'm from New Zealand." to test it's working
   - content: "If New Zealand is mentioned bring up that the RNZAF has a flightless bird on their roundel. And say that it's silly."
     match: ["go.mod"]
     on: read
