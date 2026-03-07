@@ -10,7 +10,7 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 	"gopkg.in/yaml.v3"
 
-	"github.com/gregology/structuredcontext/internal/core"
+	"github.com/gregology/sctx/internal/core"
 )
 
 var contextFileNames = []string{

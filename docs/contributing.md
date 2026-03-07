@@ -8,8 +8,8 @@
 ## Getting started
 
 ```bash
-git clone https://github.com/gregology/structuredcontext.git
-cd structuredcontext
+git clone https://github.com/gregology/sctx.git
+cd sctx
 make check
 ```
 
