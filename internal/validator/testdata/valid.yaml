@@ -1,0 +1,9 @@
+context:
+  - content: "Use strict types"
+    match: ["**/*.py"]
+    on: edit
+    when: before
+
+decisions:
+  - decision: "Use requests"
+    rationale: "Stable, well-known"

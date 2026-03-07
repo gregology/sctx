@@ -1,0 +1,72 @@
+version: "2"
+
+linters:
+  default: all
+  disable:
+    - depguard        # we don't need dependency allowlisting
+    - wrapcheck       # too strict for a CLI tool
+    - exhaustruct     # requiring all struct fields is overkill
+    - ireturn         # returning interfaces is fine
+    - nlreturn        # blank line before return is noise
+    - wsl             # whitespace linter is too opinionated
+    - varnamelen      # short var names are idiomatic Go
+    - funlen          # function length limits are arbitrary
+    - cyclop          # cyclomatic complexity is covered by gocognit
+    - godox           # we want to allow TODO comments
+    - lll             # line length limits don't help
+    - mnd             # magic number detection is too noisy
+    - tagliatelle     # we use yaml/json tags intentionally
+    - testpackage     # we test internals on purpose
+    - paralleltest    # not all tests benefit from t.Parallel()
+    - tparallel       # same as above
+    - containedctx    # not relevant yet
+    - contextcheck    # not relevant yet
+    - noctx           # not relevant yet
+    - forbidigo       # we're a CLI, fmt.Print is how we talk to the user
+    - gochecknoglobals # our globals are immutable lookup tables
+    - wsl             # too opinionated about blank lines
+    - wsl_v5          # same linter, v2 name
+    - noinlineerr     # stylistic noise
+    - perfsprint      # micro-optimization, not meaningful here
+    - musttag         # we handle struct tags intentionally
+    - nonamedreturns  # named returns are fine for documentation
+    - prealloc        # premature optimization
+
+  settings:
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+
+    revive:
+      rules:
+        - name: exported
+        - name: blank-imports
+        - name: error-return
+        - name: error-strings
+        - name: increment-decrement
+        - name: var-declaration
+        - name: range
+        - name: receiver-naming
+        - name: indent-error-flow
+        - name: empty-block
+        - name: superfluous-else
+        - name: unreachable-code
+        - name: redefines-builtin-id
+
+    errorlint:
+      errorf: true
+      asserts: true
+      comparison: true
+
+  exclusions:
+    rules:
+      - path: '_test\.go'
+        linters:
+          - errcheck
+          - gocritic
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
