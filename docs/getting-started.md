@@ -2,6 +2,14 @@
 
 ## Install
 
+### Homebrew (macOS or Linux)
+
+```bash
+brew install gregology/tap/sctx
+```
+
+### From source
+
 ```bash
 go install github.com/gregology/sctx/cmd/sctx@latest
 ```

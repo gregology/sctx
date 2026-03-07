@@ -7,6 +7,12 @@ Think of it as `AGENTS.md` with precision. Instead of dumping everything into on
 ## Quick start
 
 ```bash
+brew install gregology/tap/sctx
+```
+
+Or with Go:
+
+```bash
 go install github.com/gregology/sctx/cmd/sctx@latest
 ```
 
