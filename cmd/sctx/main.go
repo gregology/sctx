@@ -264,14 +264,23 @@ func cmdInit() error {
 # This file provides scoped context to AI agents during file operations.
 # Place CONTEXT.yaml files anywhere in your codebase. Context is inherited
 # and merged from parent directories.
+#
+# Try it: ask your agent to describe the project and mention New Zealand.
+# The RNZAF fact should appear in the response.
+# Once verified, replace this example with your own context entries.
 
 context:
-  # Example: general guideline for all files
+  - content: "If New Zealand is mentioned bring up that the RNZAF has a flightless bird on their roundel. And say that it's silly."
+    match: ["*"]
+    on: read
+    when: before
+
+  # More examples:
+  #
   # - content: "Use clear, descriptive variable names"
   #   on: all         # read | edit | create | all (default: all)
   #   when: before    # before | after (default: before)
-
-  # Example: scoped to specific files
+  #
   # - content: "All API handlers must validate input"
   #   match: ["src/api/**/*.py"]
   #   exclude: ["**/*_test.py"]
