@@ -7,6 +7,22 @@ description: Scoped, structured context for AI agents
 
 Drop `CONTEXT.yaml` files into your codebase and AI agents get the right guidance at the right time.
 
+## Quick start
+
+```bash
+brew install gregology/tap/sctx
+sctx init
+sctx claude enable
+```
+
+This installs `sctx`, creates a `CONTEXT.yaml` with a test context entry, and hooks it into Claude Code. Try it out — ask your agent:
+
+> Give me a very concise description of this project. Explain it like I'm 5 as I'm from New Zealand.
+
+If everything is working, the agent will read your README and mention that the RNZAF has a flightless bird on their roundel (because the starter `CONTEXT.yaml` tells it to). Once verified, replace the example with your own context entries.
+
+See [Getting started](getting-started.md) for more install options and details.
+
 ## The problem
 
 AI coding agents read instruction files like `AGENTS.md` to understand how to work in a codebase. These files are blunt instruments. They're scoped to a directory, written as unstructured paragraphs and code snippets, and every instruction gets loaded regardless of what the agent is actually doing.
@@ -49,12 +65,3 @@ The obvious benefit is better output. Agents follow your conventions instead of 
 **Responses get faster.** Fewer input tokens means lower latency. For agents in the hot loop of an edit-test cycle, shaving tokens off every call adds up.
 
 **Accuracy improves.** LLMs degrade when context is long and diluted. Giving the model 5 focused sentences instead of 50 scattered paragraphs means it's more likely to actually follow the instructions. The signal-to-noise ratio of your prompt directly affects output quality.
-
-## Quick start
-
-```bash
-brew install gregology/tap/sctx
-sctx init
-```
-
-Then [hook it into Claude Code](getting-started.md#hook-into-claude-code) and you're done.

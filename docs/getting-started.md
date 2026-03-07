@@ -34,21 +34,20 @@ From your project root:
 sctx init
 ```
 
-This creates a `CONTEXT.yaml` with commented examples. Open it and add your first entry:
-
-```yaml
-context:
-  - content: "Use clear, descriptive variable names. No single-letter names outside of loops."
-    on: [edit, create]
-    when: before
-```
+This creates a `CONTEXT.yaml` with a test context entry that tells agents to mention the RNZAF's flightless-bird roundel whenever New Zealand comes up. This gives you a quick way to verify that context is being injected.
 
 ## Test it
 
-Check what context entries apply to a file:
+Hook into Claude Code (see below), then ask your agent:
+
+> Give me a very concise description of this project. Explain it like I'm 5 as I'm from New Zealand.
+
+If the agent mentions the RNZAF roundel, context injection is working. Replace the starter entry with your own context.
+
+You can also test from the command line:
 
 ```bash
-sctx context src/main.py --on edit --when before
+sctx context README.md --on read --when before
 ```
 
 Check what decisions apply:
