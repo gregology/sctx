@@ -303,6 +303,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick start
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-problem" class="md-nav__link">
     <span class="md-ellipsis">
       The problem
@@ -324,15 +333,6 @@
   <a href="#why-this-matters-beyond-better-output" class="md-nav__link">
     <span class="md-ellipsis">
       Why this matters beyond better output
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      Quick start
     </span>
   </a>
   
@@ -499,6 +499,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick start
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-problem" class="md-nav__link">
     <span class="md-ellipsis">
       The problem
@@ -520,15 +529,6 @@
   <a href="#why-this-matters-beyond-better-output" class="md-nav__link">
     <span class="md-ellipsis">
       Why this matters beyond better output
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      Quick start
     </span>
   </a>
   
@@ -560,6 +560,17 @@
 
 <h1 id="structured-context">Structured Context<a class="headerlink" href="#structured-context" title="Permanent link">&para;</a></h1>
 <p>Drop <code>CONTEXT.yaml</code> files into your codebase and AI agents get the right guidance at the right time.</p>
+<h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>brew<span class="w"> </span>install<span class="w"> </span>gregology/tap/sctx
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>sctx<span class="w"> </span>init
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>sctx<span class="w"> </span>claude<span class="w"> </span><span class="nb">enable</span>
+</code></pre></div>
+<p>This installs <code>sctx</code>, creates a <code>CONTEXT.yaml</code> with a test context entry, and hooks it into Claude Code. Try it out — ask your agent:</p>
+<blockquote>
+<p>Give me a very concise description of this project. Explain it like I'm 5 as I'm from New Zealand.</p>
+</blockquote>
+<p>If everything is working, the agent will read your README and mention that the RNZAF has a flightless bird on their roundel (because the starter <code>CONTEXT.yaml</code> tells it to). Once verified, replace the example with your own context entries.</p>
+<p>See <a href="getting-started/">Getting started</a> for more install options and details.</p>
 <h2 id="the-problem">The problem<a class="headerlink" href="#the-problem" title="Permanent link">&para;</a></h2>
 <p>AI coding agents read instruction files like <code>AGENTS.md</code> to understand how to work in a codebase. These files are blunt instruments. They're scoped to a directory, written as unstructured paragraphs and code snippets, and every instruction gets loaded regardless of what the agent is actually doing.</p>
 <p>This approach bloats context.</p>
@@ -588,11 +599,6 @@
 <p><strong>Costs drop.</strong> There's the obvious part: less context per call means fewer input tokens. But the bigger win is iteration count. When an agent has the right guidance every time it touches a file, it makes fewer mistakes and needs fewer fix-up cycles. A wrong assumption in call 5 can mean 30 wasted calls cleaning it up.</p>
 <p><strong>Responses get faster.</strong> Fewer input tokens means lower latency. For agents in the hot loop of an edit-test cycle, shaving tokens off every call adds up.</p>
 <p><strong>Accuracy improves.</strong> LLMs degrade when context is long and diluted. Giving the model 5 focused sentences instead of 50 scattered paragraphs means it's more likely to actually follow the instructions. The signal-to-noise ratio of your prompt directly affects output quality.</p>
-<h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>brew<span class="w"> </span>install<span class="w"> </span>gregology/tap/sctx
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>sctx<span class="w"> </span>init
-</code></pre></div>
-<p>Then <a href="getting-started/#hook-into-claude-code">hook it into Claude Code</a> and you're done.</p>
 
 
 
