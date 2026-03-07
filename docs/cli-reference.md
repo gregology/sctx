@@ -1,4 +1,9 @@
-# CLI Reference
+---
+title: CLI reference
+description: All sctx commands, flags, and exit codes
+---
+
+# CLI reference
 
 ## sctx hook
 
@@ -72,6 +77,22 @@ sctx init
 
 Refuses to overwrite an existing `CONTEXT.yaml`.
 
+## sctx claude enable
+
+Installs the `sctx hook` into your project's `.claude/settings.json`. Creates the file and directory if they don't exist. If hooks are already configured, it leaves them alone.
+
+```bash
+sctx claude enable
+```
+
+## sctx claude disable
+
+Removes the `sctx hook` entries from `.claude/settings.json`.
+
+```bash
+sctx claude disable
+```
+
 ## sctx version
 
 Prints the version.
@@ -84,5 +105,5 @@ sctx version
 
 | Code | Meaning |
 |---|---|
-| 0 | Success. This includes "no context matched" -- that's not an error. |
-| 1 | Fatal error (invalid arguments, IO failure, validation errors) |
+| 0 | Success (includes "no context matched" -- that's not an error) |
+| 1 | Fatal error: invalid arguments, IO failure, validation errors |

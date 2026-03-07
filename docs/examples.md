@@ -1,10 +1,15 @@
+---
+title: Examples
+description: Real-world patterns for using Structured Context in dbt, API, React, Terraform, and monorepo projects
+---
+
 # Examples
 
 Real-world patterns for using Structured Context. Each example shows the problem, the file structure, and the CONTEXT.yaml that solves it.
 
 ## dbt project
 
-A dbt `models/` directory contains SQL models, YAML schema files, and markdown documentation. An agent editing a SQL model needs completely different context than one editing a YAML schema.
+A dbt `models/` directory contains SQL models, YAML schema files, and markdown docs. An agent editing a SQL model needs completely different context than one editing a YAML schema.
 
 ```
 models/
@@ -67,7 +72,7 @@ decisions:
     match: ["**/*.sql"]
 ```
 
-With AGENTS.md, this entire block would be one file where every paragraph starts with "If you're editing a SQL file..." or "For YAML schema files...". The agent parses all of it every time, regardless of which file it's touching.
+With AGENTS.md, this entire block would be one file where every paragraph starts with "if you're editing a SQL file..." The agent parses all of it every time, regardless of which file it's touching.
 
 ## API service
 
@@ -304,7 +309,7 @@ decisions:
 
 When an agent edits `packages/payments/src/checkout.ts`, it gets the shared monorepo conventions *and* the payments-specific context. The payments context appears last, giving it stronger influence.
 
-## Best practices for decisions
+## Writing good decisions
 
 A good decision entry answers four questions:
 
@@ -336,4 +341,4 @@ decisions:
     date: 2025-05-15
 ```
 
-Dates matter too. A decision made two years ago under different constraints might be worth questioning. A decision made last week probably isn't.
+Dates matter too. A decision made two years ago under different constraints might be worth questioning. One made last week probably isn't.
