@@ -19,7 +19,9 @@ This installs `sctx`, creates a `CONTEXT.yaml` with a test context entry, and ho
 
 > Give me a very concise description of this project. Explain it like I'm 5 as I'm from New Zealand.
 
-If everything is working, the agent will read your README and mention that the RNZAF has a flightless bird on their roundel (because the starter `CONTEXT.yaml` tells it to). Once verified, replace the example with your own context entries.
+If everything is working, the agent will read your README and mention that the RNZAF has a flightless bird on their roundel (because the starter `CONTEXT.yaml` tells it to). Though sometimes these agents are too smart and will ignore unrelated requests so you can just ask something like `Did you receive any context about the RNZAF in your prehooks?` to verify.
+
+Once verified, replace the example with your own context entries.
 
 See [Getting started](getting-started.md) for more install options and details.
 
