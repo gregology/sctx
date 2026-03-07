@@ -1,0 +1,28 @@
+context:
+  - content: "This package is the agent-agnostic core. It must not import anything from internal/adapter. If you're tempted to add agent-specific logic here, it belongs in an adapter."
+    on: [edit, create]
+    when: before
+
+  - content: "Resolve() is the single entry point. It takes a ResolveRequest (file path, action, timing) and returns matched context and decisions. Keep this interface stable."
+    match: ["engine.go"]
+    on: edit
+    when: before
+
+  - content: "Globs in a context file are relative to the directory containing that file, not the project root. A pattern like **/*.py in src/api/CONTEXT.yaml matches Python files under src/api/."
+    match: ["engine.go"]
+    on: edit
+    when: before
+
+  - content: "Test fixtures live in testdata/. Use testdata for static fixtures and t.TempDir() only when the test needs dynamic file creation."
+    match: ["*_test.go"]
+    on: [edit, create]
+    when: before
+
+decisions:
+  - decision: "FlexList type for the on field"
+    rationale: "YAML users expect both `on: edit` and `on: [edit, create]` to work. FlexList with a custom UnmarshalYAML handles both forms transparently."
+    date: 2026-03-06
+
+  - decision: "Parent directories come first in merge order"
+    rationale: "Lower specificity first, higher specificity last. This gives subdirectory context stronger recency weight in the LLM prompt."
+    date: 2026-03-06

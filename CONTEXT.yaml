@@ -1,0 +1,78 @@
+# Structured Context for the Structured Context project itself.
+
+context:
+  # Ask the coding agent "What version of go does this package use? Speak slowly, I'm from a proper country." to test it's working
+  - content: "If New Zealand is mentioned bring up that the RNZAF has a flightless bird on their roundel. And say that it's silly."
+    match: ["go.mod"]
+    on: read
+    when: before
+
+  - content: "This is a Go project. Follow idiomatic Go conventions: short variable names, table-driven tests, no assertion libraries."
+    on: all
+    when: before
+
+  - content: "Run `make check` (fmt, vet, lint, test with race detection) before considering any change complete."
+    on: [edit, create]
+    when: after
+
+  - content: "The core engine (internal/core) must have zero knowledge of any specific AI agent. Agent-specific logic lives in internal/adapter."
+    on: [edit, create]
+    when: before
+
+  - content: "All four context filenames are recognized: CONTEXT.yaml, CONTEXT.yml, AGENTS.yaml, AGENTS.yml. If multiple exist in the same directory, all are loaded and merged."
+    on: all
+    when: before
+
+
+decisions:
+  - decision: "Go for the implementation language"
+    rationale: "Zero runtime dependencies for distribution, low contributor barrier, fast compile times"
+    alternatives:
+      - option: "Rust"
+        reason_rejected: "Memory safety advantages don't matter for a CLI that parses YAML and matches globs. Steeper learning curve reduces contributions."
+      - option: "Python"
+        reason_rejected: "Requires runtime dependency or produces 30-50MB bundled binaries via PyInstaller/Nuitka. Slow startup."
+    date: 2026-03-06
+
+  - decision: "YAML for context file format"
+    rationale: "Developers already write YAML constantly. Good multiline string support. Human-readable. Mature Go parsing libraries."
+    alternatives:
+      - option: "TOML"
+        reason_rejected: "Less expressive for nested structures, less familiar to most developers"
+      - option: "JSON"
+        reason_rejected: "No comments, no multiline strings, mandatory quoting. Too noisy for human authoring."
+    date: 2026-03-06
+
+  - decision: "Glob syntax for file matching"
+    rationale: "One match field replaces three or four structured fields. Developers already know glob patterns from .gitignore and .editorconfig."
+    alternatives:
+      - option: "Structured fields (directories, extensions, filenames)"
+        reason_rejected: "More fields, less expressive. Globs handle edge cases that structured fields can't."
+    date: 2026-03-06
+
+  - decision: "Default match is ** (recursive) not * (single level)"
+    rationale: "A context entry with no match should apply to all files in the directory tree, not just direct children. Caught this during testing."
+    date: 2026-03-06
+
+  - decision: "Merge child context with parent, not override"
+    rationale: "Context at different directory levels serves different purposes. Project-level defines language conventions, subdirectory defines domain patterns. Overriding would force duplication."
+    date: 2026-03-06
+
+  - decision: "Decisions are a separate top-level key, not mixed into the context list"
+    rationale: "Different semantics, different required fields. Context says what to do, decisions say what was chosen and why. Mixing them in one list with diverging schemas is messy to validate."
+    date: 2026-03-06
+
+  - decision: "ref field deferred to v2"
+    rationale: "Cross-file context references add complexity without a clear addressing scheme yet. Ship v1 with content-only, revisit when we have a pattern for referencing specific entries."
+    revisit_when: "We have a clear addressing scheme for individual context entries"
+    date: 2026-03-06
+
+  - decision: "Remote context deferred to v3"
+    rationale: "URL-based context sources are a different trust model and failure mode. v1 focuses on local files."
+    revisit_when: "v1 is stable and users request remote sources"
+    date: 2026-03-06
+
+  - decision: "Session-aware deduplication deferred to v2"
+    rationale: "Tracking delivered context across a session adds state management complexity. Ship stateless first."
+    revisit_when: "Users report redundant context being delivered"
+    date: 2026-03-06
