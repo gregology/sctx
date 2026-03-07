@@ -1,3 +1,8 @@
+---
+title: Roadmap
+description: What's shipped, what's planned, and what's on the horizon
+---
+
 # Roadmap
 
 ## v1 (current)
@@ -27,7 +32,6 @@ Richer context management and broader agent support.
 - [ ] **Temporal filtering** -- context that activates after a date or expires before a date, for migration periods and deprecation windows
 - [ ] **Extensible filtering** -- framework for community-requested filter dimensions beyond glob, action, timing, and date
 
-
 ## v3 (future)
 
 Advanced features for teams and organizations.
@@ -35,4 +39,4 @@ Advanced features for teams and organizations.
 - [ ] **Remote context sources** -- URL-based context that accepts parameters, for centralized guidelines or dynamic context
 - [ ] **Context versioning** -- track when entries were last updated, surface stale context
 - [ ] **Analytics** -- which context entries are delivered most and least, helping teams identify gaps and noise
-- [ ] **Context benchmarking** -- A/B test different context entries to measure which produce better agent outcomes in specific situations
+- [ ] **Context benchmarking** -- A/B test different context entries to measure which produce better agent outcomes

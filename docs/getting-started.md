@@ -1,25 +1,30 @@
+---
+title: Getting started
+description: Install sctx and create your first context file
+---
+
 # Getting started
 
 ## Install
 
-### Homebrew (macOS or Linux)
+=== "Homebrew (macOS or Linux)"
 
-```bash
-brew install gregology/tap/sctx
-```
+    ```bash
+    brew install gregology/tap/sctx
+    ```
 
-### From source
+=== "From source"
 
-```bash
-go install github.com/gregology/sctx/cmd/sctx@latest
-```
+    ```bash
+    go install github.com/gregology/sctx/cmd/sctx@latest
+    ```
 
-Make sure `~/go/bin` is in your PATH:
+    Make sure `~/go/bin` is in your PATH:
 
-```bash
-echo 'export PATH="$PATH:$(go env GOPATH)/bin"' >> ~/.zshrc
-source ~/.zshrc
-```
+    ```bash
+    echo 'export PATH="$PATH:$(go env GOPATH)/bin"' >> ~/.zshrc
+    source ~/.zshrc
+    ```
 
 ## Create your first context file
 
@@ -91,6 +96,12 @@ Add this to `.claude/settings.json` in your project (or `~/.claude/settings.json
 }
 ```
 
+Or let sctx do it for you:
+
+```bash
+sctx claude enable
+```
+
 Now when Claude reads or edits a file, `sctx` automatically injects the relevant context. If nothing matches, it's a silent no-op.
 
 ## Add more context files
@@ -109,10 +120,10 @@ project/
     CONTEXT.yaml         <- testing standards
 ```
 
-Child directories inherit and merge with parent context. You don't need to repeat yourself.
+Child directories inherit and merge with parent context. No need to repeat yourself.
 
-## Next steps
+## What's next
 
-- [Examples](examples.md) for patterns in dbt, React, Terraform, and more
-- [Protocol spec](protocol.md) for the full schema reference
-- [CLI reference](cli-reference.md) for all commands and flags
+- [Examples](examples.md) -- patterns for dbt, React, Terraform, and more
+- [Protocol spec](protocol.md) -- the full schema reference
+- [CLI reference](cli-reference.md) -- all commands and flags
