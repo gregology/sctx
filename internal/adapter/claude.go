@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gregology/structuredcontext/internal/core"
+	"github.com/gregology/sctx/internal/core"
 )
 
 // ClaudeHookInput represents the JSON that Claude Code sends via stdin to hooks.

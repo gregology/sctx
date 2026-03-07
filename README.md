@@ -7,7 +7,7 @@ Think of it as `AGENTS.md` with precision. Instead of dumping everything into on
 ## Quick start
 
 ```bash
-go install github.com/gregology/structuredcontext/cmd/sctx@latest
+go install github.com/gregology/sctx/cmd/sctx@latest
 ```
 
 Create a `CONTEXT.yaml` anywhere in your project:
