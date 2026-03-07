@@ -1,6 +1,11 @@
-# Protocol Specification
+---
+title: Protocol specification
+description: The full Structured Context file format, schema, resolution algorithm, and merge behavior
+---
 
-This document defines the Structured Context protocol: the file format, schema, resolution algorithm, and merge behavior. It's intended for implementors building tools that read or write context files.
+# Protocol specification
+
+This defines the Structured Context protocol: the file format, schema, resolution algorithm, and merge behavior. It's written for implementors building tools that read or write context files.
 
 ## Context files
 
@@ -13,7 +18,7 @@ This document defines the Structured Context protocol: the file format, schema, 
 | `AGENTS.yaml` | Recognized for compatibility with the AGENTS.md convention |
 | `AGENTS.yml` | Alternate extension |
 
-Both `.yaml` and `.yml` are common YAML conventions. The protocol accepts both.
+Both `.yaml` and `.yml` are standard. The protocol accepts both.
 
 If multiple context files exist in the same directory, all are loaded and their contents merged. This lets teams split context across files or use whichever naming convention they prefer.
 
@@ -72,7 +77,7 @@ A self-contained, actionable piece of guidance. Prefer multiple focused entries 
 
 #### `match` and `exclude`
 
-Standard glob patterns. The same syntax used in `.gitignore`, `.editorconfig`, and similar tools.
+Standard glob patterns. Same syntax as `.gitignore`, `.editorconfig`, and similar tools.
 
 Globs are resolved relative to the directory containing the context file, not the project root. A pattern `**/*.py` in `src/api/CONTEXT.yaml` matches Python files under `src/api/`, not the entire project.
 
@@ -158,7 +163,7 @@ Given a file path, an action, and a timing:
 4. **Filter by action** -- Keep entries where `on` includes the requested action (or is `all`)
 5. **Filter by timing** -- Keep entries where `when` matches the requested timing
 6. **Merge** -- Combine all matching entries. Parent directory entries come first, child directory entries come last
-7. **Return** -- The ordered list of matching context entries and decisions. Callers choose which to use: `sctx hook` returns only context entries, `sctx context` returns only context entries, `sctx decisions` returns only decisions
+7. **Return** -- The ordered list of matching context entries and decisions
 
 ### Merge order
 

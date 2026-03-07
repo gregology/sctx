@@ -76,3 +76,23 @@ decisions:
     rationale: "Tracking delivered context across a session adds state management complexity. Ship stateless first."
     revisit_when: "Users report redundant context being delivered"
     date: 2026-03-06
+
+  - decision: "MkDocs config and requirements live inside docs/, not project root"
+    rationale: "Keeps the root clean for Go developers who don't care about the docs site. All website config stays in one directory, which makes it easier to eventually split docs into its own repo."
+    alternatives:
+      - option: "mkdocs.yml and requirements at project root"
+        reason_rejected: "Standard MkDocs convention, but adds Python files to a Go project root. Confuses new contributors who see unfamiliar config files."
+    revisit_when: "Docs are moved to a separate repo"
+    date: 2026-03-07
+
+  - decision: "MkDocs Material over Hugo, Starlight, and Jekyll for the docs site"
+    rationale: "Best polish-to-effort ratio. Single pip install, docs/ works as content directory out of the box, no JS build toolchain. GoReleaser (similar Go CLI project) uses it too."
+    alternatives:
+      - option: "Hugo with hugo-book theme"
+        reason_rejected: "Native to Go ecosystem but doc themes are less polished. Go template language is painful for customization."
+      - option: "Starlight (Astro)"
+        reason_rejected: "Great output and near-zero client JS, but pre-1.0, wants content in src/content/docs/, and pulls in 400-600 npm packages."
+      - option: "Jekyll with just-the-docs"
+        reason_rejected: "Introduces Ruby/Bundler dependency. Jekyll development has slowed significantly."
+    revisit_when: "Docs are moved to a separate repo and we want to reconsider the stack"
+    date: 2026-03-07
