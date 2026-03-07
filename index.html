@@ -569,7 +569,8 @@
 <blockquote>
 <p>Give me a very concise description of this project. Explain it like I'm 5 as I'm from New Zealand.</p>
 </blockquote>
-<p>If everything is working, the agent will read your README and mention that the RNZAF has a flightless bird on their roundel (because the starter <code>CONTEXT.yaml</code> tells it to). Once verified, replace the example with your own context entries.</p>
+<p>If everything is working, the agent will read your README and mention that the RNZAF has a flightless bird on their roundel (because the starter <code>CONTEXT.yaml</code> tells it to). Though sometimes these agents are too smart and will ignore unrelated requests so you can just ask something like <code>Did you receive any context about the RNZAF in your prehooks?</code> to verify.</p>
+<p>Once verified, replace the example with your own context entries.</p>
 <p>See <a href="getting-started/">Getting started</a> for more install options and details.</p>
 <h2 id="the-problem">The problem<a class="headerlink" href="#the-problem" title="Permanent link">&para;</a></h2>
 <p>AI coding agents read instruction files like <code>AGENTS.md</code> to understand how to work in a codebase. These files are blunt instruments. They're scoped to a directory, written as unstructured paragraphs and code snippets, and every instruction gets loaded regardless of what the agent is actually doing.</p>
