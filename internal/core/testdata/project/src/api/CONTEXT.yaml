@@ -1,0 +1,11 @@
+context:
+  - content: "Validate input with pydantic"
+    match: ["**/*.py"]
+    on: [edit, create]
+    when: before
+
+  - content: "API handlers must return typed response models"
+    match: ["**/*.py"]
+    exclude: ["**/*_test.py"]
+    on: edit
+    when: after

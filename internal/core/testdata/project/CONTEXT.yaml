@@ -1,0 +1,16 @@
+context:
+  - content: "Use strict type annotations everywhere"
+    on: all
+    when: before
+
+  - content: "Run tests after editing"
+    on: edit
+    when: after
+
+  - content: "New files must have a module docstring"
+    on: create
+    when: before
+
+decisions:
+  - decision: "Use ruff for linting"
+    rationale: "Single tool, fast, replaces black + flake8"
