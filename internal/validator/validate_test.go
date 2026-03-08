@@ -75,7 +75,7 @@ func TestValidateFile_BadYAML(t *testing.T) {
 }
 
 func TestValidateFile_NonexistentFile(t *testing.T) {
-	errors := ValidateFile("/nonexistent/CONTEXT.yaml")
+	errors := ValidateFile("/nonexistent/AGENTS.yaml")
 
 	if len(errors) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(errors))

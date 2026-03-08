@@ -9,7 +9,7 @@ description: What's shipped, what's planned, and what's on the horizon
 
 The foundation: file format, resolution engine, Claude Code integration.
 
-- [x] CONTEXT.yaml and AGENTS.yaml file discovery and parsing
+- [x] AGENTS.yaml file discovery and parsing
 - [x] Glob-based file matching with `match`/`exclude`
 - [x] Action filtering (`on`: read, edit, create, all)
 - [x] Timing filtering (`when`: before, after)

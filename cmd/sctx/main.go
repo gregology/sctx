@@ -22,7 +22,7 @@ Usage:
                                            Query context entries for a file
   sctx decisions <path> [--json]           Query decisions for a file
   sctx validate [<dir>]                    Validate all context files in a directory tree
-  sctx init                                Create a starter CONTEXT.yaml in the current directory
+  sctx init                                Create a starter AGENTS.yaml in the current directory
   sctx claude enable                       Enable sctx hooks in Claude Code
   sctx claude disable                      Disable sctx hooks in Claude Code
   sctx version                             Print version
@@ -252,7 +252,7 @@ func cmdValidate() error {
 }
 
 func cmdInit() error {
-	filename := "CONTEXT.yaml"
+	filename := "AGENTS.yaml"
 
 	if _, err := os.Stat(filename); err == nil {
 		return fmt.Errorf("%w: %s", errFileExists, filename)
@@ -262,7 +262,7 @@ func cmdInit() error {
 # Structured Context — https://sctx.dev
 #
 # This file provides scoped context to AI agents during file operations.
-# Place CONTEXT.yaml files anywhere in your codebase. Context is inherited
+# Place AGENTS.yaml files anywhere in your codebase. Context is inherited
 # and merged from parent directories.
 #
 # Try it: ask your agent to describe the project and mention New Zealand.

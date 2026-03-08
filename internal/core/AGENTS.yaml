@@ -8,7 +8,7 @@ context:
     on: edit
     when: before
 
-  - content: "Globs in a context file are relative to the directory containing that file, not the project root. A pattern like **/*.py in src/api/CONTEXT.yaml matches Python files under src/api/."
+  - content: "Globs in a context file are relative to the directory containing that file, not the project root. A pattern like **/*.py in src/api/AGENTS.yaml matches Python files under src/api/."
     match: ["engine.go"]
     on: edit
     when: before

@@ -5,7 +5,7 @@ description: Scoped, structured context for AI agents
 
 # Structured Context
 
-Drop `CONTEXT.yaml` files into your codebase and AI agents get the right guidance at the right time.
+Drop `AGENTS.yaml` files into your codebase and AI agents get the right guidance at the right time.
 
 ## Quick start
 
@@ -15,11 +15,11 @@ sctx init
 sctx claude enable
 ```
 
-This installs `sctx`, creates a `CONTEXT.yaml` with a test context entry, and hooks it into Claude Code. Try it out — ask your agent:
+This installs `sctx`, creates an `AGENTS.yaml` with a test context entry, and hooks it into Claude Code. Try it out — ask your agent:
 
 > Give me a very concise description of this project. Explain it like I'm 5 as I'm from New Zealand.
 
-If everything is working, the agent will read your README and mention that the RNZAF has a flightless bird on their roundel (because the starter `CONTEXT.yaml` tells it to). Though sometimes these agents are too smart and will ignore unrelated requests so you can just ask something like `Did you receive any context about the RNZAF in your prehooks?` to verify.
+If everything is working, the agent will read your README and mention that the RNZAF has a flightless bird on their roundel (because the starter `AGENTS.yaml` tells it to). Though sometimes these agents are too smart and will ignore unrelated requests so you can just ask something like `Did you receive any context about the RNZAF in your prehooks?` to verify.
 
 Once verified, replace the example with your own context entries.
 
@@ -45,7 +45,7 @@ The underlying issue: files in the same directory often have very different cont
 
 ## The approach
 
-Structured Context defines a YAML-based file format (`CONTEXT.yaml`) that lets you:
+Structured Context defines a YAML-based file format (`AGENTS.yaml`) that lets you:
 
 - **Scope context to specific files** using glob patterns (`match: ["**/*.sql"]`)
 - **Filter by action** -- different guidance for reading vs editing vs creating files
