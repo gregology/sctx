@@ -7,7 +7,7 @@ description: How to build, test, and contribute to sctx
 
 ## Prerequisites
 
-- Go 1.21 or later
+- Go 1.25 or later
 - [golangci-lint](https://golangci-lint.run/welcome/install/) v2+
 
 ## Getting started
