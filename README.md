@@ -90,7 +90,7 @@ Both are picked up. If both exist in the same directory, they get loaded and mer
 
 ## Claude Code integration
 
-Add hooks to `.claude/settings.json`:
+Add hooks to `.claude/settings.local.json` (personal, not committed to version control) or `.claude/settings.json` (repo-wide, shared with all contributors):
 
 ```json
 {
