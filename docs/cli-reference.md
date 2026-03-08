@@ -79,7 +79,7 @@ Refuses to overwrite an existing `AGENTS.yaml`.
 
 ## sctx claude enable
 
-Installs the `sctx hook` into your project's `.claude/settings.json`. Creates the file and directory if they don't exist. If hooks are already configured, it leaves them alone.
+Installs the `sctx hook` into your project's `.claude/settings.local.json` (personal, not committed to version control). Creates the file and directory if they don't exist. If hooks are already configured, it leaves them alone. To share hooks with all contributors, manually add the hook config to `.claude/settings.json` instead.
 
 ```bash
 sctx claude enable
@@ -87,7 +87,7 @@ sctx claude enable
 
 ## sctx claude disable
 
-Removes the `sctx hook` entries from `.claude/settings.json`.
+Removes the `sctx hook` entries from `.claude/settings.local.json`.
 
 ```bash
 sctx claude disable
