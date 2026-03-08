@@ -174,3 +174,123 @@ context:
 		t.Errorf("should not contain edit-only context, got: %s", ctx)
 	}
 }
+
+func TestHandleClaudeHook_WriteExistingFile(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(tmpDir, ".git"), []byte(""), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	contextYAML := `
+context:
+  - content: "Context for new files"
+    on: create
+    when: before
+  - content: "Context for edits only"
+    on: edit
+    when: before
+`
+	if err := os.WriteFile(filepath.Join(tmpDir, "AGENTS.yaml"), []byte(contextYAML), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	// File exists — Write should be treated as edit.
+	target := filepath.Join(tmpDir, "existing.py")
+
+	if err := os.WriteFile(target, []byte("# already here"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	inputBytes := marshalInput(t, ClaudeHookInput{
+		SessionID:     "test-session",
+		HookEventName: "PreToolUse",
+		ToolName:      "Write",
+		ToolInput:     json.RawMessage(`{"file_path":"` + target + `"}`),
+		CWD:           tmpDir,
+	})
+
+	output := captureStdout(t, func() {
+		if err := HandleClaudeHook(inputBytes); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	var hookOutput ClaudeHookOutput
+	if err := json.Unmarshal([]byte(output), &hookOutput); err != nil {
+		t.Fatalf("failed to parse output: %v (output: %s)", err, output)
+	}
+
+	ctx := hookOutput.HookSpecificOutput.AdditionalContext
+	if ctx == "" {
+		t.Fatal("expected context for edit action")
+	}
+
+	if !strings.Contains(ctx, "Context for edits only") {
+		t.Errorf("expected edit context, got: %s", ctx)
+	}
+
+	if strings.Contains(ctx, "Context for new files") {
+		t.Errorf("should not contain create-only context, got: %s", ctx)
+	}
+}
+
+func TestHandleClaudeHook_UnknownToolName(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(tmpDir, ".git"), []byte(""), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	contextYAML := `
+context:
+  - content: "Context for all actions"
+    on: all
+    when: before
+  - content: "Context for edits only"
+    on: edit
+    when: before
+`
+	if err := os.WriteFile(filepath.Join(tmpDir, "AGENTS.yaml"), []byte(contextYAML), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	target := filepath.Join(tmpDir, "somefile.py")
+
+	if err := os.WriteFile(target, []byte("# content"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	inputBytes := marshalInput(t, ClaudeHookInput{
+		SessionID:     "test-session",
+		HookEventName: "PreToolUse",
+		ToolName:      "UnknownTool",
+		ToolInput:     json.RawMessage(`{"file_path":"` + target + `"}`),
+		CWD:           tmpDir,
+	})
+
+	output := captureStdout(t, func() {
+		if err := HandleClaudeHook(inputBytes); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	var hookOutput ClaudeHookOutput
+	if err := json.Unmarshal([]byte(output), &hookOutput); err != nil {
+		t.Fatalf("failed to parse output: %v (output: %s)", err, output)
+	}
+
+	if hookOutput.HookSpecificOutput == nil {
+		t.Fatal("expected hookSpecificOutput to be present")
+	}
+
+	ctx := hookOutput.HookSpecificOutput.AdditionalContext
+
+	if !strings.Contains(ctx, "Context for all actions") {
+		t.Errorf("expected all-action context for unknown tool, got: %s", ctx)
+	}
+
+	if strings.Contains(ctx, "Context for edits only") {
+		t.Errorf("should not contain edit-only context for unknown tool, got: %s", ctx)
+	}
+}
