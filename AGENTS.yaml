@@ -19,6 +19,23 @@ context:
     on: [edit, create]
     when: before
 
+  - content: >
+      Testing philosophy: test at public API boundaries (Resolve, HandleClaudeHook, Validate),
+      not private functions. Use real temp directories, not mocks. Every test must represent a
+      real user scenario — no tests that just mirror implementation. Table-driven tests for
+      combinatorial inputs. See docs/testing.md for full guidelines.
+    match: ["**/*_test.go"]
+    on: [edit, create]
+    when: before
+
+  - content: >
+      For core.Resolve tests, prefer property-based invariants (e.g. "child merges with parent",
+      "exclude always overrides match", "resolve never panics") over exhaustive example enumeration.
+      Use pgregory.net/rapid for property tests on the resolution engine only.
+    match: ["internal/core/*_test.go"]
+    on: [edit, create]
+    when: before
+
   - content: "Both AGENTS.yaml and AGENTS.yml are recognized. If both exist in the same directory, they are loaded and merged."
     on: all
     when: before
@@ -76,6 +93,21 @@ decisions:
     rationale: "Tracking delivered context across a session adds state management complexity. Ship stateless first."
     revisit_when: "Users report redundant context being delivered"
     date: 2026-03-06
+
+  - decision: "Behavior-driven integration tests as foundation, property-based tests for core.Resolve only"
+    rationale: >
+      The resolution engine has combinatorial edge cases (globs, merge ordering, action filtering)
+      where property-based tests catch bugs that example-based tests miss. The rest of the codebase
+      (adapter, CLI, validator) is straightforward plumbing where table-driven integration tests at
+      public API boundaries are sufficient. No mocks, no private function tests, no coverage targets.
+    alternatives:
+      - option: "Pure unit tests with mocks"
+        reason_rejected: "Couples tests to implementation details. Blocks refactoring. Low signal for a small codebase."
+      - option: "Golden file / snapshot testing"
+        reason_rejected: "Good for CLI output formatting but brittle to whitespace changes. Useful as a supplement, not a foundation."
+      - option: "Minimal contract tests only"
+        reason_rejected: "Too little coverage for the core engine where glob and merge edge cases matter."
+    date: 2026-03-07
 
   - decision: "MkDocs config and requirements live inside docs/, not project root"
     rationale: "Keeps the root clean for Go developers who don't care about the docs site. All website config stays in one directory, which makes it easier to eventually split docs into its own repo."
