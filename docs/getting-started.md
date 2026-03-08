@@ -72,7 +72,7 @@ sctx validate
 
 ## Hook into Claude Code
 
-Add this to `.claude/settings.json` in your project (or `~/.claude/settings.json` for all projects):
+Add this to `.claude/settings.local.json` for personal use, or `.claude/settings.json` to share hooks with all contributors (or `~/.claude/settings.json` for all projects):
 
 ```json
 {
