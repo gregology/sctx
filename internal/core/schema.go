@@ -75,6 +75,24 @@ const (
 	TimingAfter  Timing = "after"
 )
 
+// ValidAction reports whether s is a recognised action value.
+func ValidAction(s string) bool {
+	switch Action(s) {
+	case ActionRead, ActionEdit, ActionCreate, ActionAll:
+		return true
+	}
+	return false
+}
+
+// ValidTiming reports whether s is a recognised timing value.
+func ValidTiming(s string) bool {
+	switch Timing(s) {
+	case TimingBefore, TimingAfter:
+		return true
+	}
+	return false
+}
+
 // ResolveRequest contains the universal inputs for context resolution.
 // This is the agent-agnostic interface between adapters and the core engine.
 type ResolveRequest struct {

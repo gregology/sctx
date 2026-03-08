@@ -104,6 +104,11 @@ func cmdContext() error {
 			}
 
 			i++
+
+			if !core.ValidAction(os.Args[i]) {
+				return fmt.Errorf("invalid --on value %q (must be read, edit, create, or all)", os.Args[i])
+			}
+
 			action = core.Action(os.Args[i])
 		case "--when":
 			if i+1 >= len(os.Args) {
@@ -111,6 +116,11 @@ func cmdContext() error {
 			}
 
 			i++
+
+			if !core.ValidTiming(os.Args[i]) {
+				return fmt.Errorf("invalid --when value %q (must be before or after)", os.Args[i])
+			}
+
 			timing = core.Timing(os.Args[i])
 		case "--json":
 			jsonOutput = true
