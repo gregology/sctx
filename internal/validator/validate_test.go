@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -83,6 +84,89 @@ func TestValidateFile_NonexistentFile(t *testing.T) {
 	if !containsStr(errors[0].Message, "cannot read file") {
 		t.Errorf("expected read error, got: %s", errors[0].Message)
 	}
+}
+
+func writeFile(t *testing.T, path string, data []byte) {
+	t.Helper()
+
+	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestValidateTree(t *testing.T) {
+	validYAML := []byte("context:\n  - content: \"Use strict types\"\n")
+	invalidYAML := []byte("context:\n  - content: \"\"\n")
+
+	t.Run("multi-level tree with valid and invalid files", func(t *testing.T) {
+		root := t.TempDir()
+		writeFile(t, filepath.Join(root, "AGENTS.yaml"), validYAML)
+		writeFile(t, filepath.Join(root, "sub", "dir", "AGENTS.yaml"), invalidYAML)
+
+		errs, err := ValidateTree(root)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if len(errs) != 1 {
+			t.Errorf("expected 1 validation error, got %d", len(errs))
+			for _, e := range errs {
+				t.Logf("  %s", e)
+			}
+		}
+	})
+
+	t.Run("no AGENTS files", func(t *testing.T) {
+		root := t.TempDir()
+		writeFile(t, filepath.Join(root, "README.md"), []byte("hello"))
+
+		errs, err := ValidateTree(root)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if len(errs) != 0 {
+			t.Errorf("expected 0 validation errors, got %d", len(errs))
+		}
+	})
+
+	t.Run("both AGENTS.yaml and AGENTS.yml in same directory", func(t *testing.T) {
+		root := t.TempDir()
+		writeFile(t, filepath.Join(root, "AGENTS.yaml"), validYAML)
+		writeFile(t, filepath.Join(root, "AGENTS.yml"), invalidYAML)
+
+		errs, err := ValidateTree(root)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if len(errs) != 1 {
+			t.Errorf("expected 1 validation error, got %d", len(errs))
+			for _, e := range errs {
+				t.Logf("  %s", e)
+			}
+		}
+	})
+
+	t.Run("unreadable directory returns error", func(t *testing.T) {
+		root := t.TempDir()
+		sub := filepath.Join(root, "noperm")
+		writeFile(t, filepath.Join(sub, "AGENTS.yaml"), validYAML)
+
+		if err := os.Chmod(sub, 0o000); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = os.Chmod(sub, 0o700) }) //nolint:gosec // restore perms for cleanup
+
+		_, err := ValidateTree(root)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
 }
 
 func containsStr(s, substr string) bool {
