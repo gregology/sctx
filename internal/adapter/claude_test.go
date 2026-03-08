@@ -103,6 +103,14 @@ context:
 	if hookOutput.HookSpecificOutput.AdditionalContext == "" {
 		t.Error("expected non-empty additionalContext")
 	}
+
+	if hookOutput.HookSpecificOutput.PermissionDecision != "allow" {
+		t.Errorf("expected permissionDecision 'allow', got %q", hookOutput.HookSpecificOutput.PermissionDecision)
+	}
+
+	if hookOutput.HookSpecificOutput.PermissionDecisionReason != "sctx: structured context injected" {
+		t.Errorf("expected permissionDecisionReason 'sctx: structured context injected', got %q", hookOutput.HookSpecificOutput.PermissionDecisionReason)
+	}
 }
 
 func TestHandleClaudeHook_NoFilePath(t *testing.T) {
@@ -292,5 +300,67 @@ context:
 
 	if strings.Contains(ctx, "Context for edits only") {
 		t.Errorf("should not contain edit-only context for unknown tool, got: %s", ctx)
+	}
+}
+
+func TestHandleClaudeHook_PostToolUse_NoPermissionDecision(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(tmpDir, ".git"), []byte(""), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	contextYAML := `
+context:
+  - content: "Test context after edit"
+    on: edit
+    when: after
+`
+	if err := os.WriteFile(filepath.Join(tmpDir, "AGENTS.yaml"), []byte(contextYAML), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	target := filepath.Join(tmpDir, "file.py")
+
+	if err := os.WriteFile(target, []byte("# existing file"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	inputBytes := marshalInput(t, ClaudeHookInput{
+		SessionID:     "test-session",
+		HookEventName: "PostToolUse",
+		ToolName:      "Edit",
+		ToolInput:     json.RawMessage(`{"file_path":"` + target + `"}`),
+		CWD:           tmpDir,
+	})
+
+	output := captureStdout(t, func() {
+		if err := HandleClaudeHook(inputBytes); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	var hookOutput ClaudeHookOutput
+	if err := json.Unmarshal([]byte(output), &hookOutput); err != nil {
+		t.Fatalf("failed to parse output JSON: %v (output was: %s)", err, output)
+	}
+
+	if hookOutput.HookSpecificOutput == nil {
+		t.Fatal("expected hookSpecificOutput to be present")
+	}
+
+	if hookOutput.HookSpecificOutput.PermissionDecision != "" {
+		t.Errorf("expected empty permissionDecision for PostToolUse, got %q", hookOutput.HookSpecificOutput.PermissionDecision)
+	}
+
+	if hookOutput.HookSpecificOutput.PermissionDecisionReason != "" {
+		t.Errorf("expected empty permissionDecisionReason for PostToolUse, got %q", hookOutput.HookSpecificOutput.PermissionDecisionReason)
+	}
+}
+
+func TestHandleClaudeHook_MalformedInput(t *testing.T) {
+	err := HandleClaudeHook([]byte(`{not valid json`))
+	if err == nil {
+		t.Fatal("expected error for malformed JSON input, got nil")
 	}
 }
