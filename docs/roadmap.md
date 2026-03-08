@@ -20,13 +20,13 @@ The foundation: file format, resolution engine, Claude Code integration.
 - [x] `sctx validate` -- schema validation
 - [x] `sctx init` -- starter file generation
 - [x] `alternatives` field on decisions -- record what else was considered and why it was rejected
+- [x] `sctx claude enable/disable` -- install/remove hooks in Claude Code settings
 
 ## v2 (planned)
 
 Richer context management and broader agent support.
 
 - [ ] **`ref` field** -- reference context defined in another file, maintaining a single source of truth
-- [ ] **`sctx setup claude`** -- auto-install hooks into Claude Code settings
 - [ ] **Session-aware deduplication** -- track what context has already been delivered in a session to avoid repetition
 - [ ] **Additional agent adapters** -- Cursor, Windsurf, and others as they expose hook mechanisms
 - [ ] **Temporal filtering** -- context that activates after a date or expires before a date, for migration periods and deprecation windows
