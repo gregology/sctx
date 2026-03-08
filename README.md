@@ -10,6 +10,12 @@ Think of it as `AGENTS.md` with precision. Instead of dumping everything into on
 brew install gregology/tap/sctx
 ```
 
+On Ubuntu/Debian, grab the `.deb` from [GitHub Releases](https://github.com/gregology/sctx/releases):
+
+```bash
+sudo dpkg -i sctx_*.deb
+```
+
 Or with Go:
 
 ```bash

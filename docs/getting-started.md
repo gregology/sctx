@@ -13,6 +13,14 @@ description: Install sctx and create your first context file
     brew install gregology/tap/sctx
     ```
 
+=== "Debian/Ubuntu"
+
+    Download the `.deb` from [GitHub Releases](https://github.com/gregology/sctx/releases) and install:
+
+    ```bash
+    sudo dpkg -i sctx_*.deb
+    ```
+
 === "From source"
 
     ```bash
