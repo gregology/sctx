@@ -1,10 +1,14 @@
 package core
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
+
+	"pgregory.net/rapid"
 )
 
 // testdataDir returns the absolute path to the testdata directory.
@@ -362,6 +366,328 @@ func TestResolve_ParentBeforeChild(t *testing.T) {
 	if result.ContextEntries[1].Content != "Validate input with pydantic" {
 		t.Errorf("second entry should be from subdirectory, got %q", result.ContextEntries[1].Content)
 	}
+}
+
+// genAction generates a random valid Action.
+func genAction(t *rapid.T) Action {
+	return rapid.SampledFrom([]Action{ActionRead, ActionEdit, ActionCreate, ActionAll}).Draw(t, "action")
+}
+
+// genTiming generates a random valid Timing.
+func genTiming(t *rapid.T) Timing {
+	return rapid.SampledFrom([]Timing{TimingBefore, TimingAfter}).Draw(t, "timing")
+}
+
+// genDirName generates a short directory name safe for filesystem use.
+func genDirName(t *rapid.T) string {
+	return rapid.StringMatching(`[a-z]{1,8}`).Draw(t, "dirname")
+}
+
+// genGlob generates a random glob pattern.
+func genGlob(t *rapid.T) string {
+	return rapid.SampledFrom([]string{
+		"**", "**/*.go", "**/*.py", "*.txt", "src/**", "**/*.js",
+		"docs/**", "*.md", "**/*_test.go", "vendor/**",
+	}).Draw(t, "glob")
+}
+
+// genOnValue generates a random on value.
+func genOnValue(t *rapid.T) string {
+	return rapid.SampledFrom([]string{"read", "edit", "create", "all"}).Draw(t, "on")
+}
+
+// genWhenValue generates a random when value.
+func genWhenValue(t *rapid.T) string {
+	return rapid.SampledFrom([]string{"before", "after"}).Draw(t, "when")
+}
+
+// writeAgentsYAML writes an AGENTS.yaml with the given context entries to dir.
+func writeAgentsYAML(t *testing.T, dir string, entries []ContextEntry) {
+	t.Helper()
+
+	var b strings.Builder
+	b.WriteString("context:\n")
+
+	for _, e := range entries {
+		fmt.Fprintf(&b, "  - content: %q\n", e.Content)
+
+		if len(e.Match) > 0 {
+			b.WriteString("    match:\n")
+			for _, m := range e.Match {
+				fmt.Fprintf(&b, "      - %q\n", m)
+			}
+		}
+
+		if len(e.Exclude) > 0 {
+			b.WriteString("    exclude:\n")
+			for _, ex := range e.Exclude {
+				fmt.Fprintf(&b, "      - %q\n", ex)
+			}
+		}
+
+		if len(e.On) > 0 {
+			b.WriteString("    on:\n")
+			for _, o := range e.On {
+				fmt.Fprintf(&b, "      - %s\n", o)
+			}
+		}
+
+		if e.When != "" {
+			fmt.Fprintf(&b, "    when: %s\n", e.When)
+		}
+	}
+
+	writeTestFile(t, filepath.Join(dir, "AGENTS.yaml"), b.String())
+}
+
+func TestResolve_NeverPanics(t *testing.T) {
+	rapid.Check(t, func(rt *rapid.T) {
+		tmpDir := t.TempDir()
+		writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
+
+		depth := rapid.IntRange(0, 3).Draw(rt, "depth")
+		dir := tmpDir
+
+		for i := range depth {
+			dir = filepath.Join(dir, genDirName(rt))
+			if err := os.MkdirAll(dir, 0o750); err != nil {
+				t.Fatalf("mkdir: %v", err)
+			}
+
+			numEntries := rapid.IntRange(0, 4).Draw(rt, "numEntries")
+			var entries []ContextEntry
+
+			for j := range numEntries {
+				numMatch := rapid.IntRange(0, 3).Draw(rt, "numMatch")
+				var match []string
+				for range numMatch {
+					match = append(match, genGlob(rt))
+				}
+
+				numExclude := rapid.IntRange(0, 2).Draw(rt, "numExclude")
+				var exclude []string
+				for range numExclude {
+					exclude = append(exclude, genGlob(rt))
+				}
+
+				numOn := rapid.IntRange(1, 3).Draw(rt, "numOn")
+				var on FlexList
+				for range numOn {
+					on = append(on, genOnValue(rt))
+				}
+
+				entries = append(entries, ContextEntry{
+					Content: fmt.Sprintf("content-%d-%d", i, j),
+					Match:   match,
+					Exclude: exclude,
+					On:      on,
+					When:    genWhenValue(rt),
+				})
+			}
+
+			if len(entries) > 0 {
+				writeAgentsYAML(t, dir, entries)
+			}
+		}
+
+		target := filepath.Join(dir, "target.go")
+		writeTestFile(t, target, "")
+
+		action := genAction(rt)
+		timing := genTiming(rt)
+
+		// Must not panic.
+		_, _, _ = Resolve(ResolveRequest{
+			FilePath: target,
+			Action:   action,
+			Timing:   timing,
+		})
+	})
+}
+
+func TestResolve_ChildMergesWithParent(t *testing.T) {
+	rapid.Check(t, func(rt *rapid.T) {
+		tmpDir := t.TempDir()
+		writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
+
+		parentContent := rapid.StringMatching(`[a-z]{5,15}`).Draw(rt, "parentContent")
+		childContent := rapid.StringMatching(`[a-z]{5,15}`).Draw(rt, "childContent")
+
+		writeAgentsYAML(t, tmpDir, []ContextEntry{
+			{Content: parentContent, Match: []string{"**"}, On: FlexList{"all"}, When: "before"},
+		})
+
+		childDir := filepath.Join(tmpDir, genDirName(rt))
+		if err := os.MkdirAll(childDir, 0o750); err != nil {
+			t.Fatalf("mkdir: %v", err)
+		}
+
+		writeAgentsYAML(t, childDir, []ContextEntry{
+			{Content: childContent, Match: []string{"**"}, On: FlexList{"all"}, When: "before"},
+		})
+
+		target := filepath.Join(childDir, "file.txt")
+		writeTestFile(t, target, "")
+
+		result, _, err := Resolve(ResolveRequest{
+			FilePath: target,
+			Action:   ActionRead,
+			Timing:   TimingBefore,
+		})
+		if err != nil {
+			t.Fatalf("Resolve() error: %v", err)
+		}
+
+		foundParent := false
+		foundChild := false
+
+		for _, e := range result.ContextEntries {
+			if e.Content == parentContent {
+				foundParent = true
+			}
+			if e.Content == childContent {
+				foundChild = true
+			}
+		}
+
+		if !foundParent {
+			t.Errorf("parent entry %q not found in results", parentContent)
+		}
+		if !foundChild {
+			t.Errorf("child entry %q not found in results", childContent)
+		}
+	})
+}
+
+func TestResolve_ExcludeOverridesMatch(t *testing.T) {
+	rapid.Check(t, func(rt *rapid.T) {
+		tmpDir := t.TempDir()
+		writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
+
+		ext := rapid.SampledFrom([]string{".go", ".py", ".js", ".txt", ".md"}).Draw(rt, "ext")
+		globPattern := "**/*" + ext
+		excludeContent := "excluded-content"
+
+		writeAgentsYAML(t, tmpDir, []ContextEntry{
+			{
+				Content: excludeContent,
+				Match:   []string{globPattern},
+				Exclude: []string{globPattern},
+				On:      FlexList{"all"},
+				When:    "before",
+			},
+		})
+
+		target := filepath.Join(tmpDir, "somefile"+ext)
+		writeTestFile(t, target, "")
+
+		result, _, err := Resolve(ResolveRequest{
+			FilePath: target,
+			Action:   ActionRead,
+			Timing:   TimingBefore,
+		})
+		if err != nil {
+			t.Fatalf("Resolve() error: %v", err)
+		}
+
+		for _, e := range result.ContextEntries {
+			if e.Content == excludeContent {
+				t.Errorf("excluded content %q should not appear in results", excludeContent)
+			}
+		}
+	})
+}
+
+func TestResolve_EditEntriesFilteredForActionRead(t *testing.T) {
+	rapid.Check(t, func(rt *rapid.T) {
+		tmpDir := t.TempDir()
+		writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
+
+		editContent := rapid.StringMatching(`editonly-[a-z]{5,10}`).Draw(rt, "editContent")
+		when := genWhenValue(rt)
+
+		entries := []ContextEntry{
+			{Content: editContent, Match: []string{"**"}, On: FlexList{"edit"}, When: when},
+		}
+
+		numExtra := rapid.IntRange(0, 3).Draw(rt, "numExtra")
+		for i := range numExtra {
+			entries = append(entries, ContextEntry{
+				Content: fmt.Sprintf("extra-%d", i),
+				Match:   []string{"**"},
+				On:      FlexList{genOnValue(rt)},
+				When:    genWhenValue(rt),
+			})
+		}
+
+		writeAgentsYAML(t, tmpDir, entries)
+
+		target := filepath.Join(tmpDir, "file.go")
+		writeTestFile(t, target, "")
+
+		result, _, err := Resolve(ResolveRequest{
+			FilePath: target,
+			Action:   ActionRead,
+			Timing:   Timing(when),
+		})
+		if err != nil {
+			t.Fatalf("Resolve() error: %v", err)
+		}
+
+		for _, e := range result.ContextEntries {
+			if e.Content == editContent {
+				t.Errorf("edit-only entry %q appeared for ActionRead request", editContent)
+			}
+		}
+	})
+}
+
+func TestResolve_ParentBeforeChildOrdering(t *testing.T) {
+	rapid.Check(t, func(rt *rapid.T) {
+		tmpDir := t.TempDir()
+		writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
+
+		depth := rapid.IntRange(1, 4).Draw(rt, "depth")
+		dirs := []string{tmpDir}
+		dir := tmpDir
+
+		for range depth {
+			dir = filepath.Join(dir, genDirName(rt))
+			if err := os.MkdirAll(dir, 0o750); err != nil {
+				t.Fatalf("mkdir: %v", err)
+			}
+			dirs = append(dirs, dir)
+		}
+
+		for i, d := range dirs {
+			writeAgentsYAML(t, d, []ContextEntry{
+				{Content: fmt.Sprintf("level-%d", i), Match: []string{"**"}, On: FlexList{"all"}, When: "before"},
+			})
+		}
+
+		target := filepath.Join(dir, "file.txt")
+		writeTestFile(t, target, "")
+
+		result, _, err := Resolve(ResolveRequest{
+			FilePath: target,
+			Action:   ActionRead,
+			Timing:   TimingBefore,
+		})
+		if err != nil {
+			t.Fatalf("Resolve() error: %v", err)
+		}
+
+		if len(result.ContextEntries) != len(dirs) {
+			t.Fatalf("expected %d entries, got %d", len(dirs), len(result.ContextEntries))
+		}
+
+		for i, e := range result.ContextEntries {
+			want := fmt.Sprintf("level-%d", i)
+			if e.Content != want {
+				t.Errorf("entry[%d]: got %q, want %q", i, e.Content, want)
+			}
+		}
+	})
 }
 
 // assertContextContents checks that the matched context entries have exactly
