@@ -1,7 +1,7 @@
 // Package core implements the Structured Context resolution engine.
 //
 // Given a file path, an action (read/edit/create), and a timing (before/after),
-// the engine discovers CONTEXT.yaml and AGENTS.yaml files by walking up the
+// the engine discovers AGENTS.yaml files by walking up the
 // directory tree, parses them, filters entries by glob match and action, and
 // returns the combined results.
 //

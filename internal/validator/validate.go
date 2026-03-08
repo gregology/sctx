@@ -13,9 +13,7 @@ import (
 	"github.com/gregology/sctx/internal/core"
 )
 
-var contextFileNames = []string{
-	"CONTEXT.yaml",
-	"CONTEXT.yml",
+var agentsFileNames = []string{
 	"AGENTS.yaml",
 	"AGENTS.yml",
 }
@@ -54,7 +52,7 @@ func ValidateTree(root string) ([]ValidationError, error) {
 			return walkErr //nolint:wrapcheck // walk errors are already descriptive
 		}
 
-		if slices.Contains(contextFileNames, info.Name()) {
+		if slices.Contains(agentsFileNames, info.Name()) {
 			errs = append(errs, ValidateFile(path)...)
 		}
 

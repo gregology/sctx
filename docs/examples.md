@@ -5,7 +5,7 @@ description: Real-world patterns for using Structured Context in dbt, API, React
 
 # Examples
 
-Real-world patterns for using Structured Context. Each example shows the problem, the file structure, and the CONTEXT.yaml that solves it.
+Real-world patterns for using Structured Context. Each example shows the problem, the file structure, and the AGENTS.yaml that solves it.
 
 ## dbt project
 
@@ -13,7 +13,7 @@ A dbt `models/` directory contains SQL models, YAML schema files, and markdown d
 
 ```
 models/
-  CONTEXT.yaml
+  AGENTS.yaml
   staging/
     stg_orders.sql
     stg_orders.yml
@@ -23,7 +23,7 @@ models/
 ```
 
 ```yaml
-# models/CONTEXT.yaml
+# models/AGENTS.yaml
 
 context:
   - content: |
@@ -80,7 +80,7 @@ A typical API directory has route handlers, middleware, tests, and OpenAPI specs
 
 ```
 src/api/
-  CONTEXT.yaml
+  AGENTS.yaml
   handlers/
     users.py
     users_test.py
@@ -94,7 +94,7 @@ src/api/
 ```
 
 ```yaml
-# src/api/CONTEXT.yaml
+# src/api/AGENTS.yaml
 
 context:
   - content: |
@@ -146,7 +146,7 @@ Component directories mix implementation, tests, stories, and styles. The conven
 
 ```
 src/components/
-  CONTEXT.yaml
+  AGENTS.yaml
   Button/
     Button.tsx
     Button.test.tsx
@@ -155,7 +155,7 @@ src/components/
 ```
 
 ```yaml
-# src/components/CONTEXT.yaml
+# src/components/AGENTS.yaml
 
 context:
   - content: |
@@ -196,7 +196,7 @@ Infrastructure-as-code directories mix resource definitions, variable files, and
 
 ```
 infra/
-  CONTEXT.yaml
+  AGENTS.yaml
   main.tf
   variables.tf
   terraform.tfvars
@@ -208,7 +208,7 @@ infra/
 ```
 
 ```yaml
-# infra/CONTEXT.yaml
+# infra/AGENTS.yaml
 
 context:
   - content: |
@@ -248,20 +248,20 @@ Some context applies everywhere. Some only applies to specific packages. Structu
 
 ```
 monorepo/
-  CONTEXT.yaml              <- shared conventions
+  AGENTS.yaml              <- shared conventions
   packages/
     auth/
-      CONTEXT.yaml          <- auth-specific
+      AGENTS.yaml          <- auth-specific
       src/
     payments/
-      CONTEXT.yaml          <- payments-specific
+      AGENTS.yaml          <- payments-specific
       src/
     shared/
       src/
 ```
 
 ```yaml
-# monorepo/CONTEXT.yaml (root)
+# monorepo/AGENTS.yaml (root)
 
 context:
   - content: "All packages use ESM imports. No require() calls. No default exports."
@@ -286,7 +286,7 @@ decisions:
 ```
 
 ```yaml
-# monorepo/packages/payments/CONTEXT.yaml
+# monorepo/packages/payments/AGENTS.yaml
 
 context:
   - content: "All monetary values are integers in cents. Never use floats for money. The Money type from @monorepo/shared handles formatting."

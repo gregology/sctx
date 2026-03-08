@@ -1,6 +1,6 @@
 site_name: Structured Context
 site_url: https://sctx.dev
-site_description: Scoped, structured context for AI agents. Drop CONTEXT.yaml files into your codebase and agents get the right guidance at the right time.
+site_description: Scoped, structured context for AI agents. Drop AGENTS.yaml files into your codebase and agents get the right guidance at the right time.
 docs_dir: .
 site_dir: ../site
 repo_url: https://github.com/gregology/sctx

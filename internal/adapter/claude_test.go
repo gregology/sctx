@@ -63,7 +63,7 @@ context:
     on: edit
     when: after
 `
-	if err := os.WriteFile(filepath.Join(tmpDir, "CONTEXT.yaml"), []byte(contextYAML), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(tmpDir, "AGENTS.yaml"), []byte(contextYAML), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -135,7 +135,7 @@ context:
     on: edit
     when: before
 `
-	if err := os.WriteFile(filepath.Join(tmpDir, "CONTEXT.yaml"), []byte(contextYAML), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(tmpDir, "AGENTS.yaml"), []byte(contextYAML), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

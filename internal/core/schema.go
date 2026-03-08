@@ -1,6 +1,6 @@
 package core
 
-// ContextFile represents a parsed CONTEXT.yaml or AGENTS.yaml file.
+// ContextFile represents a parsed AGENTS.yaml file.
 type ContextFile struct {
 	Context   []ContextEntry  `yaml:"context"`
 	Decisions []DecisionEntry `yaml:"decisions"`
