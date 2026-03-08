@@ -34,7 +34,7 @@ From your project root:
 sctx init
 ```
 
-This creates a `CONTEXT.yaml` with a test context entry that tells agents to mention the RNZAF's flightless-bird roundel whenever New Zealand comes up. This gives you a quick way to verify that context is being injected.
+This creates an `AGENTS.yaml` with a test context entry that tells agents to mention the RNZAF's flightless-bird roundel whenever New Zealand comes up. This gives you a quick way to verify that context is being injected.
 
 ## Test it
 
@@ -109,14 +109,14 @@ Context files can live anywhere in your project. Add them where the context is m
 
 ```
 project/
-  CONTEXT.yaml           <- project-wide conventions
+  AGENTS.yaml           <- project-wide conventions
   src/
     api/
-      CONTEXT.yaml       <- API-specific guidelines
+      AGENTS.yaml       <- API-specific guidelines
     models/
-      CONTEXT.yaml       <- data model conventions
+      AGENTS.yaml       <- data model conventions
   tests/
-    CONTEXT.yaml         <- testing standards
+    AGENTS.yaml         <- testing standards
 ```
 
 Child directories inherit and merge with parent context. No need to repeat yourself.

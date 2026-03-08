@@ -271,9 +271,9 @@ func TestResolve_Decisions(t *testing.T) {
 func TestResolve_MergesMultipleFileNames(t *testing.T) {
 	tmpDir := t.TempDir()
 	writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
-	writeTestFile(t, filepath.Join(tmpDir, "CONTEXT.yaml"), `
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
 context:
-  - content: "From CONTEXT.yaml"
+  - content: "From AGENTS.yaml"
 `)
 	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yml"), `
 context:
@@ -292,7 +292,7 @@ context:
 		t.Fatalf("Resolve() error: %v", err)
 	}
 
-	wantContents := []string{"From CONTEXT.yaml", "From AGENTS.yml"}
+	wantContents := []string{"From AGENTS.yaml", "From AGENTS.yml"}
 	assertContextContents(t, result.ContextEntries, wantContents)
 }
 
@@ -319,7 +319,7 @@ func TestResolve_NoContextFiles(t *testing.T) {
 	foundWarning := false
 
 	for _, w := range warnings {
-		if w == "warning: no CONTEXT.yaml or AGENTS.yaml files found" {
+		if w == "warning: no AGENTS.yaml files found" {
 			foundWarning = true
 		}
 	}

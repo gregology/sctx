@@ -13,14 +13,12 @@ This defines the Structured Context protocol: the file format, schema, resolutio
 
 | Filename | Notes |
 |---|---|
-| `CONTEXT.yaml` | Primary name |
-| `CONTEXT.yml` | Alternate extension |
-| `AGENTS.yaml` | Recognized for compatibility with the AGENTS.md convention |
+| `AGENTS.yaml` | Primary name |
 | `AGENTS.yml` | Alternate extension |
 
 Both `.yaml` and `.yml` are standard. The protocol accepts both.
 
-If multiple context files exist in the same directory, all are loaded and their contents merged. This lets teams split context across files or use whichever naming convention they prefer.
+If multiple context files exist in the same directory, all are loaded and their contents merged.
 
 ### Placement
 
@@ -79,7 +77,7 @@ A self-contained, actionable piece of guidance. Prefer multiple focused entries 
 
 Standard glob patterns. Same syntax as `.gitignore`, `.editorconfig`, and similar tools.
 
-Globs are resolved relative to the directory containing the context file, not the project root. A pattern `**/*.py` in `src/api/CONTEXT.yaml` matches Python files under `src/api/`, not the entire project.
+Globs are resolved relative to the directory containing the context file, not the project root. A pattern `**/*.py` in `src/api/AGENTS.yaml` matches Python files under `src/api/`, not the entire project.
 
 The default match is `["**"]` (recursive, everything). Use `*` for single-level matching.
 

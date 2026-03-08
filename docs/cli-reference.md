@@ -56,7 +56,7 @@ sctx decisions src/api/handler.py --json
 
 ## sctx validate [\<dir\>]
 
-Validates all `CONTEXT.yaml` and `AGENTS.yaml` files found in a directory tree. Reports schema errors and invalid glob patterns.
+Validates all `AGENTS.yaml` and `AGENTS.yaml` files found in a directory tree. Reports schema errors and invalid glob patterns.
 
 ```bash
 sctx validate
@@ -69,13 +69,13 @@ Exit code 0 if all files are valid. Exit code 1 if any errors are found. Warning
 
 ## sctx init
 
-Creates a starter `CONTEXT.yaml` in the current directory with commented examples.
+Creates a starter `AGENTS.yaml` in the current directory with commented examples.
 
 ```bash
 sctx init
 ```
 
-Refuses to overwrite an existing `CONTEXT.yaml`.
+Refuses to overwrite an existing `AGENTS.yaml`.
 
 ## sctx claude enable
 

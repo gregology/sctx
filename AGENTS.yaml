@@ -19,7 +19,7 @@ context:
     on: [edit, create]
     when: before
 
-  - content: "All four context filenames are recognized: CONTEXT.yaml, CONTEXT.yml, AGENTS.yaml, AGENTS.yml. If multiple exist in the same directory, all are loaded and merged."
+  - content: "Both AGENTS.yaml and AGENTS.yml are recognized. If both exist in the same directory, they are loaded and merged."
     on: all
     when: before
 
