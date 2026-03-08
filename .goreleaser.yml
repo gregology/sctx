@@ -17,6 +17,15 @@ archives:
       - tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
+nfpms:
+  - package_name: sctx
+    homepage: "https://sctx.dev"
+    maintainer: "gregology"
+    description: "Structured Context CLI — scoped context for AI agents"
+    license: "MIT"
+    formats:
+      - deb
+
 brews:
   - repository:
       owner: gregology
