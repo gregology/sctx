@@ -39,42 +39,51 @@ var (
 	errWhenNeedsValue   = errors.New("--when requires a value")
 	errFileExists       = errors.New("file already exists")
 	errClaudeSubcommand = errors.New("usage: sctx claude <enable|disable>")
+	errValidationFailed = errors.New("validation failed")
 )
 
 func main() {
-	if len(os.Args) < 2 {
+	os.Exit(run(os.Args))
+}
+
+func run(args []string) int {
+	if len(args) < 2 {
 		fmt.Fprint(os.Stderr, usage)
-		os.Exit(1)
+		return 1
 	}
 
 	var err error
 
-	switch os.Args[1] {
+	switch args[1] {
 	case "hook":
 		err = cmdHook()
 	case "context":
-		err = cmdContext()
+		err = cmdContext(args[2:])
 	case "decisions":
-		err = cmdDecisions()
+		err = cmdDecisions(args[2:])
 	case "validate":
-		err = cmdValidate()
+		err = cmdValidate(args[2:])
 	case "init":
 		err = cmdInit()
 	case "version":
 		fmt.Println("sctx", version)
 	case "claude":
-		err = cmdClaude()
+		err = cmdClaude(args[2:])
 	case "help", "--help", "-h":
 		fmt.Print(usage)
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command: %s\n\n%s", os.Args[1], usage)
-		os.Exit(1)
+		fmt.Fprintf(os.Stderr, "unknown command: %s\n\n%s", args[1], usage)
+		return 1
 	}
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+		if !errors.Is(err, errValidationFailed) {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		}
+		return 1
 	}
+
+	return 0
 }
 
 func cmdHook() error {
@@ -86,32 +95,32 @@ func cmdHook() error {
 	return adapter.HandleClaudeHook(input)
 }
 
-func cmdContext() error {
-	if len(os.Args) < 3 {
+func cmdContext(args []string) error {
+	if len(args) < 1 {
 		return errMissingPath
 	}
 
-	filePath := os.Args[2]
+	filePath := args[0]
 	action := core.ActionAll
 	timing := core.TimingBefore
 	jsonOutput := false
 
-	for i := 3; i < len(os.Args); i++ {
-		switch os.Args[i] {
+	for i := 1; i < len(args); i++ {
+		switch args[i] {
 		case "--on":
-			if i+1 >= len(os.Args) {
+			if i+1 >= len(args) {
 				return errOnNeedsValue
 			}
 
 			i++
-			action = core.Action(os.Args[i])
+			action = core.Action(args[i])
 		case "--when":
-			if i+1 >= len(os.Args) {
+			if i+1 >= len(args) {
 				return errWhenNeedsValue
 			}
 
 			i++
-			timing = core.Timing(os.Args[i])
+			timing = core.Timing(args[i])
 		case "--json":
 			jsonOutput = true
 		}
@@ -154,16 +163,16 @@ func cmdContext() error {
 	return nil
 }
 
-func cmdDecisions() error {
-	if len(os.Args) < 3 {
+func cmdDecisions(args []string) error {
+	if len(args) < 1 {
 		return errMissingPath
 	}
 
-	filePath := os.Args[2]
+	filePath := args[0]
 	jsonOutput := false
 
-	for i := 3; i < len(os.Args); i++ {
-		if os.Args[i] == "--json" {
+	for i := 1; i < len(args); i++ {
+		if args[i] == "--json" {
 			jsonOutput = true
 		}
 	}
@@ -213,10 +222,10 @@ func cmdDecisions() error {
 	return nil
 }
 
-func cmdValidate() error {
+func cmdValidate(args []string) error {
 	dir := "."
-	if len(os.Args) > 2 {
-		dir = os.Args[2]
+	if len(args) > 0 {
+		dir = args[0]
 	}
 
 	absDir, err := filepath.Abs(dir)
@@ -245,7 +254,7 @@ func cmdValidate() error {
 	}
 
 	if hasErrors {
-		os.Exit(1)
+		return errValidationFailed
 	}
 
 	return nil
@@ -305,12 +314,12 @@ decisions:
 	return nil
 }
 
-func cmdClaude() error {
-	if len(os.Args) < 3 {
+func cmdClaude(args []string) error {
+	if len(args) < 1 {
 		return errClaudeSubcommand
 	}
 
-	switch os.Args[2] {
+	switch args[0] {
 	case "enable":
 		return adapter.EnableClaude()
 	case "disable":

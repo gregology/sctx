@@ -44,6 +44,14 @@ Property tests belong only in `internal/core`. The adapter and validator don't h
 - Test `Validate()` against directories containing valid and invalid YAML
 - One test per error class (missing content, invalid glob, bad action enum, etc.)
 
+### `cmd/sctx` — CLI integration tests
+
+- Test the `run(args []string) int` function, which is the testable entry point (thin wrapper around `main()`)
+- Subcommand functions accept `args []string` instead of reading `os.Args`, so tests call `run()` directly without `exec.Command`
+- `captureStdout` / `captureStderr` helpers redirect output for assertions
+- Cover argument parsing edge cases, flag combinations, error paths, and exit codes
+- Use `t.Chdir()` for commands that operate on the current directory (`init`, `validate`)
+
 ## What NOT to test
 
 - **Private functions** — if `matchesGlobs` breaks, a `Resolve` test will catch it. Testing both just means two tests to update when the signature changes.
