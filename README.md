@@ -1,6 +1,6 @@
 # Structured Context
 
-Scoped, structured context for AI agents. Drop `CONTEXT.yaml` files into your codebase and agents get the right guidance at the right time, for the right files.
+Scoped, structured context for AI agents. Drop `AGENTS.yaml` files into your codebase and agents get the right guidance at the right time, for the right files.
 
 Think of it as `AGENTS.md` with precision. Instead of dumping everything into one big file, you scope context to specific files, actions, and timing.
 
@@ -16,7 +16,7 @@ Or with Go:
 go install github.com/gregology/sctx/cmd/sctx@latest
 ```
 
-Create a `CONTEXT.yaml` anywhere in your project:
+Create a `AGENTS.yaml` anywhere in your project:
 
 ```yaml
 context:
@@ -45,7 +45,7 @@ sctx decisions src/api/handler.py
 
 ## How it works
 
-`sctx` walks up the directory tree from the target file, collecting `CONTEXT.yaml` (and `AGENTS.yaml`) files along the way. It filters entries by glob pattern, action type, and timing, then returns the matching context.
+`sctx` walks up the directory tree from the target file, collecting `AGENTS.yaml` files along the way. It filters entries by glob pattern, action type, and timing, then returns the matching context.
 
 Parent directory context merges with child directory context. Entries from parent directories appear first (lower specificity), entries from closer directories appear last (higher specificity, stronger recency in the LLM prompt).
 
@@ -77,10 +77,8 @@ decisions:
 
 ### Recognized filenames
 
-All four are picked up. If multiple exist in the same directory, they all get loaded and merged.
+Both are picked up. If both exist in the same directory, they get loaded and merged.
 
-- `CONTEXT.yaml`
-- `CONTEXT.yml`
 - `AGENTS.yaml`
 - `AGENTS.yml`
 
@@ -123,7 +121,7 @@ The Write tool gets special handling: `sctx` checks whether the file exists on d
 
 ## Example
 
-I have added the following context to this project's root `CONTEXT.yaml` file.
+I have added the following context to this project's root `AGENTS.yaml` file.
 
 ```yaml
 context:
@@ -160,7 +158,7 @@ Response without New Zealand reference.
 
 **sctx validate [\<dir\>]** - Checks all context files in a directory tree for schema errors and invalid globs.
 
-**sctx init** - Drops a starter `CONTEXT.yaml` with commented examples into the current directory.
+**sctx init** - Drops a starter `AGENTS.yaml` with commented examples into the current directory.
 
 ## Agent-agnostic design
 

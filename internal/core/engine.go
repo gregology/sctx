@@ -10,10 +10,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// contextFileNames are the recognized filenames, in priority order.
-var contextFileNames = []string{
-	"CONTEXT.yaml",
-	"CONTEXT.yml",
+// agentsFileNames are the recognized filenames, in priority order.
+var agentsFileNames = []string{
 	"AGENTS.yaml",
 	"AGENTS.yml",
 }
@@ -90,7 +88,7 @@ func discoverAndParse(startDir, root string) (files []ContextFile, warnings []st
 	}
 
 	for _, dir := range dirs {
-		for _, name := range contextFileNames {
+		for _, name := range agentsFileNames {
 			path := filepath.Join(dir, name)
 
 			data, err := os.ReadFile(path) //nolint:gosec // paths come from directory walk, not user input
@@ -111,7 +109,7 @@ func discoverAndParse(startDir, root string) (files []ContextFile, warnings []st
 	}
 
 	if len(files) == 0 {
-		warnings = append(warnings, "warning: no CONTEXT.yaml or AGENTS.yaml files found")
+		warnings = append(warnings, "warning: no AGENTS.yaml files found")
 	}
 
 	return files, warnings

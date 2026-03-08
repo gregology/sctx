@@ -101,7 +101,7 @@ data, err := os.ReadFile(path) //nolint:gosec // path comes from directory walk,
 
 ## Validating context files
 
-The project uses its own CONTEXT.yaml files. After editing them:
+The project uses its own AGENTS.yaml files. After editing them:
 
 ```bash
 go run ./cmd/sctx validate .
