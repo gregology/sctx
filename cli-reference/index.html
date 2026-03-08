@@ -775,17 +775,17 @@
 </tbody>
 </table>
 <h2 id="sctx-validate-dir">sctx validate [\&lt;dir&gt;]<a class="headerlink" href="#sctx-validate-dir" title="Permanent link">&para;</a></h2>
-<p>Validates all <code>CONTEXT.yaml</code> and <code>AGENTS.yaml</code> files found in a directory tree. Reports schema errors and invalid glob patterns.</p>
+<p>Validates all <code>AGENTS.yaml</code> and <code>AGENTS.yaml</code> files found in a directory tree. Reports schema errors and invalid glob patterns.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>sctx<span class="w"> </span>validate
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>sctx<span class="w"> </span>validate<span class="w"> </span>./src
 </code></pre></div>
 <p>Defaults to the current directory if no path is given.</p>
 <p>Exit code 0 if all files are valid. Exit code 1 if any errors are found. Warnings (like unknown fields) don't cause a non-zero exit.</p>
 <h2 id="sctx-init">sctx init<a class="headerlink" href="#sctx-init" title="Permanent link">&para;</a></h2>
-<p>Creates a starter <code>CONTEXT.yaml</code> in the current directory with commented examples.</p>
+<p>Creates a starter <code>AGENTS.yaml</code> in the current directory with commented examples.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>sctx<span class="w"> </span>init
 </code></pre></div>
-<p>Refuses to overwrite an existing <code>CONTEXT.yaml</code>.</p>
+<p>Refuses to overwrite an existing <code>AGENTS.yaml</code>.</p>
 <h2 id="sctx-claude-enable">sctx claude enable<a class="headerlink" href="#sctx-claude-enable" title="Permanent link">&para;</a></h2>
 <p>Installs the <code>sctx hook</code> into your project's <code>.claude/settings.json</code>. Creates the file and directory if they don't exist. If hooks are already configured, it leaves them alone.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>sctx<span class="w"> </span>claude<span class="w"> </span><span class="nb">enable</span>

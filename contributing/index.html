@@ -774,7 +774,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nx">data</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nx">ReadFile</span><span class="p">(</span><span class="nx">path</span><span class="p">)</span><span class="w"> </span><span class="c1">//nolint:gosec // path comes from directory walk, not user input</span>
 </code></pre></div>
 <h2 id="validating-context-files">Validating context files<a class="headerlink" href="#validating-context-files" title="Permanent link">&para;</a></h2>
-<p>The project uses its own CONTEXT.yaml files. After editing them:</p>
+<p>The project uses its own AGENTS.yaml files. After editing them:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>go<span class="w"> </span>run<span class="w"> </span>./cmd/sctx<span class="w"> </span>validate<span class="w"> </span>.
 </code></pre></div>
 

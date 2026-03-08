@@ -903,16 +903,8 @@
 </thead>
 <tbody>
 <tr>
-<td><code>CONTEXT.yaml</code></td>
-<td>Primary name</td>
-</tr>
-<tr>
-<td><code>CONTEXT.yml</code></td>
-<td>Alternate extension</td>
-</tr>
-<tr>
 <td><code>AGENTS.yaml</code></td>
-<td>Recognized for compatibility with the AGENTS.md convention</td>
+<td>Primary name</td>
 </tr>
 <tr>
 <td><code>AGENTS.yml</code></td>
@@ -921,7 +913,7 @@
 </tbody>
 </table>
 <p>Both <code>.yaml</code> and <code>.yml</code> are standard. The protocol accepts both.</p>
-<p>If multiple context files exist in the same directory, all are loaded and their contents merged. This lets teams split context across files or use whichever naming convention they prefer.</p>
+<p>If multiple context files exist in the same directory, all are loaded and their contents merged.</p>
 <h3 id="placement">Placement<a class="headerlink" href="#placement" title="Permanent link">&para;</a></h3>
 <p>Context files can appear in any directory. Tools discover them by walking up from the target file to the project root, collecting every context file found along the way.</p>
 <h3 id="project-root-detection">Project root detection<a class="headerlink" href="#project-root-detection" title="Permanent link">&para;</a></h3>
@@ -999,7 +991,7 @@
 <p>A self-contained, actionable piece of guidance. Prefer multiple focused entries over one large entry. Each entry should make sense on its own without needing to read other entries.</p>
 <h4 id="match-and-exclude"><code>match</code> and <code>exclude</code><a class="headerlink" href="#match-and-exclude" title="Permanent link">&para;</a></h4>
 <p>Standard glob patterns. Same syntax as <code>.gitignore</code>, <code>.editorconfig</code>, and similar tools.</p>
-<p>Globs are resolved relative to the directory containing the context file, not the project root. A pattern <code>**/*.py</code> in <code>src/api/CONTEXT.yaml</code> matches Python files under <code>src/api/</code>, not the entire project.</p>
+<p>Globs are resolved relative to the directory containing the context file, not the project root. A pattern <code>**/*.py</code> in <code>src/api/AGENTS.yaml</code> matches Python files under <code>src/api/</code>, not the entire project.</p>
 <p>The default match is <code>["**"]</code> (recursive, everything). Use <code>*</code> for single-level matching.</p>
 <p><code>exclude</code> is applied after <code>match</code>. A file must match at least one <code>match</code> pattern and zero <code>exclude</code> patterns.</p>
 <h4 id="on"><code>on</code><a class="headerlink" href="#on" title="Permanent link">&para;</a></h4>

@@ -618,7 +618,7 @@
 <p>From your project root:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>sctx<span class="w"> </span>init
 </code></pre></div>
-<p>This creates a <code>CONTEXT.yaml</code> with a test context entry that tells agents to mention the RNZAF's flightless-bird roundel whenever New Zealand comes up. This gives you a quick way to verify that context is being injected.</p>
+<p>This creates an <code>AGENTS.yaml</code> with a test context entry that tells agents to mention the RNZAF's flightless-bird roundel whenever New Zealand comes up. This gives you a quick way to verify that context is being injected.</p>
 <h2 id="test-it">Test it<a class="headerlink" href="#test-it" title="Permanent link">&para;</a></h2>
 <p>Hook into Claude Code (see below), then ask your agent:</p>
 <blockquote>
@@ -670,14 +670,14 @@
 <h2 id="add-more-context-files">Add more context files<a class="headerlink" href="#add-more-context-files" title="Permanent link">&para;</a></h2>
 <p>Context files can live anywhere in your project. Add them where the context is most relevant:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>project/
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>  CONTEXT.yaml           &lt;- project-wide conventions
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>  AGENTS.yaml           &lt;- project-wide conventions
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>  src/
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    api/
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>      CONTEXT.yaml       &lt;- API-specific guidelines
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>      AGENTS.yaml       &lt;- API-specific guidelines
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    models/
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>      CONTEXT.yaml       &lt;- data model conventions
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>      AGENTS.yaml       &lt;- data model conventions
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>  tests/
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    CONTEXT.yaml         &lt;- testing standards
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    AGENTS.yaml         &lt;- testing standards
 </code></pre></div>
 <p>Child directories inherit and merge with parent context. No need to repeat yourself.</p>
 <h2 id="whats-next">What's next<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>

@@ -559,17 +559,17 @@
 
 
 <h1 id="structured-context">Structured Context<a class="headerlink" href="#structured-context" title="Permanent link">&para;</a></h1>
-<p>Drop <code>CONTEXT.yaml</code> files into your codebase and AI agents get the right guidance at the right time.</p>
+<p>Drop <code>AGENTS.yaml</code> files into your codebase and AI agents get the right guidance at the right time.</p>
 <h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>brew<span class="w"> </span>install<span class="w"> </span>gregology/tap/sctx
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>sctx<span class="w"> </span>init
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>sctx<span class="w"> </span>claude<span class="w"> </span><span class="nb">enable</span>
 </code></pre></div>
-<p>This installs <code>sctx</code>, creates a <code>CONTEXT.yaml</code> with a test context entry, and hooks it into Claude Code. Try it out — ask your agent:</p>
+<p>This installs <code>sctx</code>, creates an <code>AGENTS.yaml</code> with a test context entry, and hooks it into Claude Code. Try it out — ask your agent:</p>
 <blockquote>
 <p>Give me a very concise description of this project. Explain it like I'm 5 as I'm from New Zealand.</p>
 </blockquote>
-<p>If everything is working, the agent will read your README and mention that the RNZAF has a flightless bird on their roundel (because the starter <code>CONTEXT.yaml</code> tells it to). Though sometimes these agents are too smart and will ignore unrelated requests so you can just ask something like <code>Did you receive any context about the RNZAF in your prehooks?</code> to verify.</p>
+<p>If everything is working, the agent will read your README and mention that the RNZAF has a flightless bird on their roundel (because the starter <code>AGENTS.yaml</code> tells it to). Though sometimes these agents are too smart and will ignore unrelated requests so you can just ask something like <code>Did you receive any context about the RNZAF in your prehooks?</code> to verify.</p>
 <p>Once verified, replace the example with your own context entries.</p>
 <p>See <a href="getting-started/">Getting started</a> for more install options and details.</p>
 <h2 id="the-problem">The problem<a class="headerlink" href="#the-problem" title="Permanent link">&para;</a></h2>
@@ -585,7 +585,7 @@
 <p>This pattern shows up everywhere. API directories with route handlers, middleware, tests, and OpenAPI specs. React component directories with <code>.tsx</code>, <code>.test.tsx</code>, <code>.stories.tsx</code>, and <code>.module.css</code> files. Infrastructure directories with Terraform <code>.tf</code> files, <code>.tfvars</code>, and documentation. Monorepo packages where shared conventions apply globally but each package has its own patterns.</p>
 <p>The underlying issue: files in the same directory often have very different context requirements. Directory-scoped unstructured text can't express this.</p>
 <h2 id="the-approach">The approach<a class="headerlink" href="#the-approach" title="Permanent link">&para;</a></h2>
-<p>Structured Context defines a YAML-based file format (<code>CONTEXT.yaml</code>) that lets you:</p>
+<p>Structured Context defines a YAML-based file format (<code>AGENTS.yaml</code>) that lets you:</p>
 <ul>
 <li><strong>Scope context to specific files</strong> using glob patterns (<code>match: ["**/*.sql"]</code>)</li>
 <li><strong>Filter by action</strong> -- different guidance for reading vs editing vs creating files</li>
