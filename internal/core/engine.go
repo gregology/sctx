@@ -10,8 +10,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// agentsFileNames are the recognized filenames, in priority order.
-var agentsFileNames = []string{
+// AgentsFileNames are the recognized filenames, in priority order.
+var AgentsFileNames = []string{
 	"AGENTS.yaml",
 	"AGENTS.yml",
 }
@@ -88,7 +88,7 @@ func discoverAndParse(startDir, root string) (files []ContextFile, warnings []st
 	}
 
 	for _, dir := range dirs {
-		for _, name := range agentsFileNames {
+		for _, name := range AgentsFileNames {
 			path := filepath.Join(dir, name)
 
 			data, err := os.ReadFile(path) //nolint:gosec // paths come from directory walk, not user input

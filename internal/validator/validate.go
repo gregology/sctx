@@ -13,11 +13,6 @@ import (
 	"github.com/gregology/sctx/internal/core"
 )
 
-var agentsFileNames = []string{
-	"AGENTS.yaml",
-	"AGENTS.yml",
-}
-
 var validActions = map[string]bool{
 	"read": true, "edit": true, "create": true, "all": true,
 }
@@ -52,7 +47,7 @@ func ValidateTree(root string) ([]ValidationError, error) {
 			return walkErr //nolint:wrapcheck // walk errors are already descriptive
 		}
 
-		if slices.Contains(agentsFileNames, info.Name()) {
+		if slices.Contains(core.AgentsFileNames, info.Name()) {
 			errs = append(errs, ValidateFile(path)...)
 		}
 
