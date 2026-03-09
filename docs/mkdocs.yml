@@ -61,6 +61,7 @@ nav:
   - Protocol: protocol.md
   - Examples: examples.md
   - CLI reference: cli-reference.md
+  - Comparisons: comparisons.md
   - Contributing: contributing.md
   - Roadmap: roadmap.md
 
