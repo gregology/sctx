@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="All sctx commands, flags, and exit codes">
+        <meta name="description" content="How Structured Context differs from AGENTS.md, MCP, llms.txt, and IDE-specific rules">
       
       
       
-        <link rel="canonical" href="https://sctx.dev/cli-reference/">
+        <link rel="canonical" href="https://sctx.dev/comparisons/">
       
       
-        <link rel="prev" href="../examples/">
+        <link rel="prev" href="../cli-reference/">
       
       
-        <link rel="next" href="../comparisons/">
+        <link rel="next" href="../contributing/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -24,7 +24,7 @@
     
     
       
-        <title>CLI reference - Structured Context</title>
+        <title>How does sctx compare? - Structured Context</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#cli-reference" class="md-skip">
+        <a href="#how-does-sctx-compare" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              CLI reference
+              How does sctx compare?
             
           </span>
         </div>
@@ -338,6 +338,27 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CLI reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -354,7 +375,7 @@
           
   
   <span class="md-ellipsis">
-    CLI reference
+    Comparisons
     
   </span>
   
@@ -366,7 +387,7 @@
         
   
   <span class="md-ellipsis">
-    CLI reference
+    Comparisons
     
   </span>
   
@@ -389,28 +410,46 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#sctx-hook" class="md-nav__link">
+  <a href="#agentsmd" class="md-nav__link">
     <span class="md-ellipsis">
-      sctx hook
+      AGENTS.md
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#sctx-context-path" class="md-nav__link">
+  <a href="#model-context-protocol-mcp" class="md-nav__link">
     <span class="md-ellipsis">
-      sctx context \&lt;path>
+      Model Context Protocol (MCP)
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="sctx context \&lt;path&gt;">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#llmstxt" class="md-nav__link">
+    <span class="md-ellipsis">
+      llms.txt
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ide-specific-rules-cursorrules-windsurfrules" class="md-nav__link">
+    <span class="md-ellipsis">
+      IDE-specific rules (.cursorrules / .windsurfrules)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="IDE-specific rules (.cursorrules / .windsurfrules)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#flags" class="md-nav__link">
+  <a href="#example-monolithic-rules-vs-targeted-context" class="md-nav__link">
     <span class="md-ellipsis">
-      Flags
+      Example: monolithic rules vs. targeted context
     </span>
   </a>
   
@@ -422,78 +461,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#sctx-decisions-path" class="md-nav__link">
+  <a href="#summary" class="md-nav__link">
     <span class="md-ellipsis">
-      sctx decisions \&lt;path>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="sctx decisions \&lt;path&gt;">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#flags_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Flags
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sctx-validate-dir" class="md-nav__link">
-    <span class="md-ellipsis">
-      sctx validate [\&lt;dir>]
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sctx-init" class="md-nav__link">
-    <span class="md-ellipsis">
-      sctx init
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sctx-claude-enable" class="md-nav__link">
-    <span class="md-ellipsis">
-      sctx claude enable
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sctx-claude-disable" class="md-nav__link">
-    <span class="md-ellipsis">
-      sctx claude disable
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sctx-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      sctx version
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#exit-codes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Exit codes
+      Summary
     </span>
   </a>
   
@@ -503,27 +473,6 @@
   
 </nav>
       
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../comparisons/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Comparisons
-    
-  </span>
-  
-
-      </a>
     </li>
   
 
@@ -597,28 +546,46 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#sctx-hook" class="md-nav__link">
+  <a href="#agentsmd" class="md-nav__link">
     <span class="md-ellipsis">
-      sctx hook
+      AGENTS.md
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#sctx-context-path" class="md-nav__link">
+  <a href="#model-context-protocol-mcp" class="md-nav__link">
     <span class="md-ellipsis">
-      sctx context \&lt;path>
+      Model Context Protocol (MCP)
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="sctx context \&lt;path&gt;">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#llmstxt" class="md-nav__link">
+    <span class="md-ellipsis">
+      llms.txt
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ide-specific-rules-cursorrules-windsurfrules" class="md-nav__link">
+    <span class="md-ellipsis">
+      IDE-specific rules (.cursorrules / .windsurfrules)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="IDE-specific rules (.cursorrules / .windsurfrules)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#flags" class="md-nav__link">
+  <a href="#example-monolithic-rules-vs-targeted-context" class="md-nav__link">
     <span class="md-ellipsis">
-      Flags
+      Example: monolithic rules vs. targeted context
     </span>
   </a>
   
@@ -630,78 +597,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#sctx-decisions-path" class="md-nav__link">
+  <a href="#summary" class="md-nav__link">
     <span class="md-ellipsis">
-      sctx decisions \&lt;path>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="sctx decisions \&lt;path&gt;">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#flags_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Flags
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sctx-validate-dir" class="md-nav__link">
-    <span class="md-ellipsis">
-      sctx validate [\&lt;dir>]
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sctx-init" class="md-nav__link">
-    <span class="md-ellipsis">
-      sctx init
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sctx-claude-enable" class="md-nav__link">
-    <span class="md-ellipsis">
-      sctx claude enable
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sctx-claude-disable" class="md-nav__link">
-    <span class="md-ellipsis">
-      sctx claude disable
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sctx-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      sctx version
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#exit-codes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Exit codes
+      Summary
     </span>
   </a>
   
@@ -723,7 +621,7 @@
 
 
   
-    <a href="https://github.com/gregology/sctx/edit/main/docs/cli-reference.md" title="Edit this page" class="md-content__button md-icon">
+    <a href="https://github.com/gregology/sctx/edit/main/docs/comparisons.md" title="Edit this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -731,110 +629,91 @@
   
 
 
-<h1 id="cli-reference">CLI reference<a class="headerlink" href="#cli-reference" title="Permanent link">&para;</a></h1>
-<h2 id="sctx-hook">sctx hook<a class="headerlink" href="#sctx-hook" title="Permanent link">&para;</a></h2>
-<p>Reads agent hook input from stdin, resolves matching context entries, and writes the response to stdout. This is the primary integration point for AI agents.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;tool_name&quot;:&quot;Edit&quot;,&quot;tool_input&quot;:{&quot;file_path&quot;:&quot;/project/src/main.py&quot;},&quot;hook_event_name&quot;:&quot;PreToolUse&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sctx<span class="w"> </span>hook
+<h1 id="how-does-sctx-compare">How does sctx compare?<a class="headerlink" href="#how-does-sctx-compare" title="Permanent link">&para;</a></h1>
+<p>The ecosystem for giving AI agents context is growing fast. Here's how Structured Context fits alongside other approaches.</p>
+<p>The short version: <code>sctx</code> provides <strong>file-targeted, action-filtered context injection</strong>. Instead of loading all instructions all the time, it delivers only the entries that match what the agent is doing right now.</p>
+<h2 id="agentsmd">AGENTS.md<a class="headerlink" href="#agentsmd" title="Permanent link">&para;</a></h2>
+<p><a href="https://agents.md/">AGENTS.md</a> is becoming the standard project-level manifest for AI coding agents, providing a dedicated place for build commands and coding conventions.</p>
+<p><strong>The distinction:</strong> <code>AGENTS.md</code> is directory-scoped and largely unstructured prose. Developers must write natural language conditional logic ("If you are editing a SQL file, do X"). As the file grows, agents struggle to parse it — attention dilutes and the model quietly ignores the instruction that mattered most.</p>
+<p>Structured Context improves on this with declarative YAML glob-matching (<code>**/*.sql</code>), ensuring the LLM only ever reads the context applicable to the file it is actively touching.</p>
+<h2 id="model-context-protocol-mcp">Model Context Protocol (MCP)<a class="headerlink" href="#model-context-protocol-mcp" title="Permanent link">&para;</a></h2>
+<p>Anthropic's <a href="https://modelcontextprotocol.io/">MCP</a> is an open-source client-server protocol that standardizes how AI systems integrate with external tools and data sources.</p>
+<p><strong>The distinction:</strong> MCP is an <strong>active RPC protocol</strong> (like a USB-C cable for AI tools), whereas <code>sctx</code> is a <strong>static declarative file format</strong>. MCP connects the agent to the environment, while <code>sctx</code> dictates the <em>rules of engagement</em> for the codebase. They're complementary — an MCP server could be built to dynamically serve <code>sctx</code> contexts to an agent.</p>
+<h2 id="llmstxt">llms.txt<a class="headerlink" href="#llmstxt" title="Permanent link">&para;</a></h2>
+<p><a href="https://llmstxt.org/">llms.txt</a> is an informal web standard (similar to <code>robots.txt</code>) that provides AI agents with a machine-readable markdown map of a website or documentation repository.</p>
+<p><strong>The distinction:</strong> <code>llms.txt</code> is built for <strong>web scraping, RAG, and documentation ingestion</strong> — telling an agent <em>what to read</em>. <code>sctx</code> is built for <strong>local code manipulation and software engineering workflows</strong> — telling the agent <em>how to write</em> and what conventions to follow for specific file paths.</p>
+<h2 id="ide-specific-rules-cursorrules-windsurfrules">IDE-specific rules (.cursorrules / .windsurfrules)<a class="headerlink" href="#ide-specific-rules-cursorrules-windsurfrules" title="Permanent link">&para;</a></h2>
+<p>Project-root or directory-level markdown files where developers drop system prompts and stylistic preferences for AI IDEs like Cursor or Windsurf.</p>
+<p><strong>The distinction:</strong> These rules are generally monolithic. If a <code>.cursorrules</code> file contains React, Python, and SQL guidelines, the AI is burdened with all of them simultaneously during <em>any</em> edit. <code>sctx</code>'s action-filtering (<code>on: read</code> vs <code>on: edit</code> vs <code>on: create</code>) and precise file-path scoping offer a level of granularity that these files lack.</p>
+<h3 id="example-monolithic-rules-vs-targeted-context">Example: monolithic rules vs. targeted context<a class="headerlink" href="#example-monolithic-rules-vs-targeted-context" title="Permanent link">&para;</a></h3>
+<p>A typical <code>.cursorrules</code> file loads everything at once:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a># .cursorrules
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>When editing Python files, use snake_case for all identifiers.
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>When editing SQL models, use the incremental strategy macro.
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>When editing React components, prefer named exports.
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>When creating any file, add a license header.
 </code></pre></div>
-<p>Currently supports Claude Code's JSON format. The adapter reads <code>tool_name</code>, <code>tool_input.file_path</code>, and <code>hook_event_name</code> from stdin, resolves context, and outputs Claude Code's expected <code>hookSpecificOutput</code> JSON.</p>
-<p>Only context entries are included in hook output. Decisions are excluded to keep token costs low. Use <code>sctx decisions</code> to query decisions separately.</p>
-<p>If no context matches, exits 0 with no output (a no-op for Claude Code).</p>
-<p>The Write tool gets special treatment: <code>sctx</code> checks whether the target file exists on disk to distinguish <code>create</code> (new file) from <code>edit</code> (existing file).</p>
-<h2 id="sctx-context-path">sctx context \&lt;path&gt;<a class="headerlink" href="#sctx-context-path" title="Permanent link">&para;</a></h2>
-<p>Query context entries for a file. Useful for debugging and testing your context files.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>sctx<span class="w"> </span>context<span class="w"> </span>src/api/handler.py
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>sctx<span class="w"> </span>context<span class="w"> </span>src/api/handler.py<span class="w"> </span>--on<span class="w"> </span>edit<span class="w"> </span>--when<span class="w"> </span>before
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>sctx<span class="w"> </span>context<span class="w"> </span>src/api/handler.py<span class="w"> </span>--json
+<p>The agent sees all four instructions regardless of which file it touches. With Structured Context, each instruction only appears when it's relevant:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># AGENTS.yaml</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nt">context</span><span class="p">:</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Use</span><span class="nv"> </span><span class="s">snake_case</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">all</span><span class="nv"> </span><span class="s">identifiers&quot;</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/*.py&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">edit</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Use</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">incremental</span><span class="nv"> </span><span class="s">strategy</span><span class="nv"> </span><span class="s">macro&quot;</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;models/**/*.sql&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">edit</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Prefer</span><span class="nv"> </span><span class="s">named</span><span class="nv"> </span><span class="s">exports&quot;</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;src/components/**/*.tsx&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">edit</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Add</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">license</span><span class="nv"> </span><span class="s">header&quot;</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">create</span>
 </code></pre></div>
-<h3 id="flags">Flags<a class="headerlink" href="#flags" title="Permanent link">&para;</a></h3>
+<p>When the agent edits <code>models/revenue.sql</code>, it sees one instruction instead of four. At scale — dozens of conventions across a monorepo — the difference in signal-to-noise ratio is significant.</p>
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Flag</th>
-<th>Default</th>
-<th>Description</th>
+<th>Tool</th>
+<th>Scope</th>
+<th>Format</th>
+<th>Delivery</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--on &lt;action&gt;</code></td>
-<td><code>all</code></td>
-<td>Filter by action: <code>read</code>, <code>edit</code>, <code>create</code>, <code>all</code></td>
+<td>AGENTS.md</td>
+<td>Directory</td>
+<td>Unstructured prose</td>
+<td>Always loaded</td>
 </tr>
 <tr>
-<td><code>--when &lt;timing&gt;</code></td>
-<td><code>before</code></td>
-<td>Filter by timing: <code>before</code>, <code>after</code></td>
+<td>MCP</td>
+<td>External tools &amp; data</td>
+<td>RPC protocol</td>
+<td>On demand via server</td>
 </tr>
 <tr>
-<td><code>--json</code></td>
-<td>off</td>
-<td>Output as JSON instead of human-readable text</td>
-</tr>
-</tbody>
-</table>
-<h2 id="sctx-decisions-path">sctx decisions \&lt;path&gt;<a class="headerlink" href="#sctx-decisions-path" title="Permanent link">&para;</a></h2>
-<p>Query decisions for a file. Shows architectural decisions that apply based on glob matching.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>sctx<span class="w"> </span>decisions<span class="w"> </span>src/api/handler.py
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>sctx<span class="w"> </span>decisions<span class="w"> </span>src/api/handler.py<span class="w"> </span>--json
-</code></pre></div>
-<h3 id="flags_1">Flags<a class="headerlink" href="#flags_1" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Flag</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--json</code></td>
-<td>off</td>
-<td>Output as JSON instead of human-readable text</td>
-</tr>
-</tbody>
-</table>
-<h2 id="sctx-validate-dir">sctx validate [\&lt;dir&gt;]<a class="headerlink" href="#sctx-validate-dir" title="Permanent link">&para;</a></h2>
-<p>Validates all <code>AGENTS.yaml</code> and <code>AGENTS.yml</code> files found in a directory tree. Reports schema errors and invalid glob patterns.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>sctx<span class="w"> </span>validate
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>sctx<span class="w"> </span>validate<span class="w"> </span>./src
-</code></pre></div>
-<p>Defaults to the current directory if no path is given.</p>
-<p>Exit code 0 if all files are valid. Exit code 1 if any errors are found. Warnings (like unknown fields) don't cause a non-zero exit.</p>
-<h2 id="sctx-init">sctx init<a class="headerlink" href="#sctx-init" title="Permanent link">&para;</a></h2>
-<p>Creates a starter <code>AGENTS.yaml</code> in the current directory with commented examples.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>sctx<span class="w"> </span>init
-</code></pre></div>
-<p>Refuses to overwrite an existing <code>AGENTS.yaml</code>.</p>
-<h2 id="sctx-claude-enable">sctx claude enable<a class="headerlink" href="#sctx-claude-enable" title="Permanent link">&para;</a></h2>
-<p>Installs the <code>sctx hook</code> into your project's <code>.claude/settings.local.json</code>. Creates the file and directory if they don't exist. If hooks are already configured, it leaves them alone.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>sctx<span class="w"> </span>claude<span class="w"> </span><span class="nb">enable</span>
-</code></pre></div>
-<h2 id="sctx-claude-disable">sctx claude disable<a class="headerlink" href="#sctx-claude-disable" title="Permanent link">&para;</a></h2>
-<p>Removes the <code>sctx hook</code> entries from <code>.claude/settings.local.json</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>sctx<span class="w"> </span>claude<span class="w"> </span>disable
-</code></pre></div>
-<h2 id="sctx-version">sctx version<a class="headerlink" href="#sctx-version" title="Permanent link">&para;</a></h2>
-<p>Prints the version.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>sctx<span class="w"> </span>version
-</code></pre></div>
-<h2 id="exit-codes">Exit codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Code</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>0</td>
-<td>Success (includes "no context matched" -- that's not an error)</td>
+<td>llms.txt</td>
+<td>Website / docs</td>
+<td>Markdown</td>
+<td>Scraped / ingested</td>
 </tr>
 <tr>
-<td>1</td>
-<td>Fatal error: invalid arguments, IO failure, validation errors</td>
+<td>.cursorrules</td>
+<td>Project root</td>
+<td>Monolithic prompt</td>
+<td>Always loaded</td>
+</tr>
+<tr>
+<td><strong>sctx</strong></td>
+<td><strong>Per-file, per-action</strong></td>
+<td><strong>Declarative YAML</strong></td>
+<td><strong>JIT, glob-matched</strong></td>
 </tr>
 </tbody>
 </table>

@@ -437,6 +437,27 @@
   
   
     <li class="md-nav__item">
+      <a href="comparisons/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparisons
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="contributing/" class="md-nav__link">
         
   
@@ -561,6 +582,10 @@
 <h1 id="structured-context">Structured Context<a class="headerlink" href="#structured-context" title="Permanent link">&para;</a></h1>
 <p>AI agents work best with focused &amp; relevant context. Existing context standards like <code>AGENTS.md</code> are broad. The result is wasted cycles because of wrong patterns applied, conventions broken, and then more calls spent fixing the damage.</p>
 <p>Structured Context gives you fine-grained control over what an agent sees and when. Drop <code>AGENTS.yaml</code> files into your codebase and the right guidance shows up for the right files, filtered by what the agent is actually doing.</p>
+<div class="admonition tip">
+<p class="admonition-title">JIT context, not monolithic prompts</p>
+<p>Unlike <code>.cursorrules</code>, <code>AGENTS.md</code>, and other all-at-once approaches, Structured Context delivers <strong>just-in-time, file-targeted context</strong> — the agent only sees instructions that match the file it's touching and the action it's performing. <a href="comparisons/">See how sctx compares to other tools.</a></p>
+</div>
 <h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>brew<span class="w"> </span>install<span class="w"> </span>gregology/tap/sctx
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>sctx<span class="w"> </span>init
