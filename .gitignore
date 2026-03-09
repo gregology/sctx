@@ -40,3 +40,6 @@ site/
 # Python
 .venv/
 .python-version
+
+# Claude
+.claude/settings.local.json
