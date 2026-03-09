@@ -5,7 +5,7 @@ description: Give AI agents the right context at the right time
 
 # Structured Context
 
-AI coding agents work better when they get focused, relevant context. But instruction files are broad by design, and LLMs lose track of what matters as context grows. The result is wasted cycles: wrong patterns applied, conventions broken, more calls spent fixing the damage.
+AI agents work best with focused & relevant context. Existing context standards like `AGENTS.md` are broad. The result is wasted cycles because of wrong patterns applied, conventions broken, and then more calls spent fixing the damage.
 
 Structured Context gives you fine-grained control over what an agent sees and when. Drop `AGENTS.yaml` files into your codebase and the right guidance shows up for the right files, filtered by what the agent is actually doing.
 
