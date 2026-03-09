@@ -27,3 +27,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+
+      - name: Update latest release with Linux packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Copy packages to version-free names
+          for f in dist/*.deb dist/*.rpm dist/*.pkg.tar.zst; do
+            [ -f "$f" ] || continue
+            cp "$f" "$(echo "$f" | sed 's/_[0-9][^_]*_/_/; s|dist/||')"
+          done
+
+          # Create or update the "latest" release
+          if gh release view latest > /dev/null 2>&1; then
+            gh release delete latest --yes
+          fi
+          git tag -f latest
+          git push -f origin latest
+          gh release create latest sctx_linux_*.deb sctx_linux_*.rpm sctx_linux_*.pkg.tar.zst \
+            --title "Latest Release" \
+            --notes "Always points to the newest release. See [$(git describe --tags --abbrev=0 HEAD~0)](https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}) for full changelog." \
+            --latest=false

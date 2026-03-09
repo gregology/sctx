@@ -1,11 +1,4 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(go test:*)",
-      "Bash(make check:*)",
-      "Bash(golangci-lint:*)"
-    ]
-  },
   "hooks": {
     "PreToolUse": [
       {
