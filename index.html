@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Scoped, structured context for AI agents">
+        <meta name="description" content="Give AI agents the right context at the right time">
       
       
       
@@ -330,9 +330,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-this-matters-beyond-better-output" class="md-nav__link">
+  <a href="#why-this-matters" class="md-nav__link">
     <span class="md-ellipsis">
-      Why this matters beyond better output
+      Why this matters
     </span>
   </a>
   
@@ -526,9 +526,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-this-matters-beyond-better-output" class="md-nav__link">
+  <a href="#why-this-matters" class="md-nav__link">
     <span class="md-ellipsis">
-      Why this matters beyond better output
+      Why this matters
     </span>
   </a>
   
@@ -559,7 +559,8 @@
 
 
 <h1 id="structured-context">Structured Context<a class="headerlink" href="#structured-context" title="Permanent link">&para;</a></h1>
-<p>Drop <code>AGENTS.yaml</code> files into your codebase and AI agents get the right guidance at the right time.</p>
+<p>AI coding agents work better when they get focused, relevant context. But instruction files are broad by design, and LLMs lose track of what matters as context grows. The result is wasted cycles: wrong patterns applied, conventions broken, more calls spent fixing the damage.</p>
+<p>Structured Context gives you fine-grained control over what an agent sees and when. Drop <code>AGENTS.yaml</code> files into your codebase and the right guidance shows up for the right files, filtered by what the agent is actually doing.</p>
 <h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>brew<span class="w"> </span>install<span class="w"> </span>gregology/tap/sctx
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>sctx<span class="w"> </span>init
@@ -573,17 +574,11 @@
 <p>Once verified, replace the example with your own context entries.</p>
 <p>See <a href="getting-started/">Getting started</a> for more install options and details.</p>
 <h2 id="the-problem">The problem<a class="headerlink" href="#the-problem" title="Permanent link">&para;</a></h2>
-<p>AI coding agents read instruction files like <code>AGENTS.md</code> to understand how to work in a codebase. These files are blunt instruments. They're scoped to a directory, written as unstructured paragraphs and code snippets, and every instruction gets loaded regardless of what the agent is actually doing.</p>
-<p>This approach bloats context.</p>
-<p>Take a dbt project. A single <code>models/</code> directory contains SQL model files, YAML schema files, and markdown docs. The context an agent needs for each of these is completely different:</p>
-<ul>
-<li>When editing a <strong>SQL model</strong>, the agent should know about your SQL style, deprecated functions, available macros, and incremental strategy.</li>
-<li>When editing a <strong>YAML schema</strong>, it should know your testing conventions, required fields, and how you structure column descriptions.</li>
-<li>When editing a <strong>markdown doc</strong>, it should know your documentation templates and style.</li>
-</ul>
-<p>With <code>AGENTS.md</code>, your only option is one big file where every paragraph starts with "if you're editing SQL do X, if you're editing YAML do Y." That's conditional logic written as prose. The agent has to parse natural language to figure out which instructions apply. Wasteful and error-prone.</p>
-<p>This pattern shows up everywhere. API directories with route handlers, middleware, tests, and OpenAPI specs. React component directories with <code>.tsx</code>, <code>.test.tsx</code>, <code>.stories.tsx</code>, and <code>.module.css</code> files. Infrastructure directories with Terraform <code>.tf</code> files, <code>.tfvars</code>, and documentation. Monorepo packages where shared conventions apply globally but each package has its own patterns.</p>
-<p>The underlying issue: files in the same directory often have very different context requirements. Directory-scoped unstructured text can't express this.</p>
+<p>Instruction files like <code>AGENTS.md</code> and <code>CLAUDE.md</code> are good for project-wide guidance. But they're directory-scoped and unstructured, so every instruction gets loaded regardless of what the agent is actually doing. As they grow, LLMs start losing signal in the noise. Recency bias kicks in, attention dilutes, and the model quietly ignores the instruction that mattered most.</p>
+<p>The real gap is granularity. Files in the same directory often need completely different context.</p>
+<p>Take a dbt project. A single <code>models/</code> directory contains SQL model files, YAML schema files, and markdown docs. When an agent edits a SQL model, it should know about your SQL style, available macros, and incremental strategy. When it edits a YAML schema, it needs your testing conventions and required fields. Markdown docs need your documentation templates.</p>
+<p>You can put all of this in one <code>AGENTS.md</code> where every paragraph starts with "if you're editing SQL do X, if you're editing YAML do Y." That works, but it's conditional logic written as prose. The agent has to parse natural language to figure out which instructions apply, and as the file gets longer it increasingly won't.</p>
+<p>This pattern shows up everywhere. API directories with route handlers, middleware, and OpenAPI specs. React component directories with <code>.tsx</code>, <code>.test.tsx</code>, <code>.stories.tsx</code>, and <code>.module.css</code> files. Monorepo packages where shared conventions apply globally but each package has its own patterns.</p>
 <h2 id="the-approach">The approach<a class="headerlink" href="#the-approach" title="Permanent link">&para;</a></h2>
 <p>Structured Context defines a YAML-based file format (<code>AGENTS.yaml</code>) that lets you:</p>
 <ul>
@@ -594,12 +589,12 @@
 </ul>
 <p>Context files are placed throughout your codebase and merge with parent directories, so you get inheritance without duplication.</p>
 <p>The protocol is agent-agnostic. The reference implementation (<code>sctx</code>) ships with a Claude Code adapter, but the core engine has no knowledge of any specific agent. Other tools can adopt the file format directly.</p>
-<h2 id="why-this-matters-beyond-better-output">Why this matters beyond better output<a class="headerlink" href="#why-this-matters-beyond-better-output" title="Permanent link">&para;</a></h2>
-<p>The obvious benefit is better output. Agents follow your conventions instead of guessing or being saturated with irrelevant context to the specific task. Precise context has compounding effects.</p>
-<p><strong>Smaller models become viable.</strong> A large model can sometimes infer the right pattern from a sprawling AGENTS.md. A smaller model may struggle. But a small model with exactly the right context can perform well. Structured Context closes the gap between model tiers by compensating with better input.</p>
-<p><strong>Costs drop.</strong> There's the obvious part: less context per call means fewer input tokens. But the bigger win is iteration count. When an agent has the right guidance every time it touches a file, it makes fewer mistakes and needs fewer fix-up cycles. A wrong assumption in call 5 can mean 30 wasted calls cleaning it up.</p>
+<h2 id="why-this-matters">Why this matters<a class="headerlink" href="#why-this-matters" title="Permanent link">&para;</a></h2>
+<p>Precise context compounds.</p>
+<p><strong>Smaller models become viable.</strong> A large model can sometimes power through a long instruction file. A smaller model can't. It gets lost, introduces anti-patterns, burns cycles reverting its own mistakes. But a small model with exactly the right context can match a large model running on vague context. Better input closes the gap between model tiers.</p>
+<p><strong>Costs drop.</strong> Fewer input tokens is the obvious part. The bigger win is iteration count. When an agent has the right guidance every time it touches a file, it makes fewer mistakes and needs fewer fix-up cycles. A wrong assumption in call 5 can mean 30 wasted calls cleaning it up. Tasks that used to stall, with the agent breaking things faster than it fixed them, can start completing.</p>
 <p><strong>Responses get faster.</strong> Fewer input tokens means lower latency. For agents in the hot loop of an edit-test cycle, shaving tokens off every call adds up.</p>
-<p><strong>Accuracy improves.</strong> LLMs degrade when context is long and diluted. Giving the model 5 focused sentences instead of 50 scattered paragraphs means it's more likely to actually follow the instructions. The signal-to-noise ratio of your prompt directly affects output quality.</p>
+<p><strong>Accuracy improves.</strong> LLMs degrade when context is long and diluted. Five focused sentences beat fifty scattered paragraphs. The signal-to-noise ratio of your prompt directly affects output quality.</p>
 
 
 

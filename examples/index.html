@@ -657,7 +657,7 @@
 <a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a><span class="w">    </span><span class="nt">date</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2025-08-15</span>
 <a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a><span class="w">    </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/*.sql&quot;</span><span class="p p-Indicator">]</span>
 </code></pre></div>
-<p>With AGENTS.md, this entire block would be one file where every paragraph starts with "if you're editing a SQL file..." The agent parses all of it every time, regardless of which file it's touching.</p>
+<p>You could put all of this in an <code>AGENTS.md</code>, but every paragraph would start with "if you're editing a SQL file..." and the agent would parse all of it every time. With <code>AGENTS.yaml</code>, each entry is scoped to exactly the files it applies to.</p>
 <h2 id="api-service">API service<a class="headerlink" href="#api-service" title="Permanent link">&para;</a></h2>
 <p>A typical API directory has route handlers, middleware, tests, and OpenAPI specs. Each needs different guidance.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>src/api/
