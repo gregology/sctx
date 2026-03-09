@@ -9,6 +9,9 @@ AI agents work best with focused & relevant context. Existing context standards 
 
 Structured Context gives you fine-grained control over what an agent sees and when. Drop `AGENTS.yaml` files into your codebase and the right guidance shows up for the right files, filtered by what the agent is actually doing.
 
+!!! tip "JIT context, not monolithic prompts"
+    Unlike `.cursorrules`, `AGENTS.md`, and other all-at-once approaches, Structured Context delivers **just-in-time, file-targeted context** — the agent only sees instructions that match the file it's touching and the action it's performing. [See how sctx compares to other tools.](comparisons.md)
+
 ## Quick start
 
 ```bash

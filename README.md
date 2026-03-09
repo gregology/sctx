@@ -174,6 +174,20 @@ Response without New Zealand reference.
 
 **sctx init** - Drops a starter `AGENTS.yaml` with commented examples into the current directory.
 
+## How does sctx compare?
+
+| Tool | Scope | Format | Delivery |
+|------|-------|--------|----------|
+| AGENTS.md | Directory | Unstructured prose | Always loaded |
+| MCP | External tools & data | RPC protocol | On demand via server |
+| llms.txt | Website / docs | Markdown | Scraped / ingested |
+| .cursorrules | Project root | Monolithic prompt | Always loaded |
+| **sctx** | **Per-file, per-action** | **Declarative YAML** | **JIT, glob-matched** |
+
+`sctx` is not a replacement for these tools — it fills a different gap. MCP connects agents to external systems, `llms.txt` helps agents discover documentation, and `AGENTS.md` captures broad project guidance. `sctx` adds **fine-grained, file-targeted, action-filtered context** so the agent only sees what's relevant to the file it's touching right now.
+
+See the full breakdown at [sctx.dev/comparisons](https://sctx.dev/comparisons/).
+
 ## Agent-agnostic design
 
 The core engine knows nothing about Claude Code (or any other agent). It takes a file path, an action, and a timing, and returns matched context. The Claude-specific bits live in a thin adapter layer that translates stdin JSON into those universal inputs.
