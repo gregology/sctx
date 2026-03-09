@@ -25,6 +25,8 @@ nfpms:
     license: "MIT"
     formats:
       - deb
+      - rpm
+      - archlinux
 
 brews:
   - repository:

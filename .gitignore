@@ -3,6 +3,7 @@
 #
 # Build output
 /sctx
+dist/
 
 # Binaries for programs and plugins
 *.exe
@@ -40,3 +41,6 @@ site/
 # Python
 .venv/
 .python-version
+
+# Claude
+.claude/settings.local.json

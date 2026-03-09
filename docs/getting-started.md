@@ -15,10 +15,44 @@ description: Install sctx and create your first context file
 
 === "Debian/Ubuntu"
 
-    Download the `.deb` from [GitHub Releases](https://github.com/gregology/sctx/releases) and install:
+    ```bash
+    curl -Lo sctx.deb https://github.com/gregology/sctx/releases/download/latest/sctx_linux_amd64.deb
+    sudo dpkg -i sctx.deb
+    ```
+
+    For ARM64:
 
     ```bash
-    sudo dpkg -i sctx_*.deb
+    curl -Lo sctx.deb https://github.com/gregology/sctx/releases/download/latest/sctx_linux_arm64.deb
+    sudo dpkg -i sctx.deb
+    ```
+
+=== "Fedora/RHEL/CentOS"
+
+    ```bash
+    curl -Lo sctx.rpm https://github.com/gregology/sctx/releases/download/latest/sctx_linux_amd64.rpm
+    sudo rpm -i sctx.rpm
+    ```
+
+    For ARM64:
+
+    ```bash
+    curl -Lo sctx.rpm https://github.com/gregology/sctx/releases/download/latest/sctx_linux_arm64.rpm
+    sudo rpm -i sctx.rpm
+    ```
+
+=== "Arch Linux"
+
+    ```bash
+    curl -Lo sctx.pkg.tar.zst https://github.com/gregology/sctx/releases/download/latest/sctx_linux_amd64.pkg.tar.zst
+    sudo pacman -U sctx.pkg.tar.zst
+    ```
+
+    For ARM64:
+
+    ```bash
+    curl -Lo sctx.pkg.tar.zst https://github.com/gregology/sctx/releases/download/latest/sctx_linux_arm64.pkg.tar.zst
+    sudo pacman -U sctx.pkg.tar.zst
     ```
 
 === "From source"
