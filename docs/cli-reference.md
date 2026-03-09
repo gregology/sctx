@@ -56,7 +56,7 @@ sctx decisions src/api/handler.py --json
 
 ## sctx validate [\<dir\>]
 
-Validates all `AGENTS.yaml` and `AGENTS.yaml` files found in a directory tree. Reports schema errors and invalid glob patterns.
+Validates all `AGENTS.yaml` and `AGENTS.yml` files found in a directory tree. Reports schema errors and invalid glob patterns.
 
 ```bash
 sctx validate
