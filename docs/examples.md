@@ -72,7 +72,7 @@ decisions:
     match: ["**/*.sql"]
 ```
 
-With AGENTS.md, this entire block would be one file where every paragraph starts with "if you're editing a SQL file..." The agent parses all of it every time, regardless of which file it's touching.
+You could put all of this in an `AGENTS.md`, but every paragraph would start with "if you're editing a SQL file..." and the agent would parse all of it every time. With `AGENTS.yaml`, each entry is scoped to exactly the files it applies to.
 
 ## API service
 
