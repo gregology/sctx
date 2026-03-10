@@ -132,12 +132,14 @@ func TestMatchesAction(t *testing.T) {
 
 func TestResolve_EditBefore(t *testing.T) {
 	td := testdataDir(t)
-	target := filepath.Join(td, "project", "src", "api", "handler.py")
+	root := filepath.Join(td, "project")
+	target := filepath.Join(root, "src", "api", "handler.py")
 
 	result, _, err := Resolve(ResolveRequest{
 		FilePath: target,
 		Action:   ActionEdit,
 		Timing:   TimingBefore,
+		Root:     root,
 	})
 	if err != nil {
 		t.Fatalf("Resolve() error: %v", err)
@@ -154,12 +156,14 @@ func TestResolve_EditBefore(t *testing.T) {
 
 func TestResolve_EditAfter(t *testing.T) {
 	td := testdataDir(t)
-	target := filepath.Join(td, "project", "src", "api", "handler.py")
+	root := filepath.Join(td, "project")
+	target := filepath.Join(root, "src", "api", "handler.py")
 
 	result, _, err := Resolve(ResolveRequest{
 		FilePath: target,
 		Action:   ActionEdit,
 		Timing:   TimingAfter,
+		Root:     root,
 	})
 	if err != nil {
 		t.Fatalf("Resolve() error: %v", err)
@@ -176,12 +180,14 @@ func TestResolve_EditAfter(t *testing.T) {
 
 func TestResolve_ExcludePattern(t *testing.T) {
 	td := testdataDir(t)
-	target := filepath.Join(td, "project", "src", "api", "handler_test.py")
+	root := filepath.Join(td, "project")
+	target := filepath.Join(root, "src", "api", "handler_test.py")
 
 	result, _, err := Resolve(ResolveRequest{
 		FilePath: target,
 		Action:   ActionEdit,
 		Timing:   TimingAfter,
+		Root:     root,
 	})
 	if err != nil {
 		t.Fatalf("Resolve() error: %v", err)
@@ -195,12 +201,14 @@ func TestResolve_ExcludePattern(t *testing.T) {
 
 func TestResolve_CreateAction(t *testing.T) {
 	td := testdataDir(t)
-	target := filepath.Join(td, "project", "src", "api", "new_handler.py")
+	root := filepath.Join(td, "project")
+	target := filepath.Join(root, "src", "api", "new_handler.py")
 
 	result, _, err := Resolve(ResolveRequest{
 		FilePath: target,
 		Action:   ActionCreate,
 		Timing:   TimingBefore,
+		Root:     root,
 	})
 	if err != nil {
 		t.Fatalf("Resolve() error: %v", err)
@@ -219,12 +227,14 @@ func TestResolve_CreateAction(t *testing.T) {
 
 func TestResolve_ReadDoesNotMatchEditOnly(t *testing.T) {
 	td := testdataDir(t)
-	target := filepath.Join(td, "project", "src", "api", "handler.py")
+	root := filepath.Join(td, "project")
+	target := filepath.Join(root, "src", "api", "handler.py")
 
 	result, _, err := Resolve(ResolveRequest{
 		FilePath: target,
 		Action:   ActionRead,
 		Timing:   TimingBefore,
+		Root:     root,
 	})
 	if err != nil {
 		t.Fatalf("Resolve() error: %v", err)
@@ -238,12 +248,14 @@ func TestResolve_ReadDoesNotMatchEditOnly(t *testing.T) {
 
 func TestResolve_NonPythonFile(t *testing.T) {
 	td := testdataDir(t)
-	target := filepath.Join(td, "project", "README.md")
+	root := filepath.Join(td, "project")
+	target := filepath.Join(root, "README.md")
 
 	result, _, err := Resolve(ResolveRequest{
 		FilePath: target,
 		Action:   ActionEdit,
 		Timing:   TimingBefore,
+		Root:     root,
 	})
 	if err != nil {
 		t.Fatalf("Resolve() error: %v", err)
@@ -257,12 +269,14 @@ func TestResolve_NonPythonFile(t *testing.T) {
 
 func TestResolve_Decisions(t *testing.T) {
 	td := testdataDir(t)
-	target := filepath.Join(td, "project", "src", "api", "handler.py")
+	root := filepath.Join(td, "project")
+	target := filepath.Join(root, "src", "api", "handler.py")
 
 	result, _, err := Resolve(ResolveRequest{
 		FilePath: target,
 		Action:   ActionEdit,
 		Timing:   TimingBefore,
+		Root:     root,
 	})
 	if err != nil {
 		t.Fatalf("Resolve() error: %v", err)
@@ -278,7 +292,6 @@ func TestResolve_Decisions(t *testing.T) {
 
 func TestResolve_MergesMultipleFileNames(t *testing.T) {
 	tmpDir := t.TempDir()
-	writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
 	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
 context:
   - content: "From AGENTS.yaml"
@@ -295,6 +308,7 @@ context:
 		FilePath: target,
 		Action:   ActionRead,
 		Timing:   TimingBefore,
+		Root:     tmpDir,
 	})
 	if err != nil {
 		t.Fatalf("Resolve() error: %v", err)
@@ -306,7 +320,6 @@ context:
 
 func TestResolve_NoContextFiles(t *testing.T) {
 	tmpDir := t.TempDir()
-	writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
 
 	target := filepath.Join(tmpDir, "file.txt")
 	writeTestFile(t, target, "")
@@ -315,6 +328,7 @@ func TestResolve_NoContextFiles(t *testing.T) {
 		FilePath: target,
 		Action:   ActionRead,
 		Timing:   TimingBefore,
+		Root:     tmpDir,
 	})
 	if err != nil {
 		t.Fatalf("Resolve() error: %v", err)
@@ -339,7 +353,6 @@ func TestResolve_NoContextFiles(t *testing.T) {
 
 func TestResolve_AllActionAllTimingReturnsEverything(t *testing.T) {
 	tmpDir := t.TempDir()
-	writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
 	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
 context:
   - content: "before-all"
@@ -363,6 +376,7 @@ context:
 		FilePath: target,
 		Action:   ActionAll,
 		Timing:   TimingAll,
+		Root:     tmpDir,
 	})
 	if err != nil {
 		t.Fatalf("Resolve() error: %v", err)
@@ -378,7 +392,6 @@ context:
 
 func TestResolve_AllActionSpecificTiming(t *testing.T) {
 	tmpDir := t.TempDir()
-	writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
 	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
 context:
   - content: "before-all"
@@ -400,6 +413,7 @@ context:
 		FilePath: target,
 		Action:   ActionAll,
 		Timing:   TimingBefore,
+		Root:     tmpDir,
 	})
 	if err != nil {
 		t.Fatalf("Resolve() error: %v", err)
@@ -413,7 +427,6 @@ context:
 
 func TestResolve_SpecificActionAllTiming(t *testing.T) {
 	tmpDir := t.TempDir()
-	writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
 	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
 context:
   - content: "before-all"
@@ -435,6 +448,7 @@ context:
 		FilePath: target,
 		Action:   ActionEdit,
 		Timing:   TimingAll,
+		Root:     tmpDir,
 	})
 	if err != nil {
 		t.Fatalf("Resolve() error: %v", err)
@@ -455,14 +469,49 @@ func writeTestFile(t *testing.T, path, content string) {
 	}
 }
 
+func TestResolve_ContextAboveRootIsIgnored(t *testing.T) {
+	parentDir := t.TempDir()
+	writeTestFile(t, filepath.Join(parentDir, "AGENTS.yaml"), `
+context:
+  - content: "From above root"
+`)
+
+	childDir := filepath.Join(parentDir, "child")
+	if err := os.MkdirAll(childDir, 0o750); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+
+	writeTestFile(t, filepath.Join(childDir, "AGENTS.yaml"), `
+context:
+  - content: "From child root"
+`)
+
+	target := filepath.Join(childDir, "file.txt")
+	writeTestFile(t, target, "")
+
+	result, _, err := Resolve(ResolveRequest{
+		FilePath: target,
+		Action:   ActionAll,
+		Timing:   TimingAll,
+		Root:     childDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	assertContextContents(t, result.ContextEntries, []string{"From child root"})
+}
+
 func TestResolve_ParentBeforeChild(t *testing.T) {
 	td := testdataDir(t)
-	target := filepath.Join(td, "project", "src", "api", "handler.py")
+	root := filepath.Join(td, "project")
+	target := filepath.Join(root, "src", "api", "handler.py")
 
 	result, _, err := Resolve(ResolveRequest{
 		FilePath: target,
 		Action:   ActionEdit,
 		Timing:   TimingBefore,
+		Root:     root,
 	})
 	if err != nil {
 		t.Fatalf("Resolve() error: %v", err)
@@ -556,7 +605,6 @@ func writeAgentsYAML(t *testing.T, dir string, entries []ContextEntry) {
 func TestResolve_NeverPanics(t *testing.T) {
 	rapid.Check(t, func(rt *rapid.T) {
 		tmpDir := t.TempDir()
-		writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
 
 		depth := rapid.IntRange(0, 3).Draw(rt, "depth")
 		dir := tmpDir
@@ -614,6 +662,7 @@ func TestResolve_NeverPanics(t *testing.T) {
 			FilePath: target,
 			Action:   action,
 			Timing:   timing,
+			Root:     tmpDir,
 		})
 	})
 }
@@ -621,7 +670,6 @@ func TestResolve_NeverPanics(t *testing.T) {
 func TestResolve_ChildMergesWithParent(t *testing.T) {
 	rapid.Check(t, func(rt *rapid.T) {
 		tmpDir := t.TempDir()
-		writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
 
 		parentContent := rapid.StringMatching(`[a-z]{5,15}`).Draw(rt, "parentContent")
 		childContent := rapid.StringMatching(`[a-z]{5,15}`).Draw(rt, "childContent")
@@ -646,6 +694,7 @@ func TestResolve_ChildMergesWithParent(t *testing.T) {
 			FilePath: target,
 			Action:   ActionRead,
 			Timing:   TimingBefore,
+			Root:     tmpDir,
 		})
 		if err != nil {
 			t.Fatalf("Resolve() error: %v", err)
@@ -675,7 +724,6 @@ func TestResolve_ChildMergesWithParent(t *testing.T) {
 func TestResolve_ExcludeOverridesMatch(t *testing.T) {
 	rapid.Check(t, func(rt *rapid.T) {
 		tmpDir := t.TempDir()
-		writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
 
 		ext := rapid.SampledFrom([]string{".go", ".py", ".js", ".txt", ".md"}).Draw(rt, "ext")
 		globPattern := "**/*" + ext
@@ -698,6 +746,7 @@ func TestResolve_ExcludeOverridesMatch(t *testing.T) {
 			FilePath: target,
 			Action:   ActionRead,
 			Timing:   TimingBefore,
+			Root:     tmpDir,
 		})
 		if err != nil {
 			t.Fatalf("Resolve() error: %v", err)
@@ -714,7 +763,6 @@ func TestResolve_ExcludeOverridesMatch(t *testing.T) {
 func TestResolve_EditEntriesFilteredForActionRead(t *testing.T) {
 	rapid.Check(t, func(rt *rapid.T) {
 		tmpDir := t.TempDir()
-		writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
 
 		editContent := rapid.StringMatching(`editonly-[a-z]{5,10}`).Draw(rt, "editContent")
 		when := genWhenValue(rt)
@@ -742,6 +790,7 @@ func TestResolve_EditEntriesFilteredForActionRead(t *testing.T) {
 			FilePath: target,
 			Action:   ActionRead,
 			Timing:   Timing(when),
+			Root:     tmpDir,
 		})
 		if err != nil {
 			t.Fatalf("Resolve() error: %v", err)
@@ -758,7 +807,6 @@ func TestResolve_EditEntriesFilteredForActionRead(t *testing.T) {
 func TestResolve_ParentBeforeChildOrdering(t *testing.T) {
 	rapid.Check(t, func(rt *rapid.T) {
 		tmpDir := t.TempDir()
-		writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
 
 		depth := rapid.IntRange(1, 4).Draw(rt, "depth")
 		dirs := []string{tmpDir}
@@ -785,6 +833,7 @@ func TestResolve_ParentBeforeChildOrdering(t *testing.T) {
 			FilePath: target,
 			Action:   ActionRead,
 			Timing:   TimingBefore,
+			Root:     tmpDir,
 		})
 		if err != nil {
 			t.Fatalf("Resolve() error: %v", err)
@@ -835,7 +884,6 @@ func TestResolve_MalformedYAMLGracefulDegradation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tmpDir := t.TempDir()
-			writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
 			writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), tt.rootYAML)
 
 			childDir := filepath.Join(tmpDir, "child")
@@ -852,6 +900,7 @@ func TestResolve_MalformedYAMLGracefulDegradation(t *testing.T) {
 				FilePath: target,
 				Action:   ActionRead,
 				Timing:   TimingBefore,
+				Root:     tmpDir,
 			})
 			if err != nil {
 				t.Fatalf("Resolve() error: %v", err)

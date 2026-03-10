@@ -24,7 +24,14 @@ func Resolve(req ResolveRequest) (*ResolveResult, []string, error) {
 		return nil, nil, fmt.Errorf("resolving absolute path: %w", err)
 	}
 
-	root := findProjectRoot(filepath.Dir(absPath))
+	root := req.Root
+	if root == "" {
+		root, err = os.Getwd()
+		if err != nil {
+			return nil, nil, fmt.Errorf("getting working directory: %w", err)
+		}
+	}
+
 	files, warnings := discoverAndParse(filepath.Dir(absPath), root)
 
 	result := &ResolveResult{}
@@ -38,27 +45,6 @@ func Resolve(req ResolveRequest) (*ResolveResult, []string, error) {
 	}
 
 	return result, warnings, nil
-}
-
-// findProjectRoot walks up from dir looking for common project root markers.
-func findProjectRoot(dir string) string {
-	markers := []string{".git", "go.mod", "package.json", "Cargo.toml", "pyproject.toml", "Makefile"}
-	current := dir
-
-	for {
-		for _, marker := range markers {
-			if _, err := os.Stat(filepath.Join(current, marker)); err == nil {
-				return current
-			}
-		}
-
-		parent := filepath.Dir(current)
-		if parent == current {
-			return dir
-		}
-
-		current = parent
-	}
 }
 
 // discoverAndParse walks from startDir up to root, collecting and parsing all

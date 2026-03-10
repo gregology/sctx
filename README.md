@@ -59,7 +59,9 @@ sctx decisions src/api/handler.py
 
 ## How it works
 
-`sctx` walks up the directory tree from the target file, collecting `AGENTS.yaml` files along the way. It filters entries by glob pattern, action type, and timing, then returns the matching context.
+`sctx` walks up the directory tree from the target file to the project root, collecting `AGENTS.yaml` files along the way. It filters entries by glob pattern, action type, and timing, then returns the matching context.
+
+The project root is the working directory — the directory where the tool was launched. In hook mode, this is the `cwd` from the agent's input (e.g. where `claude` was started). In CLI mode, it's where you run `sctx`. Only `AGENTS.yaml` files at or below the root are considered.
 
 Parent directory context merges with child directory context. Entries from parent directories appear first (lower specificity), entries from closer directories appear last (higher specificity, stronger recency in the LLM prompt).
 
