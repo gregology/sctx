@@ -151,7 +151,7 @@ func filterContext(cf ContextFile, absPath string, action Action, timing Timing)
 			continue
 		}
 
-		if Timing(entry.When) != timing {
+		if timing != TimingAll && Timing(entry.When) != timing {
 			continue
 		}
 
@@ -229,6 +229,10 @@ func matchesGlobs(sourceDir, absPath string, match, exclude []string) bool {
 
 // matchesAction checks if the requested action is included in the entry's on list.
 func matchesAction(on FlexList, action Action) bool {
+	if action == ActionAll {
+		return true
+	}
+
 	for _, a := range on {
 		if Action(a) == ActionAll || Action(a) == action {
 			return true

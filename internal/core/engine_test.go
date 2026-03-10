@@ -114,6 +114,10 @@ func TestMatchesAction(t *testing.T) {
 		{"edit does not match read", FlexList{"edit"}, ActionRead, false},
 		{"multi-value list matches", FlexList{"edit", "create"}, ActionCreate, true},
 		{"multi-value list rejects", FlexList{"edit", "create"}, ActionRead, false},
+		{"requested all matches entry with on:edit", FlexList{"edit"}, ActionAll, true},
+		{"requested all matches entry with on:create", FlexList{"create"}, ActionAll, true},
+		{"requested all matches entry with on:read", FlexList{"read"}, ActionAll, true},
+		{"requested all matches entry with on:[edit,create]", FlexList{"edit", "create"}, ActionAll, true},
 	}
 
 	for _, tt := range tests {
@@ -333,6 +337,115 @@ func TestResolve_NoContextFiles(t *testing.T) {
 	}
 }
 
+func TestResolve_AllActionAllTimingReturnsEverything(t *testing.T) {
+	tmpDir := t.TempDir()
+	writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "before-all"
+    on: all
+    when: before
+  - content: "after-edit"
+    on: edit
+    when: after
+  - content: "before-create"
+    on: create
+    when: before
+  - content: "after-read"
+    on: read
+    when: after
+`)
+
+	target := filepath.Join(tmpDir, "file.go")
+	writeTestFile(t, target, "")
+
+	result, _, err := Resolve(ResolveRequest{
+		FilePath: target,
+		Action:   ActionAll,
+		Timing:   TimingAll,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	assertContextContents(t, result.ContextEntries, []string{
+		"before-all",
+		"after-edit",
+		"before-create",
+		"after-read",
+	})
+}
+
+func TestResolve_AllActionSpecificTiming(t *testing.T) {
+	tmpDir := t.TempDir()
+	writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "before-all"
+    on: all
+    when: before
+  - content: "after-edit"
+    on: edit
+    when: after
+  - content: "before-create"
+    on: create
+    when: before
+`)
+
+	target := filepath.Join(tmpDir, "file.go")
+	writeTestFile(t, target, "")
+
+	// ActionAll + TimingBefore should return all actions but only before timing.
+	result, _, err := Resolve(ResolveRequest{
+		FilePath: target,
+		Action:   ActionAll,
+		Timing:   TimingBefore,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	assertContextContents(t, result.ContextEntries, []string{
+		"before-all",
+		"before-create",
+	})
+}
+
+func TestResolve_SpecificActionAllTiming(t *testing.T) {
+	tmpDir := t.TempDir()
+	writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "before-all"
+    on: all
+    when: before
+  - content: "after-edit"
+    on: edit
+    when: after
+  - content: "before-create"
+    on: create
+    when: before
+`)
+
+	target := filepath.Join(tmpDir, "file.go")
+	writeTestFile(t, target, "")
+
+	// ActionEdit + TimingAll should return edit-matching entries for all timings.
+	result, _, err := Resolve(ResolveRequest{
+		FilePath: target,
+		Action:   ActionEdit,
+		Timing:   TimingAll,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	assertContextContents(t, result.ContextEntries, []string{
+		"before-all",
+		"after-edit",
+	})
+}
+
 // writeTestFile is a helper that writes a file and fails the test on error.
 func writeTestFile(t *testing.T, path, content string) {
 	t.Helper()
@@ -375,7 +488,7 @@ func genAction(t *rapid.T) Action {
 
 // genTiming generates a random valid Timing.
 func genTiming(t *rapid.T) Timing {
-	return rapid.SampledFrom([]Timing{TimingBefore, TimingAfter}).Draw(t, "timing")
+	return rapid.SampledFrom([]Timing{TimingBefore, TimingAfter, TimingAll}).Draw(t, "timing")
 }
 
 // genDirName generates a short directory name safe for filesystem use.

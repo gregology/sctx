@@ -95,7 +95,7 @@ func cmdContext() error {
 
 	filePath := os.Args[2]
 	action := core.ActionAll
-	timing := core.TimingBefore
+	timing := core.TimingAll
 	jsonOutput := false
 
 	for i := 3; i < len(os.Args); i++ {
@@ -120,7 +120,7 @@ func cmdContext() error {
 			i++
 
 			if !core.ValidTiming(os.Args[i]) {
-				return fmt.Errorf("%w %q (must be before or after)", errInvalidTiming, os.Args[i])
+				return fmt.Errorf("%w %q (must be before, after, or all)", errInvalidTiming, os.Args[i])
 			}
 
 			timing = core.Timing(os.Args[i])
