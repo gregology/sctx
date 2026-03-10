@@ -358,6 +358,67 @@ context:
 	}
 }
 
+func TestHandleClaudeHook_PreToolUse_NoAutoAllow(t *testing.T) {
+	tests := []struct {
+		name        string
+		contextYAML string
+	}{
+		{
+			name: "no matching context",
+			contextYAML: `
+context:
+  - content: "Python-only context"
+    on: edit
+    when: before
+    match:
+      - "**/*.py"
+`,
+		},
+		{
+			name:        "empty context list",
+			contextYAML: "context: []\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+
+			if err := os.WriteFile(filepath.Join(tmpDir, ".git"), []byte(""), 0o600); err != nil {
+				t.Fatal(err)
+			}
+
+			if err := os.WriteFile(filepath.Join(tmpDir, "AGENTS.yaml"), []byte(tt.contextYAML), 0o600); err != nil {
+				t.Fatal(err)
+			}
+
+			target := filepath.Join(tmpDir, "file.go")
+
+			if err := os.WriteFile(target, []byte("package main"), 0o600); err != nil {
+				t.Fatal(err)
+			}
+
+			inputBytes := marshalInput(t, ClaudeHookInput{
+				SessionID:     "test-session",
+				HookEventName: "PreToolUse",
+				ToolName:      "Edit",
+				ToolInput:     json.RawMessage(`{"file_path":"` + target + `"}`),
+				CWD:           tmpDir,
+			})
+
+			output := captureStdout(t, func() {
+				if err := HandleClaudeHook(inputBytes); err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+			})
+
+			if output != "" {
+				t.Errorf("expected no output (no auto-allow), got: %s", output)
+			}
+		})
+	}
+}
+
 func TestHandleClaudeHook_MalformedInput(t *testing.T) {
 	err := HandleClaudeHook([]byte(`{not valid json`))
 	if err == nil {
