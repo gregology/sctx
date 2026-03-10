@@ -82,6 +82,7 @@ type ResolveRequest struct {
 	FilePath string
 	Action   Action
 	Timing   Timing
+	Root     string // Project root directory; walk stops here.
 }
 
 // ResolveResult contains the matched context and decisions for a request.

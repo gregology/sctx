@@ -13,7 +13,7 @@ Reads agent hook input from stdin, resolves matching context entries, and writes
 echo '{"tool_name":"Edit","tool_input":{"file_path":"/project/src/main.py"},"hook_event_name":"PreToolUse"}' | sctx hook
 ```
 
-Currently supports Claude Code's JSON format. The adapter reads `tool_name`, `tool_input.file_path`, and `hook_event_name` from stdin, resolves context, and outputs Claude Code's expected `hookSpecificOutput` JSON.
+Currently supports Claude Code's JSON format. The adapter reads `tool_name`, `tool_input.file_path`, `hook_event_name`, and `cwd` from stdin, resolves context, and outputs Claude Code's expected `hookSpecificOutput` JSON. The `cwd` field determines the project root — only `AGENTS.yaml` files at or below this directory are considered.
 
 Only context entries are included in hook output. Decisions are excluded to keep token costs low. Use `sctx decisions` to query decisions separately.
 
@@ -23,7 +23,7 @@ The Write tool gets special treatment: `sctx` checks whether the target file exi
 
 ## sctx context \<path\>
 
-Query context entries for a file. Useful for debugging and testing your context files.
+Query context entries for a file. Useful for debugging and testing your context files. The current working directory is used as the project root — only `AGENTS.yaml` files at or below it are considered.
 
 ```bash
 sctx context src/api/handler.py

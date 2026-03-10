@@ -24,9 +24,14 @@ If multiple context files exist in the same directory, all are loaded and their 
 
 Context files can appear in any directory. Tools discover them by walking up from the target file to the project root, collecting every context file found along the way.
 
-### Project root detection
+### Project root
 
-The project root is identified by the presence of any of these markers: `.git`, `go.mod`, `package.json`, `Cargo.toml`, `pyproject.toml`, `Makefile`. If no marker is found, the directory containing the target file is used as the root.
+The project root is the working directory where the tool was launched — not detected via file markers. This is deliberate: marker-based detection (`.git`, `pyproject.toml`, etc.) breaks in monorepos where subdirectories contain their own project markers.
+
+- **Hook mode** (`sctx hook`): The root is the `cwd` field from the agent's JSON input. For Claude Code, this is the directory where `claude` was started.
+- **CLI mode** (`sctx context`, `sctx decisions`): The root is the current working directory where `sctx` is run.
+
+Only `AGENTS.yaml` files at or below the root are considered. Files above the root are never seen.
 
 ### Missing files
 
@@ -155,7 +160,7 @@ Decisions are made under constraints. When constraints change, the decision may 
 
 Given a file path, an action, and a timing:
 
-1. **Discover** -- Walk from the target file's directory up to the project root, collecting all context files at each level
+1. **Discover** -- Walk from the target file's directory up to the project root (the working directory), collecting all context files at each level
 2. **Parse** -- Parse each file. Emit warnings for invalid files but continue processing valid ones
 3. **Filter by match/exclude** -- Test each entry's glob patterns against the target file path. Globs are relative to the context file's directory
 4. **Filter by action** -- Keep entries where `on` includes the requested action (or is `all`)

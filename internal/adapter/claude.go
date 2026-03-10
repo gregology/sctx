@@ -77,6 +77,7 @@ func HandleClaudeHook(input []byte) error {
 		FilePath: toolInput.FilePath,
 		Action:   action,
 		Timing:   timing,
+		Root:     hookInput.CWD,
 	})
 	if err != nil {
 		return fmt.Errorf("resolving context: %w", err)
