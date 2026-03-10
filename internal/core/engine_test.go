@@ -690,6 +690,83 @@ func TestResolve_ParentBeforeChildOrdering(t *testing.T) {
 	})
 }
 
+func TestResolve_MalformedYAMLGracefulDegradation(t *testing.T) {
+	const (
+		validYAML   = "context:\n  - content: \"Valid context\"\n"
+		invalidYAML = `": invalid: [yaml`
+	)
+
+	tests := []struct {
+		name      string
+		rootYAML  string
+		childYAML string
+		wantCtx   []string
+		wantBadIn string // "root" or "child" — which dir should appear in the warning
+	}{
+		{
+			name:      "malformed parent still resolves child",
+			rootYAML:  invalidYAML,
+			childYAML: validYAML,
+			wantCtx:   []string{"Valid context"},
+			wantBadIn: "root",
+		},
+		{
+			name:      "malformed child still resolves parent",
+			rootYAML:  validYAML,
+			childYAML: invalidYAML,
+			wantCtx:   []string{"Valid context"},
+			wantBadIn: "child",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
+			writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), tt.rootYAML)
+
+			childDir := filepath.Join(tmpDir, "child")
+			if err := os.MkdirAll(childDir, 0o750); err != nil {
+				t.Fatalf("mkdir: %v", err)
+			}
+
+			writeTestFile(t, filepath.Join(childDir, "AGENTS.yaml"), tt.childYAML)
+
+			target := filepath.Join(childDir, "file.txt")
+			writeTestFile(t, target, "")
+
+			result, warnings, err := Resolve(ResolveRequest{
+				FilePath: target,
+				Action:   ActionRead,
+				Timing:   TimingBefore,
+			})
+			if err != nil {
+				t.Fatalf("Resolve() error: %v", err)
+			}
+
+			assertContextContents(t, result.ContextEntries, tt.wantCtx)
+
+			badDir := tmpDir
+			if tt.wantBadIn == "child" {
+				badDir = childDir
+			}
+
+			badFile := filepath.Join(badDir, "AGENTS.yaml")
+			foundWarning := false
+
+			for _, w := range warnings {
+				if strings.Contains(w, "failed to parse") && strings.Contains(w, badFile) {
+					foundWarning = true
+				}
+			}
+
+			if !foundWarning {
+				t.Errorf("expected warning about malformed %s, got warnings: %v", badFile, warnings)
+			}
+		})
+	}
+}
+
 // assertContextContents checks that the matched context entries have exactly
 // the expected content strings, in order.
 func assertContextContents(t *testing.T, got []MatchedContext, want []string) {
