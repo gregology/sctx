@@ -375,9 +375,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#project-root-detection" class="md-nav__link">
+  <a href="#project-root" class="md-nav__link">
     <span class="md-ellipsis">
-      Project root detection
+      Project root
     </span>
   </a>
   
@@ -715,9 +715,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#project-root-detection" class="md-nav__link">
+  <a href="#project-root" class="md-nav__link">
     <span class="md-ellipsis">
-      Project root detection
+      Project root
     </span>
   </a>
   
@@ -937,8 +937,13 @@
 <p>If multiple context files exist in the same directory, all are loaded and their contents merged.</p>
 <h3 id="placement">Placement<a class="headerlink" href="#placement" title="Permanent link">&para;</a></h3>
 <p>Context files can appear in any directory. Tools discover them by walking up from the target file to the project root, collecting every context file found along the way.</p>
-<h3 id="project-root-detection">Project root detection<a class="headerlink" href="#project-root-detection" title="Permanent link">&para;</a></h3>
-<p>The project root is identified by the presence of any of these markers: <code>.git</code>, <code>go.mod</code>, <code>package.json</code>, <code>Cargo.toml</code>, <code>pyproject.toml</code>, <code>Makefile</code>. If no marker is found, the directory containing the target file is used as the root.</p>
+<h3 id="project-root">Project root<a class="headerlink" href="#project-root" title="Permanent link">&para;</a></h3>
+<p>The project root is the working directory where the tool was launched — not detected via file markers. This is deliberate: marker-based detection (<code>.git</code>, <code>pyproject.toml</code>, etc.) breaks in monorepos where subdirectories contain their own project markers.</p>
+<ul>
+<li><strong>Hook mode</strong> (<code>sctx hook</code>): The root is the <code>cwd</code> field from the agent's JSON input. For Claude Code, this is the directory where <code>claude</code> was started.</li>
+<li><strong>CLI mode</strong> (<code>sctx context</code>, <code>sctx decisions</code>): The root is the current working directory where <code>sctx</code> is run.</li>
+</ul>
+<p>Only <code>AGENTS.yaml</code> files at or below the root are considered. Files above the root are never seen.</p>
 <h3 id="missing-files">Missing files<a class="headerlink" href="#missing-files" title="Permanent link">&para;</a></h3>
 <p>If no context files exist in the project, tools should emit a warning and return gracefully. Missing files are not errors.</p>
 <h2 id="schema">Schema<a class="headerlink" href="#schema" title="Permanent link">&para;</a></h2>
@@ -1167,7 +1172,7 @@
 <h2 id="resolution-algorithm">Resolution algorithm<a class="headerlink" href="#resolution-algorithm" title="Permanent link">&para;</a></h2>
 <p>Given a file path, an action, and a timing:</p>
 <ol>
-<li><strong>Discover</strong> -- Walk from the target file's directory up to the project root, collecting all context files at each level</li>
+<li><strong>Discover</strong> -- Walk from the target file's directory up to the project root (the working directory), collecting all context files at each level</li>
 <li><strong>Parse</strong> -- Parse each file. Emit warnings for invalid files but continue processing valid ones</li>
 <li><strong>Filter by match/exclude</strong> -- Test each entry's glob patterns against the target file path. Globs are relative to the context file's directory</li>
 <li><strong>Filter by action</strong> -- Keep entries where <code>on</code> includes the requested action (or is <code>all</code>)</li>
