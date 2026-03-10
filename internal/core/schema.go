@@ -89,6 +89,24 @@ type ResolveResult struct {
 	DecisionEntries []DecisionEntry
 }
 
+// ValidAction reports whether s is a recognized action value.
+func ValidAction(s string) bool {
+	switch Action(s) {
+	case ActionRead, ActionEdit, ActionCreate, ActionAll:
+		return true
+	}
+	return false
+}
+
+// ValidTiming reports whether s is a recognized timing value.
+func ValidTiming(s string) bool {
+	switch Timing(s) {
+	case TimingBefore, TimingAfter:
+		return true
+	}
+	return false
+}
+
 // MatchedContext pairs a context entry with the directory it came from.
 type MatchedContext struct {
 	Content   string
