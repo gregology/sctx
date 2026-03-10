@@ -73,6 +73,7 @@ type Timing string
 const (
 	TimingBefore Timing = "before"
 	TimingAfter  Timing = "after"
+	TimingAll    Timing = "all"
 )
 
 // ResolveRequest contains the universal inputs for context resolution.
@@ -101,7 +102,7 @@ func ValidAction(s string) bool {
 // ValidTiming reports whether s is a recognized timing value.
 func ValidTiming(s string) bool {
 	switch Timing(s) {
-	case TimingBefore, TimingAfter:
+	case TimingBefore, TimingAfter, TimingAll:
 		return true
 	}
 	return false

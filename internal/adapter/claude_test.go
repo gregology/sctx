@@ -298,8 +298,8 @@ context:
 		t.Errorf("expected all-action context for unknown tool, got: %s", ctx)
 	}
 
-	if strings.Contains(ctx, "Context for edits only") {
-		t.Errorf("should not contain edit-only context for unknown tool, got: %s", ctx)
+	if !strings.Contains(ctx, "Context for edits only") {
+		t.Errorf("unknown tool should see all context including edit-only, got: %s", ctx)
 	}
 }
 
