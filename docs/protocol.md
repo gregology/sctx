@@ -26,7 +26,9 @@ Context files can appear in any directory. Tools discover them by walking up fro
 
 ### Project root detection
 
-The project root is identified by the presence of any of these markers: `.git`, `go.mod`, `package.json`, `Cargo.toml`, `pyproject.toml`, `Makefile`. If no marker is found, the directory containing the target file is used as the root.
+The project root is found by walking up from the target file's directory. `.git` is checked first (definitive root in git repos). If no `.git` is found, the tool falls back to other markers: `go.mod`, `package.json`, `Cargo.toml`, `pyproject.toml`, `Makefile`. If no marker is found, the directory containing the target file is used as the root.
+
+This two-pass approach ensures that subdirectory markers (e.g., a `pyproject.toml` inside a monorepo subdirectory) don't prevent discovery of the actual repository root.
 
 ### Missing files
 

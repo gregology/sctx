@@ -446,6 +446,49 @@ context:
 	})
 }
 
+func TestResolve_SubdirProjectMarkerDoesNotStopAtGitRoot(t *testing.T) {
+	tmpDir := t.TempDir()
+	writeTestFile(t, filepath.Join(tmpDir, ".git"), "")
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "Root context for all Python files"
+    match:
+      - "**/*.py"
+    on: edit
+    when: before
+`)
+
+	// Subdirectory with its own project marker (pyproject.toml).
+	airflowDir := filepath.Join(tmpDir, "airflow")
+	pluginsDir := filepath.Join(airflowDir, "plugins")
+	if err := os.MkdirAll(pluginsDir, 0o750); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+
+	writeTestFile(t, filepath.Join(airflowDir, "pyproject.toml"), "")
+
+	target := filepath.Join(pluginsDir, "example.py")
+	writeTestFile(t, target, "")
+
+	result, warnings, err := Resolve(ResolveRequest{
+		FilePath: target,
+		Action:   ActionEdit,
+		Timing:   TimingBefore,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	for _, w := range warnings {
+		if w == "warning: no AGENTS.yaml files found" {
+			t.Fatal("should have found root AGENTS.yaml but got no-files warning")
+		}
+	}
+	_ = warnings
+
+	assertContextContents(t, result.ContextEntries, []string{"Root context for all Python files"})
+}
+
 // writeTestFile is a helper that writes a file and fails the test on error.
 func writeTestFile(t *testing.T, path, content string) {
 	t.Helper()

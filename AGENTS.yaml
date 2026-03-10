@@ -128,3 +128,10 @@ decisions:
         reason_rejected: "Introduces Ruby/Bundler dependency. Jekyll development has slowed significantly."
     revisit_when: "Docs are moved to a separate repo and we want to reconsider the stack"
     date: 2026-03-07
+
+  - decision: "Two-pass project root detection: .git first, then fallback markers"
+    rationale: "Markers like pyproject.toml, Makefile, and package.json commonly appear in subdirectories of monorepos. Treating them equally with .git caused findProjectRoot to stop at a subdirectory instead of the actual repo root. A two-pass walk (first .git only, then other markers) is simpler than remember-and-continue and sufficient for real-world usage."
+    alternatives:
+      - option: "Remember-and-continue (record first non-.git hit, keep walking, prefer .git if found)"
+        reason_rejected: "More complex state tracking for no practical benefit. .git is present in virtually all real projects."
+    date: 2026-03-10

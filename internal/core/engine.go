@@ -41,12 +41,29 @@ func Resolve(req ResolveRequest) (*ResolveResult, []string, error) {
 }
 
 // findProjectRoot walks up from dir looking for common project root markers.
+// It uses a two-pass approach: first looking only for .git (the definitive
+// root in git repos), then falling back to other markers if no .git is found.
 func findProjectRoot(dir string) string {
-	markers := []string{".git", "go.mod", "package.json", "Cargo.toml", "pyproject.toml", "Makefile"}
+	// Pass 1: walk up looking only for .git.
 	current := dir
-
 	for {
-		for _, marker := range markers {
+		if _, err := os.Stat(filepath.Join(current, ".git")); err == nil {
+			return current
+		}
+
+		parent := filepath.Dir(current)
+		if parent == current {
+			break
+		}
+
+		current = parent
+	}
+
+	// Pass 2: fall back to other project markers.
+	fallbackMarkers := []string{"go.mod", "package.json", "Cargo.toml", "pyproject.toml", "Makefile"}
+	current = dir
+	for {
+		for _, marker := range fallbackMarkers {
 			if _, err := os.Stat(filepath.Join(current, marker)); err == nil {
 				return current
 			}
