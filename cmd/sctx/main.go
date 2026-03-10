@@ -37,6 +37,8 @@ var (
 	errMissingPath      = errors.New("missing required <path> argument")
 	errOnNeedsValue     = errors.New("--on requires a value")
 	errWhenNeedsValue   = errors.New("--when requires a value")
+	errInvalidAction    = errors.New("invalid --on value")
+	errInvalidTiming    = errors.New("invalid --when value")
 	errFileExists       = errors.New("file already exists")
 	errClaudeSubcommand = errors.New("usage: sctx claude <enable|disable>")
 )
@@ -104,6 +106,11 @@ func cmdContext() error {
 			}
 
 			i++
+
+			if !core.ValidAction(os.Args[i]) {
+				return fmt.Errorf("%w %q (must be read, edit, create, or all)", errInvalidAction, os.Args[i])
+			}
+
 			action = core.Action(os.Args[i])
 		case "--when":
 			if i+1 >= len(os.Args) {
@@ -111,6 +118,11 @@ func cmdContext() error {
 			}
 
 			i++
+
+			if !core.ValidTiming(os.Args[i]) {
+				return fmt.Errorf("%w %q (must be before or after)", errInvalidTiming, os.Args[i])
+			}
+
 			timing = core.Timing(os.Args[i])
 		case "--json":
 			jsonOutput = true

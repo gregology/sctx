@@ -13,14 +13,6 @@ import (
 	"github.com/gregology/sctx/internal/core"
 )
 
-var validActions = map[string]bool{
-	"read": true, "edit": true, "create": true, "all": true,
-}
-
-var validTimings = map[string]bool{
-	"before": true, "after": true,
-}
-
 // ValidationError represents a single validation issue.
 type ValidationError struct {
 	File    string
@@ -96,7 +88,7 @@ func validateContextEntries(path string, entries []core.ContextEntry) []Validati
 		errs = append(errs, validateGlobs(path, prefix, "exclude", entry.Exclude)...)
 
 		for _, action := range entry.On {
-			if !validActions[action] {
+			if !core.ValidAction(action) {
 				errs = append(errs, ValidationError{
 					File:    path,
 					Message: fmt.Sprintf("%s: invalid action %q (must be read, edit, create, or all)", prefix, action),
@@ -104,7 +96,7 @@ func validateContextEntries(path string, entries []core.ContextEntry) []Validati
 			}
 		}
 
-		if entry.When != "" && !validTimings[entry.When] {
+		if entry.When != "" && !core.ValidTiming(entry.When) {
 			errs = append(errs, ValidationError{
 				File:    path,
 				Message: fmt.Sprintf("%s: invalid when %q (must be before or after)", prefix, entry.When),
