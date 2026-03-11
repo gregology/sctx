@@ -460,6 +460,44 @@ context:
 	})
 }
 
+func TestResolve_WhenAllMatchesAnyTiming(t *testing.T) {
+	tmpDir := t.TempDir()
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "always-deliver"
+    on: all
+    when: all
+`)
+
+	target := filepath.Join(tmpDir, "file.go")
+	writeTestFile(t, target, "")
+
+	tests := []struct {
+		name   string
+		timing Timing
+	}{
+		{"before", TimingBefore},
+		{"after", TimingAfter},
+		{"all", TimingAll},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, _, err := Resolve(ResolveRequest{
+				FilePath: target,
+				Action:   ActionEdit,
+				Timing:   tt.timing,
+				Root:     tmpDir,
+			})
+			if err != nil {
+				t.Fatalf("Resolve() error: %v", err)
+			}
+
+			assertContextContents(t, result.ContextEntries, []string{"always-deliver"})
+		})
+	}
+}
+
 // writeTestFile is a helper that writes a file and fails the test on error.
 func writeTestFile(t *testing.T, path, content string) {
 	t.Helper()
@@ -560,7 +598,7 @@ func genOnValue(t *rapid.T) string {
 
 // genWhenValue generates a random when value.
 func genWhenValue(t *rapid.T) string {
-	return rapid.SampledFrom([]string{"before", "after"}).Draw(t, "when")
+	return rapid.SampledFrom([]string{"before", "after", "all"}).Draw(t, "when")
 }
 
 // writeAgentsYAML writes an AGENTS.yaml with the given context entries to dir.

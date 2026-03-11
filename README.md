@@ -72,7 +72,7 @@ Each entry has a `content` string and optional filters:
 - **match** - glob patterns for files this applies to (default: `["**"]`, everything)
 - **exclude** - glob patterns to skip
 - **on** - when the file is being `read`, `edit`ed, `create`d, or `all` (default)
-- **when** - deliver `before` or `after` the file content in the prompt (default: `before`)
+- **when** - deliver `before` or `after` the file content in the prompt, or `all` for both (default: `before`)
 
 The `when` field matters because LLMs weight the start and end of context more heavily. Put high-priority instructions `after` so they land close to where the model generates its response.
 

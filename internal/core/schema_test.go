@@ -31,6 +31,7 @@ func TestValidTiming(t *testing.T) {
 	}{
 		{"before", true},
 		{"after", true},
+		{"all", true},
 		{"yesterday", false},
 		{"", false},
 		{"BEFORE", false},
