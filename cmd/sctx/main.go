@@ -28,7 +28,7 @@ Usage:
   sctx version                             Print version
 
 Actions: read, edit, create, all (default: all)
-Timing:  before, after (default: before)
+Timing:  before, after, all (default: all)
 `
 
 var (
