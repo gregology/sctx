@@ -79,9 +79,10 @@ Create a new file in `internal/adapter/` (e.g., `cursor.go`). Your adapter reads
 
 1. Add the field to the struct in `internal/core/schema.go`
 2. Set a default in `applyDefaults` in `engine.go` if needed
-3. Add validation in `internal/validator/validate.go`
-4. Update testdata fixtures
-5. Update `docs/protocol.md`
+3. If the field acts as a filter, add filtering logic in `filterContext()` or `filterDecisions()` in `engine.go`
+4. Add validation in `internal/validator/validate.go`
+5. Update testdata fixtures
+6. Update `docs/protocol.md`
 
 ### Test conventions
 
