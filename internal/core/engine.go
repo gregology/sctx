@@ -137,7 +137,7 @@ func filterContext(cf ContextFile, absPath string, action Action, timing Timing)
 			continue
 		}
 
-		if timing != TimingAll && Timing(entry.When) != timing {
+		if timing != TimingAll && Timing(entry.When) != TimingAll && Timing(entry.When) != timing {
 			continue
 		}
 

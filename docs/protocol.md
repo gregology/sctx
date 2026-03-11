@@ -72,7 +72,7 @@ context:
 | `match` | list of globs | no | `["**"]` | File patterns this applies to |
 | `exclude` | list of globs | no | `[]` | File patterns to exclude |
 | `on` | string or list | no | `all` | Action filter: `read`, `edit`, `create`, or `all` |
-| `when` | string | no | `before` | Prompt positioning: `before` or `after` |
+| `when` | string | no | `before` | Prompt positioning: `before`, `after`, or `all` |
 
 #### `content`
 
@@ -109,6 +109,7 @@ Controls where context appears relative to the file content in the agent's promp
 |---|---|
 | `before` | Context appears before file content. Default. Good for general guidelines. |
 | `after` | Context appears after file content. Use for high-priority instructions. |
+| `all` | Context appears for both `before` and `after` timing requests. |
 
 This matters because LLMs exhibit primacy and recency effects. They weight the beginning and end of their context window more heavily. If a piece of context is critical and the file is large, placing it `after` gives it stronger influence on the model's output.
 
@@ -182,7 +183,7 @@ This ordering is intentional. The most specific, most relevant context gets the 
 - `content` is required on every context entry
 - `decision` and `rationale` are required on every decision entry
 - `on` values must be: `read`, `edit`, `create`, `all`, or a list of these
-- `when` values must be: `before` or `after`
+- `when` values must be: `before`, `after`, or `all`
 - `match` and `exclude` must be valid glob patterns
 - `date` must be YYYY-MM-DD if present
 - Unknown fields produce warnings, not errors (forward compatibility)

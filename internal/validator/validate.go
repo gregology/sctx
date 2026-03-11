@@ -99,7 +99,7 @@ func validateContextEntries(path string, entries []core.ContextEntry) []Validati
 		if entry.When != "" && !core.ValidTiming(entry.When) {
 			errs = append(errs, ValidationError{
 				File:    path,
-				Message: fmt.Sprintf("%s: invalid when %q (must be before or after)", prefix, entry.When),
+				Message: fmt.Sprintf("%s: invalid when %q (must be before, after, or all)", prefix, entry.When),
 			})
 		}
 	}

@@ -169,6 +169,19 @@ func TestValidateTree(t *testing.T) {
 	})
 }
 
+func TestValidateFile_WhenAll(t *testing.T) {
+	tmpDir := t.TempDir()
+	path := filepath.Join(tmpDir, "AGENTS.yaml")
+	writeFile(t, path, []byte("context:\n  - content: \"Always deliver\"\n    when: all\n"))
+
+	errs := ValidateFile(path)
+	if len(errs) != 0 {
+		for _, e := range errs {
+			t.Errorf("unexpected: %s", e)
+		}
+	}
+}
+
 func containsStr(s, substr string) bool {
 	for i := 0; i <= len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {
