@@ -1009,7 +1009,7 @@
 <td>string</td>
 <td>no</td>
 <td><code>before</code></td>
-<td>Prompt positioning: <code>before</code> or <code>after</code></td>
+<td>Prompt positioning: <code>before</code>, <code>after</code>, or <code>all</code></td>
 </tr>
 </tbody>
 </table>
@@ -1066,6 +1066,10 @@
 <tr>
 <td><code>after</code></td>
 <td>Context appears after file content. Use for high-priority instructions.</td>
+</tr>
+<tr>
+<td><code>all</code></td>
+<td>Context appears for both <code>before</code> and <code>after</code> timing requests.</td>
 </tr>
 </tbody>
 </table>
@@ -1192,7 +1196,7 @@
 <li><code>content</code> is required on every context entry</li>
 <li><code>decision</code> and <code>rationale</code> are required on every decision entry</li>
 <li><code>on</code> values must be: <code>read</code>, <code>edit</code>, <code>create</code>, <code>all</code>, or a list of these</li>
-<li><code>when</code> values must be: <code>before</code> or <code>after</code></li>
+<li><code>when</code> values must be: <code>before</code>, <code>after</code>, or <code>all</code></li>
 <li><code>match</code> and <code>exclude</code> must be valid glob patterns</li>
 <li><code>date</code> must be YYYY-MM-DD if present</li>
 <li>Unknown fields produce warnings, not errors (forward compatibility)</li>
