@@ -419,6 +419,42 @@ context:
 	}
 }
 
+func TestHandleClaudeHook_FilePathOutsideCWD(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(tmpDir, ".git"), []byte(""), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	contextYAML := `
+context:
+  - content: "Should not appear"
+    on: all
+    when: before
+`
+	if err := os.WriteFile(filepath.Join(tmpDir, "AGENTS.yaml"), []byte(contextYAML), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	inputBytes := marshalInput(t, ClaudeHookInput{
+		SessionID:     "test-session",
+		HookEventName: "PreToolUse",
+		ToolName:      "Edit",
+		ToolInput:     json.RawMessage(`{"file_path":"/etc/passwd"}`),
+		CWD:           tmpDir,
+	})
+
+	output := captureStdout(t, func() {
+		if err := HandleClaudeHook(inputBytes); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	if output != "" {
+		t.Errorf("expected no output for file outside CWD (no auto-allow), got: %s", output)
+	}
+}
+
 func TestHandleClaudeHook_MalformedInput(t *testing.T) {
 	err := HandleClaudeHook([]byte(`{not valid json`))
 	if err == nil {

@@ -929,6 +929,39 @@ func TestResolve_MalformedYAMLGracefulDegradation(t *testing.T) {
 	}
 }
 
+func TestResolve_FileOutsideRoot(t *testing.T) {
+	tmpDir := t.TempDir()
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "Should not appear"
+`)
+
+	result, _, err := Resolve(ResolveRequest{
+		FilePath: "/etc/something",
+		Action:   ActionRead,
+		Timing:   TimingBefore,
+		Root:     tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	if len(result.ContextEntries) != 0 {
+		t.Errorf("expected no context for file outside root, got %d entries", len(result.ContextEntries))
+	}
+
+	if len(result.DecisionEntries) != 0 {
+		t.Errorf("expected no decisions for file outside root, got %d entries", len(result.DecisionEntries))
+	}
+}
+
+func TestDiscoverAndParse_NonAncestorRoot(t *testing.T) {
+	files, _ := discoverAndParse("/foo/bar", "/baz")
+	if len(files) != 0 {
+		t.Errorf("expected no files when startDir is not under root, got %d", len(files))
+	}
+}
+
 // assertContextContents checks that the matched context entries have exactly
 // the expected content strings, in order.
 func assertContextContents(t *testing.T, got []MatchedContext, want []string) {

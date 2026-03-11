@@ -32,6 +32,16 @@ func Resolve(req ResolveRequest) (*ResolveResult, []string, error) {
 		}
 	}
 
+	root, err = filepath.Abs(root)
+	if err != nil {
+		return nil, nil, fmt.Errorf("resolving root path: %w", err)
+	}
+
+	// Reject file paths outside the project root.
+	if !isDescendant(root, absPath) {
+		return &ResolveResult{}, nil, nil
+	}
+
 	files, warnings := discoverAndParse(filepath.Dir(absPath), root)
 
 	result := &ResolveResult{}
@@ -50,6 +60,11 @@ func Resolve(req ResolveRequest) (*ResolveResult, []string, error) {
 // discoverAndParse walks from startDir up to root, collecting and parsing all
 // context files. Files from parent directories come first (lower specificity).
 func discoverAndParse(startDir, root string) (files []ContextFile, warnings []string) {
+	// Guard: if startDir is not a descendant of root, don't walk.
+	if !isDescendant(root, startDir) {
+		return nil, nil
+	}
+
 	var dirs []string
 	current := startDir
 
@@ -99,6 +114,15 @@ func discoverAndParse(startDir, root string) (files []ContextFile, warnings []st
 	}
 
 	return files, warnings
+}
+
+// isDescendant reports whether child is under parent (or equal to it).
+func isDescendant(parent, child string) bool {
+	rel, err := filepath.Rel(parent, child)
+	if err != nil {
+		return false
+	}
+	return !strings.HasPrefix(rel, "..")
 }
 
 // applyDefaults fills in default values for context and decision entries.
