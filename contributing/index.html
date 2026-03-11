@@ -778,6 +778,7 @@
 <ol>
 <li>Add the field to the struct in <code>internal/core/schema.go</code></li>
 <li>Set a default in <code>applyDefaults</code> in <code>engine.go</code> if needed</li>
+<li>If the field acts as a filter, add filtering logic in <code>filterContext()</code> or <code>filterDecisions()</code> in <code>engine.go</code></li>
 <li>Add validation in <code>internal/validator/validate.go</code></li>
 <li>Update testdata fixtures</li>
 <li>Update <code>docs/protocol.md</code></li>
