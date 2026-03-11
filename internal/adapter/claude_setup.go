@@ -55,7 +55,9 @@ func EnableClaude() error {
 		return nil
 	}
 
-	addSctxHooks(settings)
+	if err := addSctxHooks(settings); err != nil {
+		return err
+	}
 
 	if err := writeSettings(settings); err != nil {
 		return err
@@ -214,7 +216,7 @@ func groupContainsSctxHook(group map[string]any) bool {
 }
 
 // addSctxHooks inserts the sctx hook groups into the settings map.
-func addSctxHooks(settings map[string]any) {
+func addSctxHooks(settings map[string]any) error {
 	hooks, ok := settings["hooks"].(map[string]any)
 	if !ok {
 		hooks = map[string]any{}
@@ -226,12 +228,12 @@ func addSctxHooks(settings map[string]any) {
 	// Convert to map[string]any so it serializes consistently with existing entries.
 	raw, err := json.Marshal(group)
 	if err != nil {
-		return
+		return fmt.Errorf("marshaling hook group: %w", err)
 	}
 
 	var groupMap map[string]any
 	if err := json.Unmarshal(raw, &groupMap); err != nil {
-		return
+		return fmt.Errorf("converting hook group: %w", err)
 	}
 
 	for _, event := range []string{"PreToolUse", "PostToolUse"} {
@@ -242,6 +244,8 @@ func addSctxHooks(settings map[string]any) {
 
 		hooks[event] = append(existing, groupMap)
 	}
+
+	return nil
 }
 
 // removeSctxHooks removes all hook groups containing the sctx hook command.
