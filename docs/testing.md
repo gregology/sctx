@@ -6,7 +6,7 @@ sctx uses **behavior-driven integration tests** as its foundation, with **proper
 
 ### Core principles
 
-1. **Test at public API boundaries** — `core.Resolve()`, `adapter.HandleClaudeHook()`, `validator.Validate()`. Never test private functions directly.
+1. **Test at public API boundaries** — `core.Resolve()`, `adapter.HandleClaudeHook()`, `validator.ValidateTree()`. Never test private functions directly.
 2. **Every test represents a real user scenario** — if you can't describe the test as "when a user does X, Y should happen," delete it.
 3. **No mocks** — use real temp directories and real YAML files. The codebase is small enough that real I/O is fast.
 4. **No coverage targets** — coverage percentages incentivize pointless tests. Focus on behavior coverage instead.
@@ -41,7 +41,7 @@ Property tests belong only in `internal/core`. The adapter and validator don't h
 
 ### `internal/validator` — Integration tests only
 
-- Test `Validate()` against directories containing valid and invalid YAML
+- Test `ValidateTree()` against directories containing valid and invalid YAML
 - One test per error class (missing content, invalid glob, bad action enum, etc.)
 
 ## What NOT to test
