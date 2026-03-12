@@ -482,6 +482,24 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sctx-pi-enable" class="md-nav__link">
+    <span class="md-ellipsis">
+      sctx pi enable
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sctx-pi-disable" class="md-nav__link">
+    <span class="md-ellipsis">
+      sctx pi disable
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#sctx-version" class="md-nav__link">
     <span class="md-ellipsis">
       sctx version
@@ -690,6 +708,24 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sctx-pi-enable" class="md-nav__link">
+    <span class="md-ellipsis">
+      sctx pi enable
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sctx-pi-disable" class="md-nav__link">
+    <span class="md-ellipsis">
+      sctx pi disable
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#sctx-version" class="md-nav__link">
     <span class="md-ellipsis">
       sctx version
@@ -736,7 +772,7 @@
 <p>Reads agent hook input from stdin, resolves matching context entries, and writes the response to stdout. This is the primary integration point for AI agents.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;tool_name&quot;:&quot;Edit&quot;,&quot;tool_input&quot;:{&quot;file_path&quot;:&quot;/project/src/main.py&quot;},&quot;hook_event_name&quot;:&quot;PreToolUse&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sctx<span class="w"> </span>hook
 </code></pre></div>
-<p>Currently supports Claude Code's JSON format. The adapter reads <code>tool_name</code>, <code>tool_input.file_path</code>, <code>hook_event_name</code>, and <code>cwd</code> from stdin, resolves context, and outputs Claude Code's expected <code>hookSpecificOutput</code> JSON. The <code>cwd</code> field determines the project root — only <code>AGENTS.yaml</code> files at or below this directory are considered.</p>
+<p>Supports Claude Code and pi JSON formats. The source is auto-detected: input with <code>"source": "pi"</code> is routed to the pi adapter; all other input is treated as Claude Code format. The <code>cwd</code> field determines the project root — only <code>AGENTS.yaml</code> files at or below this directory are considered.</p>
 <p>Only context entries are included in hook output. Decisions are excluded to keep token costs low. Use <code>sctx decisions</code> to query decisions separately.</p>
 <p>If no context matches, exits 0 with no output (a no-op for Claude Code).</p>
 <p>The Write tool gets special treatment: <code>sctx</code> checks whether the target file exists on disk to distinguish <code>create</code> (new file) from <code>edit</code> (existing file).</p>
@@ -815,9 +851,17 @@
 <p>Removes the <code>sctx hook</code> entries from <code>.claude/settings.local.json</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>sctx<span class="w"> </span>claude<span class="w"> </span>disable
 </code></pre></div>
+<h2 id="sctx-pi-enable">sctx pi enable<a class="headerlink" href="#sctx-pi-enable" title="Permanent link">&para;</a></h2>
+<p>Installs a thin TypeScript extension at <code>.pi/extensions/sctx.ts</code> that hooks into pi's <code>tool_call</code> and <code>tool_result</code> events and forwards them to <code>sctx hook</code>. Requires a <code>.pi/</code> directory to exist in the current directory.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>sctx<span class="w"> </span>pi<span class="w"> </span><span class="nb">enable</span>
+</code></pre></div>
+<h2 id="sctx-pi-disable">sctx pi disable<a class="headerlink" href="#sctx-pi-disable" title="Permanent link">&para;</a></h2>
+<p>Removes the sctx extension from <code>.pi/extensions/sctx.ts</code>. Cleans up the <code>extensions/</code> directory if empty.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>sctx<span class="w"> </span>pi<span class="w"> </span>disable
+</code></pre></div>
 <h2 id="sctx-version">sctx version<a class="headerlink" href="#sctx-version" title="Permanent link">&para;</a></h2>
 <p>Prints the version.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>sctx<span class="w"> </span>version
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>sctx<span class="w"> </span>version
 </code></pre></div>
 <h2 id="exit-codes">Exit codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
 <table>

@@ -362,6 +362,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#hook-into-pi" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hook into pi
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#add-more-context-files" class="md-nav__link">
     <span class="md-ellipsis">
       Add more context files
@@ -576,6 +585,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#hook-into-pi" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hook into pi
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#add-more-context-files" class="md-nav__link">
     <span class="md-ellipsis">
       Add more context files
@@ -715,17 +733,25 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>sctx<span class="w"> </span>claude<span class="w"> </span><span class="nb">enable</span>
 </code></pre></div>
 <p>Now when Claude reads or edits a file, <code>sctx</code> automatically injects the relevant context. If nothing matches, it's a silent no-op.</p>
+<h2 id="hook-into-pi">Hook into pi<a class="headerlink" href="#hook-into-pi" title="Permanent link">&para;</a></h2>
+<p>Install the sctx extension into your project:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>sctx<span class="w"> </span>pi<span class="w"> </span><span class="nb">enable</span>
+</code></pre></div>
+<p>This creates <code>.pi/extensions/sctx.ts</code>, a thin extension that hooks into pi's <code>tool_call</code> and <code>tool_result</code> events. When pi reads, writes, or edits a file, matching context is automatically injected into the tool result.</p>
+<p>To remove:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>sctx<span class="w"> </span>pi<span class="w"> </span>disable
+</code></pre></div>
 <h2 id="add-more-context-files">Add more context files<a class="headerlink" href="#add-more-context-files" title="Permanent link">&para;</a></h2>
 <p>Context files can live anywhere in your project. Add them where the context is most relevant:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>project/
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>  AGENTS.yaml           &lt;- project-wide conventions
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>  src/
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    api/
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>      AGENTS.yaml       &lt;- API-specific guidelines
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    models/
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>      AGENTS.yaml       &lt;- data model conventions
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>  tests/
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>    AGENTS.yaml         &lt;- testing standards
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>project/
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>  AGENTS.yaml           &lt;- project-wide conventions
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>  src/
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>    api/
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>      AGENTS.yaml       &lt;- API-specific guidelines
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>    models/
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>      AGENTS.yaml       &lt;- data model conventions
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>  tests/
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>    AGENTS.yaml         &lt;- testing standards
 </code></pre></div>
 <p>Child directories inherit and merge with parent context. No need to repeat yourself.</p>
 <h2 id="whats-next">What's next<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>
