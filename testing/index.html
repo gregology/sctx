@@ -562,7 +562,7 @@
 <p>sctx uses <strong>behavior-driven integration tests</strong> as its foundation, with <strong>property-based tests</strong> targeted at the core resolution engine. The goal is tests that catch real bugs without slowing down development or blocking refactors.</p>
 <h3 id="core-principles">Core principles<a class="headerlink" href="#core-principles" title="Permanent link">&para;</a></h3>
 <ol>
-<li><strong>Test at public API boundaries</strong> — <code>core.Resolve()</code>, <code>adapter.HandleClaudeHook()</code>, <code>validator.Validate()</code>. Never test private functions directly.</li>
+<li><strong>Test at public API boundaries</strong> — <code>core.Resolve()</code>, <code>adapter.HandleClaudeHook()</code>, <code>validator.ValidateTree()</code>. Never test private functions directly.</li>
 <li><strong>Every test represents a real user scenario</strong> — if you can't describe the test as "when a user does X, Y should happen," delete it.</li>
 <li><strong>No mocks</strong> — use real temp directories and real YAML files. The codebase is small enough that real I/O is fast.</li>
 <li><strong>No coverage targets</strong> — coverage percentages incentivize pointless tests. Focus on behavior coverage instead.</li>
@@ -593,7 +593,7 @@
 </ul>
 <h3 id="internalvalidator-integration-tests-only"><code>internal/validator</code> — Integration tests only<a class="headerlink" href="#internalvalidator-integration-tests-only" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Test <code>Validate()</code> against directories containing valid and invalid YAML</li>
+<li>Test <code>ValidateTree()</code> against directories containing valid and invalid YAML</li>
 <li>One test per error class (missing content, invalid glob, bad action enum, etc.)</li>
 </ul>
 <h2 id="what-not-to-test">What NOT to test<a class="headerlink" href="#what-not-to-test" title="Permanent link">&para;</a></h2>
