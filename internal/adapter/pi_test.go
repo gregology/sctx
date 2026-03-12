@@ -299,6 +299,8 @@ func TestBashReadPath(t *testing.T) {
 		{"grep foo bar.go", ""},
 		{"echo hello | cat", ""},
 		{"cat file1.go file2.go", "file1.go"},
+		{`cat "my file.txt"`, ""},
+		{`cat 'my file.txt'`, ""},
 	}
 
 	for _, tt := range tests {

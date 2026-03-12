@@ -164,6 +164,10 @@ func bashReadPath(command string) string {
 			continue
 		}
 
+		if strings.HasPrefix(f, "'") || strings.HasPrefix(f, "\"") {
+			return ""
+		}
+
 		return f
 	}
 
