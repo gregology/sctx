@@ -28,10 +28,24 @@ type PiHookOutput struct {
 	AdditionalContext string `json:"additionalContext,omitempty"`
 }
 
+// piBashInput extracts the command from bash tool input.
+type piBashInput struct {
+	Command string `json:"command"`
+}
+
 // piToolToAction maps pi tool names to our universal action type.
 var piToolToAction = map[string]core.Action{
 	"read": core.ActionRead,
 	"edit": core.ActionEdit,
+	"bash": core.ActionRead,
+}
+
+// bashReadCmds maps commands that read files to their flags that consume the next argument.
+// For example, head -n 20 file.go: the -n flag takes "20" as its value, not as a file path.
+var bashReadCmds = map[string]map[string]bool{
+	"cat":  {},
+	"head": {"-n": true, "-c": true},
+	"tail": {"-n": true, "-c": true},
 }
 
 // piEventToTiming maps pi hook event names to our universal timing type.
@@ -51,6 +65,13 @@ func HandlePiHook(input []byte) error {
 	var toolInput piToolInput
 	if err := json.Unmarshal(hookInput.Input, &toolInput); err != nil {
 		return fmt.Errorf("parsing tool input: %w", err)
+	}
+
+	if toolInput.Path == "" && hookInput.ToolName == "bash" {
+		var bashIn piBashInput
+		if err := json.Unmarshal(hookInput.Input, &bashIn); err == nil {
+			toolInput.Path = bashReadPath(bashIn.Command)
+		}
 	}
 
 	if toolInput.Path == "" {
@@ -105,6 +126,48 @@ func resolvePiAction(toolName, filePath string) core.Action {
 	}
 
 	return core.ActionAll
+}
+
+// bashReadPath extracts a file path from simple cat, head, or tail commands.
+// It returns "" if the command is not a recognized read pattern.
+func bashReadPath(command string) string {
+	// Isolate the first pipe segment: "cat go.mod | grep foo" → "cat go.mod"
+	if i := strings.IndexByte(command, '|'); i >= 0 {
+		command = command[:i]
+	}
+
+	fields := strings.Fields(command)
+	if len(fields) == 0 {
+		return ""
+	}
+
+	valuedFlags, ok := bashReadCmds[fields[0]]
+	if !ok {
+		return ""
+	}
+
+	// Skip flags and their values to find the file path.
+	skip := false
+
+	for _, f := range fields[1:] {
+		if skip {
+			skip = false
+
+			continue
+		}
+
+		if strings.HasPrefix(f, "-") {
+			if valuedFlags[f] {
+				skip = true
+			}
+
+			continue
+		}
+
+		return f
+	}
+
+	return ""
 }
 
 // IsPiHook checks whether the raw JSON input is from pi (has "source": "pi").

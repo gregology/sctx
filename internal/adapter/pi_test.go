@@ -282,6 +282,115 @@ context:
 	}
 }
 
+func TestBashReadPath(t *testing.T) {
+	tests := []struct {
+		command string
+		want    string
+	}{
+		{"cat go.mod", "go.mod"},
+		{"head -20 internal/core/schema.go", "internal/core/schema.go"},
+		{"tail -n 50 go.sum", "go.sum"},
+		{"cat -n go.mod", "go.mod"},
+		{"cat go.mod | grep require", "go.mod"},
+		{"head -n 5 go.mod | wc -l", "go.mod"},
+		{"cat", ""},
+		{"cat -n", ""},
+		{"ls -la", ""},
+		{"grep foo bar.go", ""},
+		{"echo hello | cat", ""},
+		{"cat file1.go file2.go", "file1.go"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.command, func(t *testing.T) {
+			got := bashReadPath(tt.command)
+			if got != tt.want {
+				t.Errorf("bashReadPath(%q) = %q, want %q", tt.command, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHandlePiHook_BashCat(t *testing.T) {
+	contextYAML := `
+context:
+  - content: "Read context for go.mod"
+    on: read
+    when: before
+`
+	tmpDir := setupPiTestDir(t, contextYAML)
+	target := filepath.Join(tmpDir, "go.mod")
+
+	if err := os.WriteFile(target, []byte("module example"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	_, out := runPiHook(t, PiHookInput{
+		Source:   "pi",
+		Event:    "tool_call",
+		ToolName: "bash",
+		Input:    json.RawMessage(`{"command":"cat ` + target + `"}`),
+		CWD:      tmpDir,
+	})
+
+	if out == nil || out.AdditionalContext == "" {
+		t.Fatal("expected context for bash cat command")
+	}
+
+	if !strings.Contains(out.AdditionalContext, "Read context for go.mod") {
+		t.Errorf("expected read context, got: %s", out.AdditionalContext)
+	}
+}
+
+func TestHandlePiHook_BashCatNoReadContext(t *testing.T) {
+	contextYAML := `
+context:
+  - content: "Edit-only context"
+    on: edit
+    when: before
+`
+	tmpDir := setupPiTestDir(t, contextYAML)
+	target := filepath.Join(tmpDir, "file.go")
+
+	if err := os.WriteFile(target, []byte("package main"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	raw, _ := runPiHook(t, PiHookInput{
+		Source:   "pi",
+		Event:    "tool_call",
+		ToolName: "bash",
+		Input:    json.RawMessage(`{"command":"cat ` + target + `"}`),
+		CWD:      tmpDir,
+	})
+
+	if raw != "" {
+		t.Errorf("expected no output for edit-only context on bash read, got: %s", raw)
+	}
+}
+
+func TestHandlePiHook_BashNonReadCommand(t *testing.T) {
+	contextYAML := `
+context:
+  - content: "Should not appear"
+    on: read
+    when: before
+`
+	tmpDir := setupPiTestDir(t, contextYAML)
+
+	raw, _ := runPiHook(t, PiHookInput{
+		Source:   "pi",
+		Event:    "tool_call",
+		ToolName: "bash",
+		Input:    json.RawMessage(`{"command":"ls -la"}`),
+		CWD:      tmpDir,
+	})
+
+	if raw != "" {
+		t.Errorf("expected no output for non-read bash command, got: %s", raw)
+	}
+}
+
 func TestHandlePiHook_MalformedInput(t *testing.T) {
 	err := HandlePiHook([]byte(`{not valid json`))
 	if err == nil {
