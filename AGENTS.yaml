@@ -20,7 +20,7 @@ context:
     when: before
 
   - content: >
-      Testing philosophy: test at public API boundaries (Resolve, HandleClaudeHook, Validate),
+      Testing philosophy: test at public API boundaries (Resolve, HandleClaudeHook, ValidateTree),
       not private functions. Use real temp directories, not mocks. Every test must represent a
       real user scenario — no tests that just mirror implementation. Table-driven tests for
       combinatorial inputs. See docs/testing.md for full guidelines.
