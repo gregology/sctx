@@ -145,6 +145,22 @@ sctx claude enable
 
 Now when Claude reads or edits a file, `sctx` automatically injects the relevant context. If nothing matches, it's a silent no-op.
 
+## Hook into pi
+
+Install the sctx extension into your project:
+
+```bash
+sctx pi enable
+```
+
+This creates `.pi/extensions/sctx.ts`, a thin extension that hooks into pi's `tool_call` and `tool_result` events. When pi reads, writes, or edits a file, matching context is automatically injected into the tool result.
+
+To remove:
+
+```bash
+sctx pi disable
+```
+
 ## Add more context files
 
 Context files can live anywhere in your project. Add them where the context is most relevant:
