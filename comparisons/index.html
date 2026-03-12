@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="How Structured Context differs from AGENTS.md, MCP, llms.txt, and IDE-specific rules">
+        <meta name="description" content="How Structured Context differs from AGENTS.md, MCP, and IDE-specific rules">
       
       
       
@@ -428,15 +428,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#llmstxt" class="md-nav__link">
-    <span class="md-ellipsis">
-      llms.txt
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#ide-specific-rules-cursorrules-windsurfrules" class="md-nav__link">
     <span class="md-ellipsis">
       IDE-specific rules (.cursorrules / .windsurfrules)
@@ -457,15 +448,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      Summary
-    </span>
-  </a>
   
 </li>
       
@@ -564,15 +546,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#llmstxt" class="md-nav__link">
-    <span class="md-ellipsis">
-      llms.txt
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#ide-specific-rules-cursorrules-windsurfrules" class="md-nav__link">
     <span class="md-ellipsis">
       IDE-specific rules (.cursorrules / .windsurfrules)
@@ -593,15 +566,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      Summary
-    </span>
-  </a>
   
 </li>
       
@@ -630,8 +594,43 @@
 
 
 <h1 id="how-does-sctx-compare">How does sctx compare?<a class="headerlink" href="#how-does-sctx-compare" title="Permanent link">&para;</a></h1>
-<p>The ecosystem for giving AI agents context is growing fast. Here's how Structured Context fits alongside other approaches.</p>
 <p>The short version: <code>sctx</code> provides <strong>file-targeted, action-filtered context injection</strong>. Instead of loading all instructions all the time, it delivers only the entries that match what the agent is doing right now.</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Scope</th>
+<th>Format</th>
+<th>Delivery</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AGENTS.md</td>
+<td>Directory</td>
+<td>Unstructured prose</td>
+<td>Always loaded</td>
+</tr>
+<tr>
+<td>MCP</td>
+<td>External tools &amp; data</td>
+<td>RPC protocol</td>
+<td>On demand via server</td>
+</tr>
+<tr>
+<td>.cursorrules</td>
+<td>Project root</td>
+<td>Monolithic prompt</td>
+<td>Always loaded</td>
+</tr>
+<tr>
+<td><strong>sctx</strong></td>
+<td><strong>Per-file, per-action</strong></td>
+<td><strong>Declarative YAML</strong></td>
+<td><strong>JIT, glob-matched</strong></td>
+</tr>
+</tbody>
+</table>
 <h2 id="agentsmd">AGENTS.md<a class="headerlink" href="#agentsmd" title="Permanent link">&para;</a></h2>
 <p><a href="https://agents.md/">AGENTS.md</a> is becoming the standard project-level manifest for AI coding agents, providing a dedicated place for build commands and coding conventions.</p>
 <p><strong>The distinction:</strong> <code>AGENTS.md</code> is directory-scoped and largely unstructured prose. Developers must write natural language conditional logic ("If you are editing a SQL file, do X"). As the file grows, agents struggle to parse it — attention dilutes and the model quietly ignores the instruction that mattered most.</p>
@@ -639,9 +638,6 @@
 <h2 id="model-context-protocol-mcp">Model Context Protocol (MCP)<a class="headerlink" href="#model-context-protocol-mcp" title="Permanent link">&para;</a></h2>
 <p>Anthropic's <a href="https://modelcontextprotocol.io/">MCP</a> is an open-source client-server protocol that standardizes how AI systems integrate with external tools and data sources.</p>
 <p><strong>The distinction:</strong> MCP is an <strong>active RPC protocol</strong> (like a USB-C cable for AI tools), whereas <code>sctx</code> is a <strong>static declarative file format</strong>. MCP connects the agent to the environment, while <code>sctx</code> dictates the <em>rules of engagement</em> for the codebase. They're complementary — an MCP server could be built to dynamically serve <code>sctx</code> contexts to an agent.</p>
-<h2 id="llmstxt">llms.txt<a class="headerlink" href="#llmstxt" title="Permanent link">&para;</a></h2>
-<p><a href="https://llmstxt.org/">llms.txt</a> is an informal web standard (similar to <code>robots.txt</code>) that provides AI agents with a machine-readable markdown map of a website or documentation repository.</p>
-<p><strong>The distinction:</strong> <code>llms.txt</code> is built for <strong>web scraping, RAG, and documentation ingestion</strong> — telling an agent <em>what to read</em>. <code>sctx</code> is built for <strong>local code manipulation and software engineering workflows</strong> — telling the agent <em>how to write</em> and what conventions to follow for specific file paths.</p>
 <h2 id="ide-specific-rules-cursorrules-windsurfrules">IDE-specific rules (.cursorrules / .windsurfrules)<a class="headerlink" href="#ide-specific-rules-cursorrules-windsurfrules" title="Permanent link">&para;</a></h2>
 <p>Project-root or directory-level markdown files where developers drop system prompts and stylistic preferences for AI IDEs like Cursor or Windsurf.</p>
 <p><strong>The distinction:</strong> These rules are generally monolithic. If a <code>.cursorrules</code> file contains React, Python, and SQL guidelines, the AI is burdened with all of them simultaneously during <em>any</em> edit. <code>sctx</code>'s action-filtering (<code>on: read</code> vs <code>on: edit</code> vs <code>on: create</code>) and precise file-path scoping offer a level of granularity that these files lack.</p>
@@ -674,49 +670,6 @@
 <a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">create</span>
 </code></pre></div>
 <p>When the agent edits <code>models/revenue.sql</code>, it sees one instruction instead of four. At scale — dozens of conventions across a monorepo — the difference in signal-to-noise ratio is significant.</p>
-<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Tool</th>
-<th>Scope</th>
-<th>Format</th>
-<th>Delivery</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>AGENTS.md</td>
-<td>Directory</td>
-<td>Unstructured prose</td>
-<td>Always loaded</td>
-</tr>
-<tr>
-<td>MCP</td>
-<td>External tools &amp; data</td>
-<td>RPC protocol</td>
-<td>On demand via server</td>
-</tr>
-<tr>
-<td>llms.txt</td>
-<td>Website / docs</td>
-<td>Markdown</td>
-<td>Scraped / ingested</td>
-</tr>
-<tr>
-<td>.cursorrules</td>
-<td>Project root</td>
-<td>Monolithic prompt</td>
-<td>Always loaded</td>
-</tr>
-<tr>
-<td><strong>sctx</strong></td>
-<td><strong>Per-file, per-action</strong></td>
-<td><strong>Declarative YAML</strong></td>
-<td><strong>JIT, glob-matched</strong></td>
-</tr>
-</tbody>
-</table>
 
 
 
