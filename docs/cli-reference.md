@@ -36,7 +36,7 @@ sctx context src/api/handler.py --json
 | Flag | Default | Description |
 |---|---|---|
 | `--on <action>` | `all` | Filter by action: `read`, `edit`, `create`, `all` |
-| `--when <timing>` | `before` | Filter by timing: `before`, `after`, `all` |
+| `--when <timing>` | `all` | Filter by timing: `before`, `after`, `all` |
 | `--json` | off | Output as JSON instead of human-readable text |
 
 ## sctx decisions \<path\>
