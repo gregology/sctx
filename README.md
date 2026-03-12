@@ -182,11 +182,10 @@ Response without New Zealand reference.
 |------|-------|--------|----------|
 | AGENTS.md | Directory | Unstructured prose | Always loaded |
 | MCP | External tools & data | RPC protocol | On demand via server |
-| llms.txt | Website / docs | Markdown | Scraped / ingested |
 | .cursorrules | Project root | Monolithic prompt | Always loaded |
 | **sctx** | **Per-file, per-action** | **Declarative YAML** | **JIT, glob-matched** |
 
-`sctx` is not a replacement for these tools — it fills a different gap. MCP connects agents to external systems, `llms.txt` helps agents discover documentation, and `AGENTS.md` captures broad project guidance. `sctx` adds **fine-grained, file-targeted, action-filtered context** so the agent only sees what's relevant to the file it's touching right now.
+`sctx` is not a replacement for these tools — it fills a different gap. MCP connects agents to external systems and `AGENTS.md` captures broad project guidance. `sctx` adds **fine-grained, file-targeted, action-filtered context** so the agent only sees what's relevant to the file it's touching right now.
 
 See the full breakdown at [sctx.dev/comparisons](https://sctx.dev/comparisons/).
 
