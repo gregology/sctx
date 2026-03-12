@@ -13,7 +13,7 @@ Reads agent hook input from stdin, resolves matching context entries, and writes
 echo '{"tool_name":"Edit","tool_input":{"file_path":"/project/src/main.py"},"hook_event_name":"PreToolUse"}' | sctx hook
 ```
 
-Currently supports Claude Code's JSON format. The adapter reads `tool_name`, `tool_input.file_path`, `hook_event_name`, and `cwd` from stdin, resolves context, and outputs Claude Code's expected `hookSpecificOutput` JSON. The `cwd` field determines the project root — only `AGENTS.yaml` files at or below this directory are considered.
+Supports Claude Code and pi JSON formats. The source is auto-detected: input with `"source": "pi"` is routed to the pi adapter; all other input is treated as Claude Code format. The `cwd` field determines the project root — only `AGENTS.yaml` files at or below this directory are considered.
 
 Only context entries are included in hook output. Decisions are excluded to keep token costs low. Use `sctx decisions` to query decisions separately.
 
@@ -91,6 +91,22 @@ Removes the `sctx hook` entries from `.claude/settings.local.json`.
 
 ```bash
 sctx claude disable
+```
+
+## sctx pi enable
+
+Installs a thin TypeScript extension at `.pi/extensions/sctx.ts` that hooks into pi's `tool_call` and `tool_result` events and forwards them to `sctx hook`. Requires a `.pi/` directory to exist in the current directory.
+
+```bash
+sctx pi enable
+```
+
+## sctx pi disable
+
+Removes the sctx extension from `.pi/extensions/sctx.ts`. Cleans up the `extensions/` directory if empty.
+
+```bash
+sctx pi disable
 ```
 
 ## sctx version

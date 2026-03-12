@@ -25,6 +25,8 @@ Usage:
   sctx init                                Create a starter AGENTS.yaml in the current directory
   sctx claude enable                       Enable sctx hooks in Claude Code
   sctx claude disable                      Disable sctx hooks in Claude Code
+  sctx pi enable                           Enable sctx extension in pi
+  sctx pi disable                          Disable sctx extension in pi
   sctx version                             Print version
 
 Actions: read, edit, create, all (default: all)
@@ -41,6 +43,7 @@ var (
 	errInvalidTiming    = errors.New("invalid --when value")
 	errFileExists       = errors.New("file already exists")
 	errClaudeSubcommand = errors.New("usage: sctx claude <enable|disable>")
+	errPiSubcommand     = errors.New("usage: sctx pi <enable|disable>")
 )
 
 func main() {
@@ -66,6 +69,8 @@ func main() {
 		fmt.Println("sctx", version)
 	case "claude":
 		err = cmdClaude()
+	case "pi":
+		err = cmdPi()
 	case "help", "--help", "-h":
 		fmt.Print(usage)
 	default:
@@ -83,6 +88,10 @@ func cmdHook() error {
 	input, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return fmt.Errorf("reading stdin: %w", err)
+	}
+
+	if adapter.IsPiHook(input) {
+		return adapter.HandlePiHook(input)
 	}
 
 	return adapter.HandleClaudeHook(input)
@@ -329,5 +338,20 @@ func cmdClaude() error {
 		return adapter.DisableClaude()
 	default:
 		return errClaudeSubcommand
+	}
+}
+
+func cmdPi() error {
+	if len(os.Args) < 3 {
+		return errPiSubcommand
+	}
+
+	switch os.Args[2] {
+	case "enable":
+		return adapter.EnablePi()
+	case "disable":
+		return adapter.DisablePi()
+	default:
+		return errPiSubcommand
 	}
 }

@@ -190,8 +190,24 @@ Response without New Zealand reference.
 
 See the full breakdown at [sctx.dev/comparisons](https://sctx.dev/comparisons/).
 
+## pi integration
+
+Install the sctx extension into your project's `.pi/extensions/` directory:
+
+```bash
+sctx pi enable
+```
+
+This creates a thin TypeScript extension that hooks into pi's `tool_call` and `tool_result` events. When pi reads, writes, or edits a file, the extension forwards the event to `sctx hook` and injects any matching context into the tool result.
+
+To remove:
+
+```bash
+sctx pi disable
+```
+
 ## Agent-agnostic design
 
-The core engine knows nothing about Claude Code (or any other agent). It takes a file path, an action, and a timing, and returns matched context. The Claude-specific bits live in a thin adapter layer that translates stdin JSON into those universal inputs.
+The core engine knows nothing about Claude Code, pi, or any other agent. It takes a file path, an action, and a timing, and returns matched context. Agent-specific bits live in thin adapter layers that translate stdin JSON into those universal inputs.
 
 Other agents can use `sctx context` directly, or new adapters can be added without touching the core.
