@@ -95,7 +95,7 @@ sctx claude disable
 
 ## sctx pi enable
 
-Installs a thin TypeScript extension at `.pi/extensions/sctx.ts` that hooks into pi's `tool_call` and `tool_result` events and forwards them to `sctx hook`. Requires a `.pi/` directory to exist in the current directory.
+Installs a thin TypeScript extension at `.pi/extensions/sctx.ts` that hooks into pi's `tool_call` and `tool_result` events and forwards them to `sctx hook`. For mutating tools (`edit`, `write`), the extension blocks the tool call and surfaces context before the edit occurs. For all other tools, context is appended to the tool result. Requires a `.pi/` directory to exist in the current directory.
 
 ```bash
 sctx pi enable

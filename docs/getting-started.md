@@ -153,7 +153,7 @@ Install the sctx extension into your project:
 sctx pi enable
 ```
 
-This creates `.pi/extensions/sctx.ts`, a thin extension that hooks into pi's `tool_call` and `tool_result` events. When pi reads, writes, or edits a file, matching context is automatically injected into the tool result.
+This creates `.pi/extensions/sctx.ts`, a thin extension that hooks into pi's `tool_call` and `tool_result` events. For mutating tools (`edit`, `write`), context is provided _before_ the edit by blocking the tool call and asking the agent to review it first. For all other tools, matching context is injected into the tool result.
 
 To remove:
 
