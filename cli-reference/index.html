@@ -852,7 +852,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>sctx<span class="w"> </span>claude<span class="w"> </span>disable
 </code></pre></div>
 <h2 id="sctx-pi-enable">sctx pi enable<a class="headerlink" href="#sctx-pi-enable" title="Permanent link">&para;</a></h2>
-<p>Installs a thin TypeScript extension at <code>.pi/extensions/sctx.ts</code> that hooks into pi's <code>tool_call</code> and <code>tool_result</code> events and forwards them to <code>sctx hook</code>. Requires a <code>.pi/</code> directory to exist in the current directory.</p>
+<p>Installs a thin TypeScript extension at <code>.pi/extensions/sctx.ts</code> that hooks into pi's <code>tool_call</code> and <code>tool_result</code> events and forwards them to <code>sctx hook</code>. For mutating tools (<code>edit</code>, <code>write</code>), the extension blocks the tool call and surfaces context before the edit occurs. For all other tools, context is appended to the tool result. Requires a <code>.pi/</code> directory to exist in the current directory.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>sctx<span class="w"> </span>pi<span class="w"> </span><span class="nb">enable</span>
 </code></pre></div>
 <h2 id="sctx-pi-disable">sctx pi disable<a class="headerlink" href="#sctx-pi-disable" title="Permanent link">&para;</a></h2>

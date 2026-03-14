@@ -737,7 +737,7 @@
 <p>Install the sctx extension into your project:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>sctx<span class="w"> </span>pi<span class="w"> </span><span class="nb">enable</span>
 </code></pre></div>
-<p>This creates <code>.pi/extensions/sctx.ts</code>, a thin extension that hooks into pi's <code>tool_call</code> and <code>tool_result</code> events. When pi reads, writes, or edits a file, matching context is automatically injected into the tool result.</p>
+<p>This creates <code>.pi/extensions/sctx.ts</code>, a thin extension that hooks into pi's <code>tool_call</code> and <code>tool_result</code> events. For mutating tools (<code>edit</code>, <code>write</code>), context is provided <em>before</em> the edit by blocking the tool call and asking the agent to review it first. For all other tools, matching context is injected into the tool result.</p>
 <p>To remove:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>sctx<span class="w"> </span>pi<span class="w"> </span>disable
 </code></pre></div>
