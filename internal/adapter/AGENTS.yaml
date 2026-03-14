@@ -16,3 +16,8 @@ decisions:
   - decision: "No output on no-match rather than empty JSON"
     rationale: "Claude Code treats exit 0 with no stdout as a no-op. Outputting empty JSON would add unnecessary noise to the conversation context."
     date: 2026-03-06
+
+  - decision: "Defer DRYing up write-action detection logic across adapters until a 3rd provider is added"
+    rationale: "resolveAction (claude.go) and resolvePiAction (pi.go) contain the same os.Stat heuristic for distinguishing create vs edit on write operations. Two copies is manageable; extracting a shared function now adds indirection without enough payoff. When a third adapter arrives, extract a shared resolveWriteAction(filePath string) core.Action function into a common file."
+    revisit_when: "A third adapter is introduced"
+    date: 2026-03-14
