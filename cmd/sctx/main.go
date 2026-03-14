@@ -44,6 +44,7 @@ var (
 	errFileExists       = errors.New("file already exists")
 	errClaudeSubcommand = errors.New("usage: sctx claude <enable|disable>")
 	errPiSubcommand     = errors.New("usage: sctx pi <enable|disable>")
+	errValidation       = errors.New("validation failed")
 )
 
 func main() {
@@ -54,23 +55,25 @@ func main() {
 
 	var err error
 
+	args := os.Args[2:]
+
 	switch os.Args[1] {
 	case "hook":
 		err = cmdHook()
 	case "context":
-		err = cmdContext()
+		err = cmdContext(args, os.Stdout, os.Stderr)
 	case "decisions":
-		err = cmdDecisions()
+		err = cmdDecisions(args, os.Stdout, os.Stderr)
 	case "validate":
-		err = cmdValidate()
+		err = cmdValidate(args, os.Stdout)
 	case "init":
-		err = cmdInit()
+		err = cmdInit(os.Stdout)
 	case "version":
 		fmt.Println("sctx", version)
 	case "claude":
-		err = cmdClaude()
+		err = cmdClaude(args)
 	case "pi":
-		err = cmdPi()
+		err = cmdPi(args)
 	case "help", "--help", "-h":
 		fmt.Print(usage)
 	default:
@@ -97,42 +100,44 @@ func cmdHook() error {
 	return adapter.HandleClaudeHook(input)
 }
 
-func cmdContext() error {
-	if len(os.Args) < 3 {
+func cmdContext(args []string, out, errOut io.Writer) error {
+	if len(args) < 1 {
 		return errMissingPath
 	}
 
-	filePath := os.Args[2]
+	filePath := args[0]
 	action := core.ActionAll
 	timing := core.TimingAll
 	jsonOutput := false
 
-	for i := 3; i < len(os.Args); i++ {
-		switch os.Args[i] {
+	for i := 1; i < len(args); i++ {
+		switch args[i] {
 		case "--on":
-			if i+1 >= len(os.Args) {
+			if i+1 >= len(args) {
 				return errOnNeedsValue
 			}
 
 			i++
+			v := args[i] //nolint:gosec // bounds checked above
 
-			if !core.ValidAction(os.Args[i]) {
-				return fmt.Errorf("%w %q (must be read, edit, create, or all)", errInvalidAction, os.Args[i])
+			if !core.ValidAction(v) {
+				return fmt.Errorf("%w %q (must be read, edit, create, or all)", errInvalidAction, v)
 			}
 
-			action = core.Action(os.Args[i])
+			action = core.Action(v)
 		case "--when":
-			if i+1 >= len(os.Args) {
+			if i+1 >= len(args) {
 				return errWhenNeedsValue
 			}
 
 			i++
+			v := args[i] //nolint:gosec // bounds checked above
 
-			if !core.ValidTiming(os.Args[i]) {
-				return fmt.Errorf("%w %q (must be before, after, or all)", errInvalidTiming, os.Args[i])
+			if !core.ValidTiming(v) {
+				return fmt.Errorf("%w %q (must be before, after, or all)", errInvalidTiming, v)
 			}
 
-			timing = core.Timing(os.Args[i])
+			timing = core.Timing(v)
 		case "--json":
 			jsonOutput = true
 		}
@@ -153,38 +158,38 @@ func cmdContext() error {
 	}
 
 	for _, w := range warnings {
-		fmt.Fprintln(os.Stderr, w)
+		_, _ = fmt.Fprintln(errOut, w)
 	}
 
 	if jsonOutput {
-		enc := json.NewEncoder(os.Stdout)
+		enc := json.NewEncoder(out)
 		enc.SetIndent("", "  ")
 		return enc.Encode(result.ContextEntries)
 	}
 
 	if len(result.ContextEntries) == 0 {
-		fmt.Println("No matching context found.")
+		_, _ = fmt.Fprintln(out, "No matching context found.")
 		return nil
 	}
 
 	for _, entry := range result.ContextEntries {
-		fmt.Printf("  - %s\n", entry.Content)
-		fmt.Printf("    (from %s)\n", entry.SourceDir)
+		_, _ = fmt.Fprintf(out, "  - %s\n", entry.Content)
+		_, _ = fmt.Fprintf(out, "    (from %s)\n", entry.SourceDir)
 	}
 
 	return nil
 }
 
-func cmdDecisions() error {
-	if len(os.Args) < 3 {
+func cmdDecisions(args []string, out, errOut io.Writer) error {
+	if len(args) < 1 {
 		return errMissingPath
 	}
 
-	filePath := os.Args[2]
+	filePath := args[0]
 	jsonOutput := false
 
-	for i := 3; i < len(os.Args); i++ {
-		if os.Args[i] == "--json" {
+	for i := 1; i < len(args); i++ {
+		if args[i] == "--json" {
 			jsonOutput = true
 		}
 	}
@@ -204,40 +209,40 @@ func cmdDecisions() error {
 	}
 
 	for _, w := range warnings {
-		fmt.Fprintln(os.Stderr, w)
+		_, _ = fmt.Fprintln(errOut, w)
 	}
 
 	if jsonOutput {
-		enc := json.NewEncoder(os.Stdout)
+		enc := json.NewEncoder(out)
 		enc.SetIndent("", "  ")
 		return enc.Encode(result.DecisionEntries)
 	}
 
 	if len(result.DecisionEntries) == 0 {
-		fmt.Println("No matching decisions found.")
+		_, _ = fmt.Fprintln(out, "No matching decisions found.")
 		return nil
 	}
 
 	for _, entry := range result.DecisionEntries {
-		fmt.Printf("  - %s\n", entry.Decision)
-		fmt.Printf("    Rationale: %s\n", entry.Rationale)
+		_, _ = fmt.Fprintf(out, "  - %s\n", entry.Decision)
+		_, _ = fmt.Fprintf(out, "    Rationale: %s\n", entry.Rationale)
 
 		for _, alt := range entry.Alternatives {
-			fmt.Printf("    Considered %s, rejected: %s\n", alt.Option, alt.ReasonRejected)
+			_, _ = fmt.Fprintf(out, "    Considered %s, rejected: %s\n", alt.Option, alt.ReasonRejected)
 		}
 
 		if entry.RevisitWhen != "" {
-			fmt.Printf("    Revisit when: %s\n", entry.RevisitWhen)
+			_, _ = fmt.Fprintf(out, "    Revisit when: %s\n", entry.RevisitWhen)
 		}
 	}
 
 	return nil
 }
 
-func cmdValidate() error {
+func cmdValidate(args []string, out io.Writer) error {
 	dir := "."
-	if len(os.Args) > 2 {
-		dir = os.Args[2]
+	if len(args) > 0 {
+		dir = args[0]
 	}
 
 	absDir, err := filepath.Abs(dir)
@@ -251,14 +256,14 @@ func cmdValidate() error {
 	}
 
 	if len(validationErrors) == 0 {
-		fmt.Println("All context files are valid.")
+		_, _ = fmt.Fprintln(out, "All context files are valid.")
 		return nil
 	}
 
 	hasErrors := false
 
 	for _, e := range validationErrors {
-		fmt.Println(e)
+		_, _ = fmt.Fprintln(out, e)
 
 		if !e.IsWarn {
 			hasErrors = true
@@ -266,13 +271,13 @@ func cmdValidate() error {
 	}
 
 	if hasErrors {
-		os.Exit(1)
+		return errValidation
 	}
 
 	return nil
 }
 
-func cmdInit() error {
+func cmdInit(out io.Writer) error {
 	filename := "AGENTS.yaml"
 
 	if _, err := os.Stat(filename); err == nil {
@@ -321,17 +326,17 @@ decisions:
 		return fmt.Errorf("writing %s: %w", filename, err)
 	}
 
-	fmt.Printf("Created %s\n", filename)
+	_, _ = fmt.Fprintf(out, "Created %s\n", filename)
 
 	return nil
 }
 
-func cmdClaude() error {
-	if len(os.Args) < 3 {
+func cmdClaude(args []string) error {
+	if len(args) < 1 {
 		return errClaudeSubcommand
 	}
 
-	switch os.Args[2] {
+	switch args[0] {
 	case "enable":
 		return adapter.EnableClaude()
 	case "disable":
@@ -341,12 +346,12 @@ func cmdClaude() error {
 	}
 }
 
-func cmdPi() error {
-	if len(os.Args) < 3 {
+func cmdPi(args []string) error {
+	if len(args) < 1 {
 		return errPiSubcommand
 	}
 
-	switch os.Args[2] {
+	switch args[0] {
 	case "enable":
 		return adapter.EnablePi()
 	case "disable":
