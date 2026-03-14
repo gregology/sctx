@@ -1,0 +1,15 @@
+foo: bar
+context:
+  - content: "Use strict types"
+    mach: ["*.py"]
+  - content: "Another rule"
+    exlude: ["vendor/"]
+
+decisions:
+  - decision: "Use requests"
+    rationale: "Stable"
+    importanc: high
+    alternatives:
+      - option: "urllib"
+        reason_rejected: "Too low-level"
+        scor: 3

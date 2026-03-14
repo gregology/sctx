@@ -52,6 +52,14 @@ func ValidateTree(root string) ([]ValidationError, error) {
 	return errs, nil
 }
 
+// Known field sets for each struct level.
+var (
+	knownTopLevel      = map[string]bool{"context": true, "decisions": true}
+	knownContextEntry  = map[string]bool{"content": true, "match": true, "exclude": true, "on": true, "when": true}
+	knownDecisionEntry = map[string]bool{"decision": true, "rationale": true, "alternatives": true, "revisit_when": true, "date": true, "match": true}
+	knownAlternative   = map[string]bool{"option": true, "reason_rejected": true}
+)
+
 // ValidateFile validates a single context file.
 func ValidateFile(path string) []ValidationError {
 	data, err := os.ReadFile(path) //nolint:gosec // path comes from directory walk
@@ -65,10 +73,76 @@ func ValidateFile(path string) []ValidationError {
 	}
 
 	var errs []ValidationError
+	errs = append(errs, checkUnknownFields(path, data)...)
 	errs = append(errs, validateContextEntries(path, cf.Context)...)
 	errs = append(errs, validateDecisionEntries(path, cf.Decisions)...)
 
 	return errs
+}
+
+// checkUnknownFields decodes YAML into a raw map and warns on unrecognised keys.
+func checkUnknownFields(path string, data []byte) []ValidationError {
+	var raw map[string]any
+	if err := yaml.Unmarshal(data, &raw); err != nil {
+		return nil // parse errors are reported elsewhere
+	}
+
+	var warns []ValidationError
+	warns = append(warns, warnUnknownKeys(path, "top level", raw, knownTopLevel)...)
+	warns = append(warns, checkListEntries(path, "context", raw, knownContextEntry)...)
+
+	for i, m := range extractMaps(raw, "decisions") {
+		prefix := fmt.Sprintf("decisions[%d]", i)
+		warns = append(warns, warnUnknownKeys(path, prefix, m, knownDecisionEntry)...)
+		warns = append(warns, checkListEntries(path, prefix+".alternatives", m, knownAlternative)...)
+	}
+
+	return warns
+}
+
+// warnUnknownKeys emits a warning for each key in m not present in known.
+func warnUnknownKeys(path, prefix string, m map[string]any, known map[string]bool) []ValidationError {
+	var warns []ValidationError
+	for key := range m {
+		if !known[key] {
+			warns = append(warns, ValidationError{
+				File:    path,
+				Message: fmt.Sprintf("%s: unknown field %q", prefix, key),
+				IsWarn:  true,
+			})
+		}
+	}
+	return warns
+}
+
+// checkListEntries extracts a named list of maps from parent and checks each entry's keys.
+// The prefix is used for display; the map key is derived from the last dot-separated segment.
+func checkListEntries(path, prefix string, parent map[string]any, known map[string]bool) []ValidationError {
+	key := prefix
+	if idx := strings.LastIndex(prefix, "."); idx >= 0 {
+		key = prefix[idx+1:]
+	}
+	var warns []ValidationError
+	for i, m := range extractMaps(parent, key) {
+		entryPrefix := fmt.Sprintf("%s[%d]", prefix, i)
+		warns = append(warns, warnUnknownKeys(path, entryPrefix, m, known)...)
+	}
+	return warns
+}
+
+// extractMaps pulls a []map[string]any from a named key in parent, skipping non-map entries.
+func extractMaps(parent map[string]any, key string) []map[string]any {
+	list, ok := parent[key].([]any)
+	if !ok {
+		return nil
+	}
+	var out []map[string]any
+	for _, item := range list {
+		if m, ok := item.(map[string]any); ok {
+			out = append(out, m)
+		}
+	}
+	return out
 }
 
 func validateContextEntries(path string, entries []core.ContextEntry) []ValidationError {
