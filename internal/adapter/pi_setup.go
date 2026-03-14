@@ -17,9 +17,22 @@ const piExtensionSource = `import { execSync } from "node:child_process";
 export default function (pi) {
   const pending = new Map();
 
+  const mutatingTools = new Set(["edit", "write"]);
+
   pi.on("tool_call", async (event, ctx) => {
     const text = callSctx("tool_call", event, ctx.cwd);
-    if (text) pending.set(event.toolCallId, text);
+    if (!text) return;
+
+    if (mutatingTools.has(event.toolName)) {
+      return {
+        block: true,
+        reason:
+          "Review the following context before proceeding, then re-apply your change.\n\n" +
+          text,
+      };
+    }
+
+    pending.set(event.toolCallId, text);
   });
 
   pi.on("tool_result", async (event, ctx) => {
