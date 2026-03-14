@@ -182,6 +182,48 @@ func TestValidateFile_WhenAll(t *testing.T) {
 	}
 }
 
+func TestValidateFile_UnknownFields(t *testing.T) {
+	path := filepath.Join(testdataDir(t), "unknown_fields.yaml")
+	errs := ValidateFile(path)
+
+	// Expect warnings for: "foo" (top level), "mach" (context[0]), "exlude" (context[1]),
+	// "importanc" (decisions[0]), "scor" (decisions[0].alternatives[0])
+	wantWarnings := []string{
+		`top level: unknown field "foo"`,
+		`context[0]: unknown field "mach"`,
+		`context[1]: unknown field "exlude"`,
+		`decisions[0]: unknown field "importanc"`,
+		`decisions[0].alternatives[0]: unknown field "scor"`,
+	}
+
+	for _, w := range wantWarnings {
+		found := false
+		for _, e := range errs {
+			if containsStr(e.Message, w) {
+				if !e.IsWarn {
+					t.Errorf("expected IsWarn=true for %q", w)
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("expected warning containing %q", w)
+		}
+	}
+}
+
+func TestValidateFile_NoUnknownFieldWarnings(t *testing.T) {
+	path := filepath.Join(testdataDir(t), "valid.yaml")
+	errs := ValidateFile(path)
+
+	for _, e := range errs {
+		if e.IsWarn {
+			t.Errorf("unexpected warning: %s", e)
+		}
+	}
+}
+
 func containsStr(s, substr string) bool {
 	for i := 0; i <= len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {
