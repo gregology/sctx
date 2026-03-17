@@ -6,3 +6,4 @@ context:
 decisions:
   - decision: ""
     rationale: ""
+    date: "banana"

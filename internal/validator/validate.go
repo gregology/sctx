@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"gopkg.in/yaml.v3"
@@ -199,6 +200,15 @@ func validateDecisionEntries(path string, entries []core.DecisionEntry) []Valida
 				File:    path,
 				Message: prefix + ": rationale is required",
 			})
+		}
+
+		if entry.Date != "" {
+			if _, err := time.Parse("2006-01-02", entry.Date); err != nil {
+				errs = append(errs, ValidationError{
+					File:    path,
+					Message: fmt.Sprintf("%s: invalid date %q (must be YYYY-MM-DD)", prefix, entry.Date),
+				})
+			}
 		}
 
 		errs = append(errs, validateGlobs(path, prefix, "match", entry.Match)...)
