@@ -182,6 +182,16 @@ Response without New Zealand reference.
 
 **sctx init** - Drops a starter `AGENTS.yaml` with commented examples into the current directory.
 
+**sctx claude enable** - Install sctx hooks in Claude Code settings
+
+**sctx claude disable** - Remove sctx hooks from Claude Code settings
+
+**sctx pi enable** - Install sctx extension for pi
+
+**sctx pi disable** - Remove sctx extension for pi
+
+**sctx version** - Print version
+
 ## How does sctx compare?
 
 | Tool | Scope | Format | Delivery |
