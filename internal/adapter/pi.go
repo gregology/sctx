@@ -3,6 +3,7 @@ package adapter
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -56,7 +57,7 @@ var piEventToTiming = map[string]core.Timing{
 
 // HandlePiHook reads pi's stdin JSON, resolves context, and writes
 // the appropriate JSON response to stdout. Returns an error only on fatal failures.
-func HandlePiHook(input []byte) error {
+func HandlePiHook(input []byte, out, errOut io.Writer) error {
 	var hookInput PiHookInput
 	if err := json.Unmarshal(input, &hookInput); err != nil {
 		return fmt.Errorf("parsing hook input: %w", err)
@@ -96,7 +97,7 @@ func HandlePiHook(input []byte) error {
 	}
 
 	for _, w := range warnings {
-		fmt.Fprintln(os.Stderr, w)
+		_, _ = fmt.Fprintln(errOut, w) // best-effort; write failures non-fatal
 	}
 
 	if len(result.ContextEntries) == 0 {
@@ -107,7 +108,7 @@ func HandlePiHook(input []byte) error {
 		AdditionalContext: formatContext(result.ContextEntries),
 	}
 
-	return json.NewEncoder(os.Stdout).Encode(output)
+	return json.NewEncoder(out).Encode(output)
 }
 
 // resolvePiAction determines the action type from the pi tool name.

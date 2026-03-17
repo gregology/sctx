@@ -1,6 +1,7 @@
 package adapter
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -46,28 +47,27 @@ func setupPiTestDir(t *testing.T, contextYAML string) string {
 	return tmpDir
 }
 
-// runPiHook runs HandlePiHook with captured stdout and returns the parsed output.
+// runPiHook runs HandlePiHook with buffer writers and returns the raw output and parsed result.
 func runPiHook(t *testing.T, input PiHookInput) (string, *PiHookOutput) {
 	t.Helper()
 
 	inputBytes := marshalPiInput(t, input)
 
-	output := captureStdout(t, func() {
-		if err := HandlePiHook(inputBytes); err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-	})
+	var out, errOut bytes.Buffer
+	if err := HandlePiHook(inputBytes, &out, &errOut); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
-	if output == "" {
+	if out.Len() == 0 {
 		return "", nil
 	}
 
 	var hookOutput PiHookOutput
-	if err := json.Unmarshal([]byte(output), &hookOutput); err != nil {
-		t.Fatalf("failed to parse output JSON: %v (output was: %s)", err, output)
+	if err := json.Unmarshal(out.Bytes(), &hookOutput); err != nil {
+		t.Fatalf("failed to parse output JSON: %v (output was: %s)", err, out.String())
 	}
 
-	return output, &hookOutput
+	return out.String(), &hookOutput
 }
 
 func TestHandlePiHook_ToolCallEdit(t *testing.T) {
@@ -117,7 +117,9 @@ func TestHandlePiHook_NoPath(t *testing.T) {
 		CWD:      "/tmp",
 	})
 
-	err := HandlePiHook(inputBytes)
+	var out, errOut bytes.Buffer
+
+	err := HandlePiHook(inputBytes, &out, &errOut)
 	if err != nil {
 		t.Fatalf("expected no error for tool without path, got: %v", err)
 	}
@@ -394,7 +396,9 @@ context:
 }
 
 func TestHandlePiHook_MalformedInput(t *testing.T) {
-	err := HandlePiHook([]byte(`{not valid json`))
+	var out, errOut bytes.Buffer
+
+	err := HandlePiHook([]byte(`{not valid json`), &out, &errOut)
 	if err == nil {
 		t.Fatal("expected error for malformed JSON input, got nil")
 	}

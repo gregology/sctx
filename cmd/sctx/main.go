@@ -59,7 +59,7 @@ func main() {
 
 	switch os.Args[1] {
 	case "hook":
-		err = cmdHook()
+		err = cmdHook(os.Stdin, os.Stdout, os.Stderr)
 	case "context":
 		err = cmdContext(args, os.Stdout, os.Stderr)
 	case "decisions":
@@ -87,17 +87,17 @@ func main() {
 	}
 }
 
-func cmdHook() error {
-	input, err := io.ReadAll(os.Stdin)
+func cmdHook(in io.Reader, out, errOut io.Writer) error {
+	input, err := io.ReadAll(in)
 	if err != nil {
 		return fmt.Errorf("reading stdin: %w", err)
 	}
 
 	if adapter.IsPiHook(input) {
-		return adapter.HandlePiHook(input)
+		return adapter.HandlePiHook(input, out, errOut)
 	}
 
-	return adapter.HandleClaudeHook(input)
+	return adapter.HandleClaudeHook(input, out, errOut)
 }
 
 func cmdContext(args []string, out, errOut io.Writer) error {

@@ -3,6 +3,7 @@ package adapter
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -51,7 +52,7 @@ var eventToTiming = map[string]core.Timing{
 
 // HandleClaudeHook reads Claude Code's stdin JSON, resolves context, and writes
 // the appropriate JSON response to stdout. Returns an error only on fatal failures.
-func HandleClaudeHook(input []byte) error {
+func HandleClaudeHook(input []byte, out, errOut io.Writer) error {
 	var hookInput ClaudeHookInput
 	if err := json.Unmarshal(input, &hookInput); err != nil {
 		return fmt.Errorf("parsing hook input: %w", err)
@@ -84,7 +85,7 @@ func HandleClaudeHook(input []byte) error {
 	}
 
 	for _, w := range warnings {
-		fmt.Fprintln(os.Stderr, w)
+		_, _ = fmt.Fprintln(errOut, w) // best-effort; write failures non-fatal
 	}
 
 	if len(result.ContextEntries) == 0 {
@@ -105,7 +106,7 @@ func HandleClaudeHook(input []byte) error {
 		HookSpecificOutput: hookOutput,
 	}
 
-	return json.NewEncoder(os.Stdout).Encode(output)
+	return json.NewEncoder(out).Encode(output)
 }
 
 // resolveAction determines the action type from the tool name.

@@ -35,7 +35,7 @@ Property tests belong only in `internal/core`. The adapter and validator don't h
 
 ### `internal/adapter` — Integration tests only
 
-- Test `HandleClaudeHook()` with real JSON input on stdin, assert on formatted output
+- Test `HandleClaudeHook()` with real JSON input and `bytes.Buffer` writers, assert on formatted output
 - Test `EnableClaude()` / `DisableClaude()` against real temp `.claude/settings.local.json` files
 - Table-driven tests for tool-name-to-action mapping
 

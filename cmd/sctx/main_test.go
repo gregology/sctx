@@ -2,11 +2,14 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gregology/sctx/internal/adapter"
 )
 
 func writeTestFile(t *testing.T, path, content string) {
@@ -19,6 +22,17 @@ func writeTestFile(t *testing.T, path, content string) {
 	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func mustMarshal(t *testing.T, v any) []byte {
+	t.Helper()
+
+	data, err := json.Marshal(v)
+	if err != nil {
+		t.Fatalf("failed to marshal test input: %v", err)
+	}
+
+	return data
 }
 
 const testAgentsYAML = `context:
@@ -417,4 +431,109 @@ func TestCmdPi(t *testing.T) {
 			}
 		})
 	}
+}
+
+func runHook(t *testing.T, input []byte) bytes.Buffer {
+	t.Helper()
+
+	var out, errOut bytes.Buffer
+
+	if err := cmdHook(bytes.NewReader(input), &out, &errOut); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	return out
+}
+
+func TestCmdHook(t *testing.T) {
+	tmp := t.TempDir()
+	writeTestFile(t, filepath.Join(tmp, ".git"), "")
+	writeTestFile(t, filepath.Join(tmp, "AGENTS.yaml"), `context:
+  - content: "hook test context"
+    on: edit
+    when: before
+`)
+	target := filepath.Join(tmp, "file.go")
+	writeTestFile(t, target, "package main\n")
+
+	claudeInput := mustMarshal(t, adapter.ClaudeHookInput{
+		SessionID:     "s1",
+		HookEventName: "PreToolUse",
+		ToolName:      "Edit",
+		ToolInput:     json.RawMessage(`{"file_path":"` + target + `"}`),
+		CWD:           tmp,
+	})
+
+	piInput := mustMarshal(t, adapter.PiHookInput{
+		Source:   "pi",
+		Event:    "tool_call",
+		ToolName: "edit",
+		Input:    json.RawMessage(`{"path":"` + target + `"}`),
+		CWD:      tmp,
+	})
+
+	piWithClaudeShape := mustMarshal(t, adapter.PiHookInput{
+		Source:   "pi",
+		Event:    "tool_call",
+		ToolName: "edit",
+		Input:    json.RawMessage(`{"path":"` + target + `","file_path":"` + target + `"}`),
+		CWD:      tmp,
+	})
+
+	t.Run("empty input returns error", func(t *testing.T) {
+		var out, errOut bytes.Buffer
+		if err := cmdHook(bytes.NewReader([]byte{}), &out, &errOut); err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
+
+	t.Run("malformed JSON returns error", func(t *testing.T) {
+		var out, errOut bytes.Buffer
+		if err := cmdHook(bytes.NewReader([]byte(`{not valid`)), &out, &errOut); err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
+
+	t.Run("claude hook dispatches to claude handler", func(t *testing.T) {
+		out := runHook(t, claudeInput)
+
+		var got adapter.ClaudeHookOutput
+		if err := json.Unmarshal(out.Bytes(), &got); err != nil {
+			t.Fatalf("unmarshal output: %v", err)
+		}
+
+		if got.HookSpecificOutput == nil {
+			t.Fatal("hookSpecificOutput is nil")
+		}
+
+		if !strings.Contains(got.HookSpecificOutput.AdditionalContext, "hook test context") {
+			t.Errorf("additionalContext %q does not contain %q", got.HookSpecificOutput.AdditionalContext, "hook test context")
+		}
+	})
+
+	t.Run("pi hook dispatches to pi handler", func(t *testing.T) {
+		out := runHook(t, piInput)
+
+		var got adapter.PiHookOutput
+		if err := json.Unmarshal(out.Bytes(), &got); err != nil {
+			t.Fatalf("unmarshal output: %v", err)
+		}
+
+		if !strings.Contains(got.AdditionalContext, "hook test context") {
+			t.Errorf("additionalContext %q does not contain %q", got.AdditionalContext, "hook test context")
+		}
+	})
+
+	t.Run("pi source with claude-shaped payload routes to pi handler", func(t *testing.T) {
+		out := runHook(t, piWithClaudeShape)
+
+		var got adapter.PiHookOutput
+		if err := json.Unmarshal(out.Bytes(), &got); err != nil {
+			t.Fatalf("unmarshal output: %v", err)
+		}
+
+		if !strings.Contains(got.AdditionalContext, "hook test context") {
+			t.Errorf("additionalContext %q does not contain %q", got.AdditionalContext, "hook test context")
+		}
+	})
 }
