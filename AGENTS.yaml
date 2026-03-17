@@ -128,3 +128,11 @@ decisions:
         reason_rejected: "Introduces Ruby/Bundler dependency. Jekyll development has slowed significantly."
     revisit_when: "Docs are moved to a separate repo and we want to reconsider the stack"
     date: 2026-03-07
+
+  - decision: "Declined issue #79: adapter tests redirect os.Stdout globally"
+    rationale: >
+      The proposed refactoring has already been implemented. HandleClaudeHook and HandlePiHook
+      accept io.Writer parameters (out, errOut) instead of writing to os.Stdout directly.
+      The captureStdout helper no longer exists. All adapter tests use bytes.Buffer, matching
+      the pattern used by cmdContext and cmdDecisions. No further action needed.
+    date: 2026-03-16
