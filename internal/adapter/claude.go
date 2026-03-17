@@ -85,7 +85,7 @@ func HandleClaudeHook(input []byte, out, errOut io.Writer) error {
 	}
 
 	for _, w := range warnings {
-		_, _ = fmt.Fprintln(errOut, w)
+		_, _ = fmt.Fprintln(errOut, w) // best-effort; write failures non-fatal
 	}
 
 	if len(result.ContextEntries) == 0 {

@@ -433,6 +433,18 @@ func TestCmdPi(t *testing.T) {
 	}
 }
 
+func runHook(t *testing.T, input []byte) bytes.Buffer {
+	t.Helper()
+
+	var out, errOut bytes.Buffer
+
+	if err := cmdHook(bytes.NewReader(input), &out, &errOut); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	return out
+}
+
 func TestCmdHook(t *testing.T) {
 	tmp := t.TempDir()
 	writeTestFile(t, filepath.Join(tmp, ".git"), "")
@@ -468,65 +480,60 @@ func TestCmdHook(t *testing.T) {
 		CWD:      tmp,
 	})
 
-	tests := []struct {
-		name       string
-		input      []byte
-		wantErr    bool
-		wantOut    string
-		notWantOut string
-	}{
-		{
-			name:    "claude hook dispatches to claude handler",
-			input:   claudeInput,
-			wantOut: "hookSpecificOutput",
-		},
-		{
-			name:    "pi hook dispatches to pi handler",
-			input:   piInput,
-			wantOut: "additionalContext",
-		},
-		{
-			name:    "empty input returns error",
-			input:   []byte{},
-			wantErr: true,
-		},
-		{
-			name:    "malformed JSON returns error",
-			input:   []byte(`{not valid`),
-			wantErr: true,
-		},
-		{
-			name:    "pi source with claude-shaped payload routes to pi handler",
-			input:   piWithClaudeShape,
-			wantOut: "additionalContext",
-		},
-	}
+	t.Run("empty input returns error", func(t *testing.T) {
+		var out, errOut bytes.Buffer
+		if err := cmdHook(bytes.NewReader([]byte{}), &out, &errOut); err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var out, errOut bytes.Buffer
+	t.Run("malformed JSON returns error", func(t *testing.T) {
+		var out, errOut bytes.Buffer
+		if err := cmdHook(bytes.NewReader([]byte(`{not valid`)), &out, &errOut); err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
 
-			err := cmdHook(bytes.NewReader(tt.input), &out, &errOut)
+	t.Run("claude hook dispatches to claude handler", func(t *testing.T) {
+		out := runHook(t, claudeInput)
 
-			if tt.wantErr {
-				if err == nil {
-					t.Fatal("expected error, got nil")
-				}
+		var got adapter.ClaudeHookOutput
+		if err := json.Unmarshal(out.Bytes(), &got); err != nil {
+			t.Fatalf("unmarshal output: %v", err)
+		}
 
-				return
-			}
+		if got.HookSpecificOutput == nil {
+			t.Fatal("hookSpecificOutput is nil")
+		}
 
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
+		if !strings.Contains(got.HookSpecificOutput.AdditionalContext, "hook test context") {
+			t.Errorf("additionalContext %q does not contain %q", got.HookSpecificOutput.AdditionalContext, "hook test context")
+		}
+	})
 
-			if tt.wantOut != "" && !strings.Contains(out.String(), tt.wantOut) {
-				t.Errorf("output %q does not contain %q", out.String(), tt.wantOut)
-			}
+	t.Run("pi hook dispatches to pi handler", func(t *testing.T) {
+		out := runHook(t, piInput)
 
-			if tt.notWantOut != "" && strings.Contains(out.String(), tt.notWantOut) {
-				t.Errorf("output %q should not contain %q", out.String(), tt.notWantOut)
-			}
-		})
-	}
+		var got adapter.PiHookOutput
+		if err := json.Unmarshal(out.Bytes(), &got); err != nil {
+			t.Fatalf("unmarshal output: %v", err)
+		}
+
+		if !strings.Contains(got.AdditionalContext, "hook test context") {
+			t.Errorf("additionalContext %q does not contain %q", got.AdditionalContext, "hook test context")
+		}
+	})
+
+	t.Run("pi source with claude-shaped payload routes to pi handler", func(t *testing.T) {
+		out := runHook(t, piWithClaudeShape)
+
+		var got adapter.PiHookOutput
+		if err := json.Unmarshal(out.Bytes(), &got); err != nil {
+			t.Fatalf("unmarshal output: %v", err)
+		}
+
+		if !strings.Contains(got.AdditionalContext, "hook test context") {
+			t.Errorf("additionalContext %q does not contain %q", got.AdditionalContext, "hook test context")
+		}
+	})
 }
