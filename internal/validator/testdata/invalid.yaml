@@ -2,6 +2,7 @@ context:
   - content: ""
     on: nope
     when: yesterday
+    match: ["[invalid"]
 
 decisions:
   - decision: ""
