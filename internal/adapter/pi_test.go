@@ -303,6 +303,10 @@ func TestBashReadPath(t *testing.T) {
 		{"cat file1.go file2.go", "file1.go"},
 		{`cat "my file.txt"`, ""},
 		{`cat 'my file.txt'`, ""},
+		{"cat <<EOF", ""},
+		{"cat < file.txt", ""},
+		{"cat $(echo file.txt)", ""},
+		{"head -n 20 file.txt 2>/dev/null", "file.txt"},
 	}
 
 	for _, tt := range tests {

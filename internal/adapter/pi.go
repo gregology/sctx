@@ -169,6 +169,18 @@ func bashReadPath(command string) string {
 			return ""
 		}
 
+		if strings.HasPrefix(f, "<") || f == ">" {
+			return ""
+		}
+
+		if strings.HasPrefix(f, "$(") || strings.Contains(f, "`") {
+			return ""
+		}
+
+		if strings.ContainsRune(f, '>') {
+			continue
+		}
+
 		return f
 	}
 
