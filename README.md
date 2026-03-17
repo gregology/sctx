@@ -131,6 +131,12 @@ Add hooks to `.claude/settings.local.json`:
 }
 ```
 
+Or let sctx configure it automatically:
+
+```
+sctx claude enable
+```
+
 `sctx hook` reads the hook JSON from stdin, figures out the file path and action from the tool call, resolves matching context entries, and returns them as `additionalContext` in Claude Code's expected format. Decisions are not included in hook output to keep the token cost low. If nothing matches, it exits silently.
 
 The Write tool gets special handling: `sctx` checks whether the file exists on disk to distinguish `create` from `edit`.
