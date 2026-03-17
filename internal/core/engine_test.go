@@ -209,6 +209,45 @@ context:
 	assertContextContents(t, result.ContextEntries, wantContents)
 }
 
+func TestResolve_DefaultWhenIsBefore(t *testing.T) {
+	tmpDir := t.TempDir()
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "no explicit when"
+`)
+
+	target := filepath.Join(tmpDir, "file.txt")
+	writeTestFile(t, target, "")
+
+	// Omitting when: should default to "before", so TimingBefore resolves the entry.
+	result, _, err := Resolve(ResolveRequest{
+		FilePath: target,
+		Action:   ActionRead,
+		Timing:   TimingBefore,
+		Root:     tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	assertContextContents(t, result.ContextEntries, []string{"no explicit when"})
+
+	// TimingAfter must NOT match the default "before".
+	result, _, err = Resolve(ResolveRequest{
+		FilePath: target,
+		Action:   ActionRead,
+		Timing:   TimingAfter,
+		Root:     tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	if len(result.ContextEntries) != 0 {
+		t.Errorf("expected no entries for TimingAfter with default when, got %d", len(result.ContextEntries))
+	}
+}
+
 func TestResolve_NoContextFiles(t *testing.T) {
 	tmpDir := t.TempDir()
 
