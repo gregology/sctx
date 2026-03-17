@@ -808,6 +808,20 @@ func TestResolve_MalformedYAMLGracefulDegradation(t *testing.T) {
 			wantCtx:   []string{"Valid context"},
 			wantBadIn: "child",
 		},
+		{
+			name:      "map typed on field still resolves sibling",
+			rootYAML:  validYAML,
+			childYAML: "context:\n  - content: \"Bad on\"\n    on: {read: true}\n",
+			wantCtx:   []string{"Valid context"},
+			wantBadIn: "child",
+		},
+		{
+			name:      "nested sequence on field still resolves sibling",
+			rootYAML:  "context:\n  - content: \"Bad on\"\n    on: [[nested]]\n",
+			childYAML: validYAML,
+			wantCtx:   []string{"Valid context"},
+			wantBadIn: "root",
+		},
 	}
 
 	for _, tt := range tests {
