@@ -21,3 +21,8 @@ decisions:
     rationale: "resolveAction (claude.go) and resolvePiAction (pi.go) contain the same os.Stat heuristic for distinguishing create vs edit on write operations. Two copies is manageable; extracting a shared function now adds indirection without enough payoff. When a third adapter arrives, extract a shared resolveWriteAction(filePath string) core.Action function into a common file."
     revisit_when: "A third adapter is introduced"
     date: 2026-03-14
+
+  - decision: "Decline speculative bashReadPath hardening for redirects, heredocs, and subshells (#81)"
+    rationale: "bashReadPath already has 95.2% line coverage with 14 test cases. The proposed edge cases (heredocs, redirects, subshells) are hypothetical — no user has reported hitting them. Maintainer prefers a reactive approach: fix issues as they arise in practice rather than preemptively handling unlikely inputs."
+    revisit_when: "A user reports bashReadPath returning incorrect paths for real-world commands"
+    date: 2026-03-16
