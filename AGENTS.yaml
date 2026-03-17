@@ -128,3 +128,13 @@ decisions:
         reason_rejected: "Introduces Ruby/Bundler dependency. Jekyll development has slowed significantly."
     revisit_when: "Docs are moved to a separate repo and we want to reconsider the stack"
     date: 2026-03-07
+
+  - decision: "Declined issue #82: no documentation inconsistency exists for private function testing guidance"
+    rationale: >
+      Issue claimed TestMatchesGlobs exists in engine_test.go:24 and contradicts the testing doc's
+      guidance against testing private functions. Investigation found this is factually incorrect:
+      line 24 is TestResolve_EditBefore, and no TestMatchesGlobs function exists anywhere in the
+      codebase. The matchesGlobs function is tested only indirectly through Resolve() tests
+      (e.g. TestResolve_ExcludePattern, TestResolve_NonPythonFile), which is exactly what
+      docs/testing.md prescribes. The documentation and code are consistent — no changes needed.
+    date: 2026-03-16
