@@ -86,6 +86,73 @@ context:
 	}
 }
 
+func TestHandleClaudeHook_PreToolUseMultiEdit(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(tmpDir, ".git"), []byte(""), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	contextYAML := `
+context:
+  - content: "Edit guidance"
+    on: edit
+    when: before
+  - content: "Read guidance"
+    on: read
+    when: before
+`
+	if err := os.WriteFile(filepath.Join(tmpDir, "AGENTS.yaml"), []byte(contextYAML), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	target := filepath.Join(tmpDir, "file.py")
+
+	if err := os.WriteFile(target, []byte("# existing file"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	inputBytes := marshalInput(t, ClaudeHookInput{
+		SessionID:     "test-session",
+		HookEventName: "PreToolUse",
+		ToolName:      "MultiEdit",
+		ToolInput:     json.RawMessage(`{"file_path":"` + target + `"}`),
+		CWD:           tmpDir,
+	})
+
+	var out, errOut bytes.Buffer
+	if err := HandleClaudeHook(inputBytes, &out, &errOut); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var hookOutput ClaudeHookOutput
+	if err := json.Unmarshal(out.Bytes(), &hookOutput); err != nil {
+		t.Fatalf("failed to parse output JSON: %v (output was: %s)", err, out.String())
+	}
+
+	if hookOutput.HookSpecificOutput == nil {
+		t.Fatal("expected hookSpecificOutput to be present")
+	}
+
+	if hookOutput.HookSpecificOutput.HookEventName != "PreToolUse" {
+		t.Errorf("expected hookEventName PreToolUse, got %s", hookOutput.HookSpecificOutput.HookEventName)
+	}
+
+	if hookOutput.HookSpecificOutput.PermissionDecision != "allow" {
+		t.Errorf("expected permissionDecision 'allow', got %q", hookOutput.HookSpecificOutput.PermissionDecision)
+	}
+
+	ctx := hookOutput.HookSpecificOutput.AdditionalContext
+
+	if !strings.Contains(ctx, "Edit guidance") {
+		t.Errorf("expected edit context for MultiEdit, got: %s", ctx)
+	}
+
+	if strings.Contains(ctx, "Read guidance") {
+		t.Errorf("MultiEdit should not include read-only context, got: %s", ctx)
+	}
+}
+
 func TestHandleClaudeHook_NoFilePath(t *testing.T) {
 	inputBytes := marshalInput(t, ClaudeHookInput{
 		SessionID:     "test-session",
