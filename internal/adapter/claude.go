@@ -37,6 +37,11 @@ type ClaudeHookSpecificOutput struct {
 	AdditionalContext        string `json:"additionalContext,omitempty"`
 }
 
+const (
+	eventPreToolUse         = "PreToolUse"
+	permissionDecisionAllow = "allow"
+)
+
 // toolToAction maps Claude Code tool names to our universal action type.
 var toolToAction = map[string]core.Action{
 	"Read":      core.ActionRead,
@@ -97,8 +102,8 @@ func HandleClaudeHook(input []byte, out, errOut io.Writer) error {
 		AdditionalContext: formatContext(result.ContextEntries),
 	}
 
-	if hookInput.HookEventName == "PreToolUse" {
-		hookOutput.PermissionDecision = "allow"
+	if hookInput.HookEventName == eventPreToolUse {
+		hookOutput.PermissionDecision = permissionDecisionAllow
 		hookOutput.PermissionDecisionReason = "sctx: structured context injected"
 	}
 
