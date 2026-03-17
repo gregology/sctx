@@ -858,6 +858,149 @@ func TestResolve_MalformedYAMLGracefulDegradation(t *testing.T) {
 	}
 }
 
+func TestResolve_DecisionsNotMatchedForWrongFileType(t *testing.T) {
+	tmpDir := t.TempDir()
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+decisions:
+  - decision: "Use ruff for linting"
+    rationale: "Fast, replaces flake8+isort+pycodestyle"
+    match: ["**/*.py"]
+    date: 2026-03-06
+`)
+
+	target := filepath.Join(tmpDir, "main.go")
+	writeTestFile(t, target, "")
+
+	result, _, err := Resolve(ResolveRequest{
+		FilePath: target,
+		Action:   ActionEdit,
+		Timing:   TimingBefore,
+		Root:     tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	if len(result.DecisionEntries) != 0 {
+		t.Errorf("expected 0 decisions for .go file, got %d: %v",
+			len(result.DecisionEntries), result.DecisionEntries)
+	}
+}
+
+func TestResolve_DecisionsDefaultMatch(t *testing.T) {
+	tmpDir := t.TempDir()
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+decisions:
+  - decision: "YAML for config format"
+    rationale: "Human readable"
+    date: 2026-03-06
+`)
+
+	target := filepath.Join(tmpDir, "anything.rs")
+	writeTestFile(t, target, "")
+
+	result, _, err := Resolve(ResolveRequest{
+		FilePath: target,
+		Action:   ActionRead,
+		Timing:   TimingBefore,
+		Root:     tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	if len(result.DecisionEntries) != 1 {
+		t.Fatalf("expected 1 decision, got %d", len(result.DecisionEntries))
+	}
+	if result.DecisionEntries[0].Decision != "YAML for config format" {
+		t.Errorf("got decision %q", result.DecisionEntries[0].Decision)
+	}
+}
+
+func TestResolve_DecisionsMergeParentAndChild(t *testing.T) {
+	tmpDir := t.TempDir()
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+decisions:
+  - decision: "Go for implementation"
+    rationale: "Fast compile"
+    date: 2026-03-06
+`)
+
+	childDir := filepath.Join(tmpDir, "src")
+	if err := os.MkdirAll(childDir, 0o750); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+
+	writeTestFile(t, filepath.Join(childDir, "AGENTS.yaml"), `
+decisions:
+  - decision: "Table-driven tests"
+    rationale: "Idiomatic Go"
+    date: 2026-03-06
+`)
+
+	target := filepath.Join(childDir, "main.go")
+	writeTestFile(t, target, "")
+
+	result, _, err := Resolve(ResolveRequest{
+		FilePath: target,
+		Action:   ActionEdit,
+		Timing:   TimingBefore,
+		Root:     tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	if len(result.DecisionEntries) != 2 {
+		t.Fatalf("expected 2 decisions, got %d", len(result.DecisionEntries))
+	}
+	if result.DecisionEntries[0].Decision != "Go for implementation" {
+		t.Errorf("first decision should be from parent, got %q", result.DecisionEntries[0].Decision)
+	}
+	if result.DecisionEntries[1].Decision != "Table-driven tests" {
+		t.Errorf("second decision should be from child, got %q", result.DecisionEntries[1].Decision)
+	}
+}
+
+func TestResolve_ScopedDecisionExcludesNonMatchingFiles(t *testing.T) {
+	rapid.Check(t, func(rt *rapid.T) {
+		tmpDir := t.TempDir()
+
+		ext := rapid.SampledFrom([]string{".go", ".py", ".js", ".txt", ".md"}).Draw(rt, "ext")
+		otherExt := rapid.SampledFrom([]string{".rs", ".rb", ".java", ".cpp", ".zig"}).Draw(rt, "otherExt")
+		glob := "**/*" + ext
+		decisionText := "scoped-decision"
+
+		writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), fmt.Sprintf(`
+decisions:
+  - decision: %q
+    rationale: "test"
+    match: [%q]
+    date: 2026-03-06
+`, decisionText, glob))
+
+		target := filepath.Join(tmpDir, "somefile"+otherExt)
+		writeTestFile(t, target, "")
+
+		result, _, err := Resolve(ResolveRequest{
+			FilePath: target,
+			Action:   ActionRead,
+			Timing:   TimingBefore,
+			Root:     tmpDir,
+		})
+		if err != nil {
+			t.Fatalf("Resolve() error: %v", err)
+		}
+
+		for _, d := range result.DecisionEntries {
+			if d.Decision == decisionText {
+				t.Errorf("decision %q with match %q should not appear for file %q",
+					decisionText, glob, target)
+			}
+		}
+	})
+}
+
 // assertContextContents checks that the matched context entries have exactly
 // the expected content strings, in order.
 func assertContextContents(t *testing.T, got []MatchedContext, want []string) {
