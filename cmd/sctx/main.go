@@ -94,10 +94,10 @@ func cmdHook() error {
 	}
 
 	if adapter.IsPiHook(input) {
-		return adapter.HandlePiHook(input)
+		return adapter.HandlePiHook(input, os.Stdout, os.Stderr)
 	}
 
-	return adapter.HandleClaudeHook(input)
+	return adapter.HandleClaudeHook(input, os.Stdout, os.Stderr)
 }
 
 func cmdContext(args []string, out, errOut io.Writer) error {

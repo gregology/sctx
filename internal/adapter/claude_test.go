@@ -1,6 +1,7 @@
 package adapter
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -18,33 +19,6 @@ func marshalInput(t *testing.T, input ClaudeHookInput) []byte {
 	}
 
 	return data
-}
-
-// captureStdout runs fn with stdout redirected to a pipe and returns what was written.
-func captureStdout(t *testing.T, fn func()) string {
-	t.Helper()
-
-	oldStdout := os.Stdout
-
-	r, w, err := os.Pipe()
-	if err != nil {
-		t.Fatalf("failed to create pipe: %v", err)
-	}
-
-	os.Stdout = w
-
-	fn()
-
-	if err = w.Close(); err != nil {
-		t.Fatalf("failed to close pipe writer: %v", err)
-	}
-
-	os.Stdout = oldStdout
-
-	buf := make([]byte, 4096)
-	n, _ := r.Read(buf)
-
-	return string(buf[:n])
 }
 
 func TestHandleClaudeHook_PreToolUseEdit(t *testing.T) {
@@ -81,15 +55,14 @@ context:
 		CWD:           tmpDir,
 	})
 
-	output := captureStdout(t, func() {
-		if err := HandleClaudeHook(inputBytes); err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-	})
+	var out bytes.Buffer
+	if err := HandleClaudeHook(inputBytes, &out, &bytes.Buffer{}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	var hookOutput ClaudeHookOutput
-	if err := json.Unmarshal([]byte(output), &hookOutput); err != nil {
-		t.Fatalf("failed to parse output JSON: %v (output was: %s)", err, output)
+	if err := json.Unmarshal(out.Bytes(), &hookOutput); err != nil {
+		t.Fatalf("failed to parse output JSON: %v (output was: %s)", err, out.String())
 	}
 
 	if hookOutput.HookSpecificOutput == nil {
@@ -121,7 +94,7 @@ func TestHandleClaudeHook_NoFilePath(t *testing.T) {
 		ToolInput:     json.RawMessage(`{"command":"ls"}`),
 	})
 
-	err := HandleClaudeHook(inputBytes)
+	err := HandleClaudeHook(inputBytes, &bytes.Buffer{}, &bytes.Buffer{})
 	if err != nil {
 		t.Fatalf("expected no error for tool without file_path, got: %v", err)
 	}
@@ -158,15 +131,14 @@ context:
 		CWD:           tmpDir,
 	})
 
-	output := captureStdout(t, func() {
-		if err := HandleClaudeHook(inputBytes); err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-	})
+	var out bytes.Buffer
+	if err := HandleClaudeHook(inputBytes, &out, &bytes.Buffer{}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	var hookOutput ClaudeHookOutput
-	if err := json.Unmarshal([]byte(output), &hookOutput); err != nil {
-		t.Fatalf("failed to parse output: %v (output: %s)", err, output)
+	if err := json.Unmarshal(out.Bytes(), &hookOutput); err != nil {
+		t.Fatalf("failed to parse output: %v (output: %s)", err, out.String())
 	}
 
 	ctx := hookOutput.HookSpecificOutput.AdditionalContext
@@ -218,15 +190,14 @@ context:
 		CWD:           tmpDir,
 	})
 
-	output := captureStdout(t, func() {
-		if err := HandleClaudeHook(inputBytes); err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-	})
+	var out bytes.Buffer
+	if err := HandleClaudeHook(inputBytes, &out, &bytes.Buffer{}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	var hookOutput ClaudeHookOutput
-	if err := json.Unmarshal([]byte(output), &hookOutput); err != nil {
-		t.Fatalf("failed to parse output: %v (output: %s)", err, output)
+	if err := json.Unmarshal(out.Bytes(), &hookOutput); err != nil {
+		t.Fatalf("failed to parse output: %v (output: %s)", err, out.String())
 	}
 
 	ctx := hookOutput.HookSpecificOutput.AdditionalContext
@@ -277,15 +248,14 @@ context:
 		CWD:           tmpDir,
 	})
 
-	output := captureStdout(t, func() {
-		if err := HandleClaudeHook(inputBytes); err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-	})
+	var out bytes.Buffer
+	if err := HandleClaudeHook(inputBytes, &out, &bytes.Buffer{}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	var hookOutput ClaudeHookOutput
-	if err := json.Unmarshal([]byte(output), &hookOutput); err != nil {
-		t.Fatalf("failed to parse output: %v (output: %s)", err, output)
+	if err := json.Unmarshal(out.Bytes(), &hookOutput); err != nil {
+		t.Fatalf("failed to parse output: %v (output: %s)", err, out.String())
 	}
 
 	if hookOutput.HookSpecificOutput == nil {
@@ -334,15 +304,14 @@ context:
 		CWD:           tmpDir,
 	})
 
-	output := captureStdout(t, func() {
-		if err := HandleClaudeHook(inputBytes); err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-	})
+	var out bytes.Buffer
+	if err := HandleClaudeHook(inputBytes, &out, &bytes.Buffer{}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	var hookOutput ClaudeHookOutput
-	if err := json.Unmarshal([]byte(output), &hookOutput); err != nil {
-		t.Fatalf("failed to parse output JSON: %v (output was: %s)", err, output)
+	if err := json.Unmarshal(out.Bytes(), &hookOutput); err != nil {
+		t.Fatalf("failed to parse output JSON: %v (output was: %s)", err, out.String())
 	}
 
 	if hookOutput.HookSpecificOutput == nil {
@@ -406,21 +375,20 @@ context:
 				CWD:           tmpDir,
 			})
 
-			output := captureStdout(t, func() {
-				if err := HandleClaudeHook(inputBytes); err != nil {
-					t.Fatalf("unexpected error: %v", err)
-				}
-			})
+			var out bytes.Buffer
+			if err := HandleClaudeHook(inputBytes, &out, &bytes.Buffer{}); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 
-			if output != "" {
-				t.Errorf("expected no output (no auto-allow), got: %s", output)
+			if out.Len() != 0 {
+				t.Errorf("expected no output (no auto-allow), got: %s", out.String())
 			}
 		})
 	}
 }
 
 func TestHandleClaudeHook_MalformedInput(t *testing.T) {
-	err := HandleClaudeHook([]byte(`{not valid json`))
+	err := HandleClaudeHook([]byte(`{not valid json`), &bytes.Buffer{}, &bytes.Buffer{})
 	if err == nil {
 		t.Fatal("expected error for malformed JSON input, got nil")
 	}
