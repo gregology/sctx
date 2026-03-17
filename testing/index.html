@@ -587,7 +587,7 @@
 <p>Property tests belong only in <code>internal/core</code>. The adapter and validator don't have the combinatorial complexity to justify them.</p>
 <h3 id="internaladapter-integration-tests-only"><code>internal/adapter</code> — Integration tests only<a class="headerlink" href="#internaladapter-integration-tests-only" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Test <code>HandleClaudeHook()</code> with real JSON input on stdin, assert on formatted output</li>
+<li>Test <code>HandleClaudeHook()</code> with real JSON input and <code>bytes.Buffer</code> writers, assert on formatted output</li>
 <li>Test <code>EnableClaude()</code> / <code>DisableClaude()</code> against real temp <code>.claude/settings.local.json</code> files</li>
 <li>Table-driven tests for tool-name-to-action mapping</li>
 </ul>
