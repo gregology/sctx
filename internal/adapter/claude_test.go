@@ -73,8 +73,12 @@ context:
 		t.Errorf("expected hookEventName PreToolUse, got %s", hookOutput.HookSpecificOutput.HookEventName)
 	}
 
-	if hookOutput.HookSpecificOutput.AdditionalContext == "" {
-		t.Error("expected non-empty additionalContext")
+	ctx := hookOutput.HookSpecificOutput.AdditionalContext
+	if !strings.Contains(ctx, "Test context before edit") {
+		t.Errorf("expected before-edit context, got: %s", ctx)
+	}
+	if strings.Contains(ctx, "Test context after edit") {
+		t.Errorf("should not contain after-edit context, got: %s", ctx)
 	}
 
 	if hookOutput.HookSpecificOutput.PermissionDecision != "allow" {
