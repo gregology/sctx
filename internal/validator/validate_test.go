@@ -32,9 +32,9 @@ func TestValidateFile_Invalid(t *testing.T) {
 	errors := ValidateFile(path)
 
 	// Expecting: missing content, invalid action "nope", invalid when "yesterday",
-	// missing decision, missing rationale.
-	if len(errors) < 4 {
-		t.Errorf("expected at least 4 errors, got %d", len(errors))
+	// missing decision, missing rationale, invalid date.
+	if len(errors) < 5 {
+		t.Errorf("expected at least 5 errors, got %d", len(errors))
 		for _, e := range errors {
 			t.Logf("  %s", e)
 		}
@@ -46,6 +46,7 @@ func TestValidateFile_Invalid(t *testing.T) {
 		"invalid when":          false,
 		"decision is required":  false,
 		"rationale is required": false,
+		"invalid date":          false,
 	}
 
 	for _, e := range errors {

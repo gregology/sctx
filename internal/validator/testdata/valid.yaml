@@ -7,3 +7,4 @@ context:
 decisions:
   - decision: "Use requests"
     rationale: "Stable, well-known"
+    date: 2026-03-06
