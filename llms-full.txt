@@ -1,0 +1,1039 @@
+# Structured Context
+
+> Scoped, structured context for AI agents. Drop AGENTS.yaml files into your codebase and agents get the right guidance at the right time.
+
+sctx replaces monolithic instruction files with distributed AGENTS.yaml files placed throughout a codebase. When an AI agent edits a file, sctx discovers nearby AGENTS.yaml files, filters their instructions by glob patterns and action type, and delivers only the relevant context just-in-time. This ensures agents receive precise, scoped guidance instead of an overwhelming wall of instructions.
+
+
+# Getting Started
+
+# Getting started
+
+## Install
+
+```
+brew install gregology/tap/sctx
+```
+
+```
+curl -Lo sctx.deb https://github.com/gregology/sctx/releases/download/latest/sctx_linux_amd64.deb
+sudo dpkg -i sctx.deb
+```
+
+For ARM64:
+
+```
+curl -Lo sctx.deb https://github.com/gregology/sctx/releases/download/latest/sctx_linux_arm64.deb
+sudo dpkg -i sctx.deb
+```
+
+```
+curl -Lo sctx.rpm https://github.com/gregology/sctx/releases/download/latest/sctx_linux_amd64.rpm
+sudo rpm -i sctx.rpm
+```
+
+For ARM64:
+
+```
+curl -Lo sctx.rpm https://github.com/gregology/sctx/releases/download/latest/sctx_linux_arm64.rpm
+sudo rpm -i sctx.rpm
+```
+
+```
+curl -Lo sctx.pkg.tar.zst https://github.com/gregology/sctx/releases/download/latest/sctx_linux_amd64.pkg.tar.zst
+sudo pacman -U sctx.pkg.tar.zst
+```
+
+For ARM64:
+
+```
+curl -Lo sctx.pkg.tar.zst https://github.com/gregology/sctx/releases/download/latest/sctx_linux_arm64.pkg.tar.zst
+sudo pacman -U sctx.pkg.tar.zst
+```
+
+```
+go install github.com/gregology/sctx/cmd/sctx@latest
+```
+
+Make sure `~/go/bin` is in your PATH:
+
+```
+echo 'export PATH="$PATH:$(go env GOPATH)/bin"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+## Create your first context file
+
+From your project root:
+
+```
+sctx init
+```
+
+This creates an `AGENTS.yaml` with a test context entry that tells agents to mention the RNZAF's flightless-bird roundel whenever New Zealand comes up. This gives you a quick way to verify that context is being injected.
+
+## Test it
+
+Hook into Claude Code (see below), then ask your agent:
+
+> Give me a very concise description of this project. Explain it like I'm 5 as I'm from New Zealand.
+
+If the agent mentions the RNZAF roundel, context injection is working. Replace the starter entry with your own context.
+
+You can also test from the command line:
+
+```
+sctx context README.md --on read --when before
+```
+
+Check what decisions apply:
+
+```
+sctx decisions src/main.py
+```
+
+Validate all context files in your project:
+
+```
+sctx validate
+```
+
+## Hook into Claude Code
+
+Add this to `.claude/settings.local.json` for personal use, or `.claude/settings.json` to share hooks with all contributors (or `~/.claude/settings.json` for all projects):
+
+```
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sctx hook"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Read|Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sctx hook"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Or let sctx do it for you:
+
+```
+sctx claude enable
+```
+
+Now when Claude reads or edits a file, `sctx` automatically injects the relevant context. If nothing matches, it's a silent no-op.
+
+## Hook into pi
+
+Install the sctx extension into your project:
+
+```
+sctx pi enable
+```
+
+This creates `.pi/extensions/sctx.ts`, a thin extension that hooks into pi's `tool_call` and `tool_result` events. For mutating tools (`edit`, `write`), context is provided *before* the edit by blocking the tool call and asking the agent to review it first. For all other tools, matching context is injected into the tool result.
+
+To remove:
+
+```
+sctx pi disable
+```
+
+## Add more context files
+
+Context files can live anywhere in your project. Add them where the context is most relevant:
+
+```
+project/
+  AGENTS.yaml           <- project-wide conventions
+  src/
+    api/
+      AGENTS.yaml       <- API-specific guidelines
+    models/
+      AGENTS.yaml       <- data model conventions
+  tests/
+    AGENTS.yaml         <- testing standards
+```
+
+Child directories inherit and merge with parent context. No need to repeat yourself.
+
+## What's next
+
+- [Examples](https://sctx.dev/examples/index.md) -- patterns for dbt, React, Terraform, and more
+- [Protocol spec](https://sctx.dev/protocol/index.md) -- the full schema reference
+- [CLI reference](https://sctx.dev/cli-reference/index.md) -- all commands and flags
+# Documentation
+
+# Protocol specification
+
+This defines the Structured Context protocol: the file format, schema, resolution algorithm, and merge behavior. It's written for implementors building tools that read or write context files.
+
+## Context files
+
+### Recognized filenames
+
+| Filename      | Notes               |
+| ------------- | ------------------- |
+| `AGENTS.yaml` | Primary name        |
+| `AGENTS.yml`  | Alternate extension |
+
+Both `.yaml` and `.yml` are standard. The protocol accepts both.
+
+If multiple context files exist in the same directory, all are loaded and their contents merged.
+
+### Placement
+
+Context files can appear in any directory. Tools discover them by walking up from the target file to the project root, collecting every context file found along the way.
+
+### Project root
+
+The project root is the working directory where the tool was launched — not detected via file markers. This is deliberate: marker-based detection (`.git`, `pyproject.toml`, etc.) breaks in monorepos where subdirectories contain their own project markers.
+
+- **Hook mode** (`sctx hook`): The root is the `cwd` field from the agent's JSON input. For Claude Code, this is the directory where `claude` was started.
+- **CLI mode** (`sctx context`, `sctx decisions`): The root is the current working directory where `sctx` is run.
+
+Only `AGENTS.yaml` files at or below the root are considered. Files above the root are never seen.
+
+### Missing files
+
+If no context files exist in the project, tools should emit a warning and return gracefully. Missing files are not errors.
+
+## Schema
+
+A context file has two optional top-level keys:
+
+```
+context:
+  - # ... context entries
+
+decisions:
+  - # ... decision entries
+```
+
+Both are lists. Both are optional.
+
+### Context entries
+
+Each entry is an atomic piece of guidance.
+
+```
+context:
+  - content: "Use snake_case for all identifiers"
+    match: ["**/*.py"]
+    exclude: ["**/vendor/**"]
+    on: edit
+    when: after
+```
+
+#### Fields
+
+| Field     | Type           | Required | Default  | Description                                       |
+| --------- | -------------- | -------- | -------- | ------------------------------------------------- |
+| `content` | string         | yes      | --       | The context to deliver                            |
+| `match`   | list of globs  | no       | `["**"]` | File patterns this applies to                     |
+| `exclude` | list of globs  | no       | `[]`     | File patterns to exclude                          |
+| `on`      | string or list | no       | `all`    | Action filter: `read`, `edit`, `create`, or `all` |
+| `when`    | string         | no       | `before` | Prompt positioning: `before`, `after`, or `all`   |
+
+#### `content`
+
+A self-contained, actionable piece of guidance. Prefer multiple focused entries over one large entry. Each entry should make sense on its own without needing to read other entries.
+
+#### `match` and `exclude`
+
+Standard glob patterns. Same syntax as `.gitignore`, `.editorconfig`, and similar tools.
+
+Globs are resolved relative to the directory containing the context file, not the project root. A pattern `**/*.py` in `src/api/AGENTS.yaml` matches Python files under `src/api/`, not the entire project.
+
+The default match is `["**"]` (recursive, everything). Use `*` for single-level matching.
+
+`exclude` is applied after `match`. A file must match at least one `match` pattern and zero `exclude` patterns.
+
+#### `on`
+
+The action being performed on the file.
+
+| Value    | Meaning                             |
+| -------- | ----------------------------------- |
+| `read`   | Agent is reading the file           |
+| `edit`   | Agent is modifying an existing file |
+| `create` | Agent is creating a new file        |
+| `all`    | Any action (default)                |
+
+Accepts a single string (`on: edit`) or a list (`on: [edit, create]`).
+
+#### `when`
+
+Controls where context appears relative to the file content in the agent's prompt.
+
+| Value    | Meaning                                                                    |
+| -------- | -------------------------------------------------------------------------- |
+| `before` | Context appears before file content. Default. Good for general guidelines. |
+| `after`  | Context appears after file content. Use for high-priority instructions.    |
+| `all`    | Context appears for both `before` and `after` timing requests.             |
+
+This matters because LLMs exhibit primacy and recency effects. They weight the beginning and end of their context window more heavily. If a piece of context is critical and the file is large, placing it `after` gives it stronger influence on the model's output.
+
+### Decision entries
+
+Decisions capture architectural choices, their rationale, and the alternatives that were considered. This prevents agents from re-litigating settled choices or introducing patterns that were deliberately rejected.
+
+```
+decisions:
+  - decision: "REST over GraphQL for public APIs"
+    rationale: "Team expertise and simpler caching"
+    alternatives:
+      - option: "GraphQL"
+        reason_rejected: "Team has no GraphQL experience, caching is complex"
+      - option: "gRPC"
+        reason_rejected: "Public API needs browser compatibility"
+    revisit_when: "We need real-time subscriptions or complex nested queries"
+    date: 2025-10-20
+    match: ["src/api/**"]
+```
+
+#### Fields
+
+| Field          | Type          | Required | Default  | Description                        |
+| -------------- | ------------- | -------- | -------- | ---------------------------------- |
+| `decision`     | string        | yes      | --       | What was decided                   |
+| `rationale`    | string        | yes      | --       | Why this was chosen                |
+| `alternatives` | list          | no       | --       | Other options that were considered |
+| `revisit_when` | string        | no       | --       | Condition to reconsider            |
+| `date`         | date          | no       | --       | When it was made (YYYY-MM-DD)      |
+| `match`        | list of globs | no       | `["**"]` | Scope to specific files            |
+
+#### `alternatives`
+
+Each alternative has:
+
+| Field             | Type   | Required | Description                         |
+| ----------------- | ------ | -------- | ----------------------------------- |
+| `option`          | string | yes      | The alternative that was considered |
+| `reason_rejected` | string | yes      | Why it wasn't chosen                |
+
+Including alternatives gives agents (and humans) the full picture. Without them, an agent might suggest the exact thing you already evaluated and rejected.
+
+#### `revisit_when`
+
+Decisions are made under constraints. When constraints change, the decision may no longer hold. Making the trigger condition explicit lets agents flag stale decisions rather than blindly following them.
+
+## Resolution algorithm
+
+Given a file path, an action, and a timing:
+
+1. **Discover** -- Walk from the target file's directory up to the project root (the working directory), collecting all context files at each level
+1. **Parse** -- Parse each file. Emit warnings for invalid files but continue processing valid ones
+1. **Filter by match/exclude** -- Test each entry's glob patterns against the target file path. Globs are relative to the context file's directory
+1. **Filter by action** -- Keep entries where `on` includes the requested action (or is `all`)
+1. **Filter by timing** -- Keep entries where `when` matches the requested timing
+1. **Merge** -- Combine all matching entries. Parent directory entries come first, child directory entries come last
+1. **Return** -- The ordered list of matching context entries and decisions
+
+### Merge order
+
+Parent directories come before child directories. This means:
+
+- General project-level context appears first (lower specificity)
+- Directory-specific context appears last (higher specificity, stronger recency in the prompt)
+
+This ordering is intentional. The most specific, most relevant context gets the strongest position in the LLM's attention.
+
+### Validation rules
+
+- `content` is required on every context entry
+- `decision` and `rationale` are required on every decision entry
+- `on` values must be: `read`, `edit`, `create`, `all`, or a list of these
+- `when` values must be: `before`, `after`, or `all`
+- `match` and `exclude` must be valid glob patterns
+- `date` must be YYYY-MM-DD if present
+- Unknown fields produce warnings, not errors (forward compatibility)
+
+# CLI reference
+
+## sctx hook
+
+Reads agent hook input from stdin, resolves matching context entries, and writes the response to stdout. This is the primary integration point for AI agents.
+
+```
+echo '{"tool_name":"Edit","tool_input":{"file_path":"/project/src/main.py"},"hook_event_name":"PreToolUse"}' | sctx hook
+```
+
+Supports Claude Code and pi JSON formats. The source is auto-detected: input with `"source": "pi"` is routed to the pi adapter; all other input is treated as Claude Code format. The `cwd` field determines the project root — only `AGENTS.yaml` files at or below this directory are considered.
+
+Only context entries are included in hook output. Decisions are excluded to keep token costs low. Use `sctx decisions` to query decisions separately.
+
+If no context matches, exits 0 with no output (a no-op for Claude Code).
+
+The Write tool gets special treatment: `sctx` checks whether the target file exists on disk to distinguish `create` (new file) from `edit` (existing file).
+
+## sctx context \<path>
+
+Query context entries for a file. Useful for debugging and testing your context files. The current working directory is used as the project root — only `AGENTS.yaml` files at or below it are considered.
+
+```
+sctx context src/api/handler.py
+sctx context src/api/handler.py --on edit --when before
+sctx context src/api/handler.py --json
+```
+
+### Flags
+
+| Flag              | Default | Description                                       |
+| ----------------- | ------- | ------------------------------------------------- |
+| `--on <action>`   | `all`   | Filter by action: `read`, `edit`, `create`, `all` |
+| `--when <timing>` | `all`   | Filter by timing: `before`, `after`, `all`        |
+| `--json`          | off     | Output as JSON instead of human-readable text     |
+
+## sctx decisions \<path>
+
+Query decisions for a file. Shows architectural decisions that apply based on glob matching.
+
+```
+sctx decisions src/api/handler.py
+sctx decisions src/api/handler.py --json
+```
+
+### Flags
+
+| Flag     | Default | Description                                   |
+| -------- | ------- | --------------------------------------------- |
+| `--json` | off     | Output as JSON instead of human-readable text |
+
+## sctx validate [\<dir>]
+
+Validates all `AGENTS.yaml` and `AGENTS.yml` files found in a directory tree. Reports schema errors and invalid glob patterns.
+
+```
+sctx validate
+sctx validate ./src
+```
+
+Defaults to the current directory if no path is given.
+
+Exit code 0 if all files are valid. Exit code 1 if any errors are found. Warnings (like unknown fields) don't cause a non-zero exit.
+
+## sctx init
+
+Creates a starter `AGENTS.yaml` in the current directory with commented examples.
+
+```
+sctx init
+```
+
+Refuses to overwrite an existing `AGENTS.yaml`.
+
+## sctx claude enable
+
+Installs the `sctx hook` into your project's `.claude/settings.local.json`. Creates the settings file if it doesn't exist. Requires the `.claude/` directory to already be present (i.e., you've run `claude` in this project at least once). If hooks are already configured, it leaves them alone.
+
+```
+sctx claude enable
+```
+
+## sctx claude disable
+
+Removes the `sctx hook` entries from `.claude/settings.local.json`.
+
+```
+sctx claude disable
+```
+
+## sctx pi enable
+
+Installs a thin TypeScript extension at `.pi/extensions/sctx.ts` that hooks into pi's `tool_call` and `tool_result` events and forwards them to `sctx hook`. For mutating tools (`edit`, `write`), the extension blocks the tool call and surfaces context before the edit occurs. For all other tools, context is appended to the tool result. Requires a `.pi/` directory to exist in the current directory.
+
+```
+sctx pi enable
+```
+
+## sctx pi disable
+
+Removes the sctx extension from `.pi/extensions/sctx.ts`. Cleans up the `extensions/` directory if empty.
+
+```
+sctx pi disable
+```
+
+## sctx version
+
+Prints the version.
+
+```
+sctx version
+```
+
+## Exit codes
+
+| Code | Meaning                                                        |
+| ---- | -------------------------------------------------------------- |
+| 0    | Success (includes "no context matched" -- that's not an error) |
+| 1    | Fatal error: invalid arguments, IO failure, validation errors  |
+
+# Examples
+
+Real-world patterns for using Structured Context. Each example shows the problem, the file structure, and the AGENTS.yaml that solves it.
+
+## dbt project
+
+A dbt `models/` directory contains SQL models, YAML schema files, and markdown docs. An agent editing a SQL model needs completely different context than one editing a YAML schema.
+
+```
+models/
+  AGENTS.yaml
+  staging/
+    stg_orders.sql
+    stg_orders.yml
+    stg_orders.md
+    stg_customers.sql
+    stg_customers.yml
+```
+
+```
+# models/AGENTS.yaml
+
+context:
+  - content: |
+      SQL models use the following conventions:
+      - CTEs over subqueries, always
+      - snake_case for all identifiers
+      - Prefix staging models with stg_, intermediate with int_, mart with fct_ or dim_
+      - Use the incremental materialization with merge strategy for large tables
+      - Reference other models with {{ ref('model_name') }}, never hardcode table names
+    match: ["**/*.sql"]
+    on: [edit, create]
+    when: before
+
+  - content: |
+      Schema YAML files define tests and documentation for each model.
+      Every model must have:
+      - A description
+      - A unique test on the primary key
+      - not_null tests on required columns
+      - accepted_values tests on status/type columns
+      Column descriptions should be written for business users, not engineers.
+    match: ["**/*.yml", "**/*.yaml"]
+    on: [edit, create]
+    when: before
+
+  - content: |
+      Documentation files follow this template:
+      ## Overview (what this model represents)
+      ## Source (where the data comes from)
+      ## Key columns (the important fields and what they mean)
+      ## Business rules (any transformations or filters applied)
+      These are read by analysts and PMs. Write for that audience.
+    match: ["**/*.md"]
+    on: [edit, create]
+    when: before
+
+decisions:
+  - decision: "Incremental models use merge strategy, not delete+insert"
+    rationale: "Merge handles late-arriving data correctly without duplicates"
+    alternatives:
+      - option: "delete+insert"
+        reason_rejected: "Creates a window where rows are missing during refresh"
+      - option: "insert_overwrite"
+        reason_rejected: "Only works with partition-based models"
+    date: 2025-08-15
+    match: ["**/*.sql"]
+```
+
+You could put all of this in an `AGENTS.md`, but every paragraph would start with "if you're editing a SQL file..." and the agent would parse all of it every time. With `AGENTS.yaml`, each entry is scoped to exactly the files it applies to.
+
+## API service
+
+A typical API directory has route handlers, middleware, tests, and OpenAPI specs. Each needs different guidance.
+
+```
+src/api/
+  AGENTS.yaml
+  handlers/
+    users.py
+    users_test.py
+    orders.py
+    orders_test.py
+  middleware/
+    auth.py
+    rate_limit.py
+  openapi/
+    spec.yaml
+```
+
+```
+# src/api/AGENTS.yaml
+
+context:
+  - content: |
+      Handlers follow this pattern:
+      1. Validate input with a Pydantic model
+      2. Call the service layer (never access the database directly)
+      3. Return a typed response model
+      4. Raise HTTPException for error cases, don't return error dicts
+    match: ["handlers/**/*.py"]
+    exclude: ["**/*_test.py"]
+    on: [edit, create]
+    when: before
+
+  - content: |
+      Tests use pytest with the test client fixture. Each handler test file
+      should test: happy path, validation errors, auth failures, and not-found
+      cases. Use factory functions for test data, not raw dicts.
+    match: ["**/*_test.py"]
+    on: [edit, create]
+    when: before
+
+  - content: |
+      Middleware must be stateless. No database calls, no file I/O.
+      Configuration comes from environment variables loaded at startup.
+      Always call `await call_next(request)` even in error paths.
+    match: ["middleware/**/*.py"]
+    on: [edit, create]
+    when: before
+
+  - content: "The OpenAPI spec is the source of truth for the API contract. Update it before changing handler signatures, not after."
+    match: ["openapi/**"]
+    on: edit
+    when: after
+
+decisions:
+  - decision: "Pydantic for request/response validation, not marshmallow or attrs"
+    rationale: "Native FastAPI integration, better type inference, JSON Schema generation for free"
+    alternatives:
+      - option: "marshmallow"
+        reason_rejected: "Requires separate schema definitions, no FastAPI integration"
+      - option: "attrs + cattrs"
+        reason_rejected: "No JSON Schema output, manual validation code"
+    date: 2025-09-01
+```
+
+## React component library
+
+Component directories mix implementation, tests, stories, and styles. The conventions for each are different.
+
+```
+src/components/
+  AGENTS.yaml
+  Button/
+    Button.tsx
+    Button.test.tsx
+    Button.stories.tsx
+    Button.module.css
+```
+
+```
+# src/components/AGENTS.yaml
+
+context:
+  - content: |
+      Components are functional, using hooks. Props interfaces are defined
+      in the same file, exported, and named ComponentNameProps.
+      Use forwardRef for any component that wraps a native HTML element.
+    match: ["**/*.tsx"]
+    exclude: ["**/*.test.tsx", "**/*.stories.tsx"]
+    on: [edit, create]
+    when: before
+
+  - content: |
+      Tests use React Testing Library. Test behavior, not implementation.
+      Query by role or label, never by class name or test ID unless there's
+      no accessible alternative. Every component needs: render test,
+      interaction test, accessibility check with axe.
+    match: ["**/*.test.tsx"]
+    on: [edit, create]
+    when: before
+
+  - content: |
+      Stories follow the CSF3 format. Every component needs: a Default
+      story, one story per significant prop variation, and an interactive
+      story with args. Use the autodocs tag.
+    match: ["**/*.stories.tsx"]
+    on: [edit, create]
+    when: before
+
+  - content: "CSS modules only. No global styles, no inline styles, no styled-components. Use design tokens from tokens.css for colors, spacing, and typography."
+    match: ["**/*.css"]
+    on: [edit, create]
+    when: before
+```
+
+## Terraform infrastructure
+
+Infrastructure-as-code directories mix resource definitions, variable files, and documentation.
+
+```
+infra/
+  AGENTS.yaml
+  main.tf
+  variables.tf
+  terraform.tfvars
+  README.md
+  modules/
+    networking/
+      main.tf
+      outputs.tf
+```
+
+```
+# infra/AGENTS.yaml
+
+context:
+  - content: |
+      All resources must have: a Name tag, an Environment tag, and a
+      ManagedBy tag set to "terraform". Use locals for any value
+      referenced more than once. Never hardcode AWS account IDs.
+    match: ["**/*.tf"]
+    exclude: ["**/*.tfvars"]
+    on: [edit, create]
+    when: before
+
+  - content: "Variable files contain only variable declarations. No resources, no data sources, no locals. Every variable needs a description and a type constraint."
+    match: ["**/variables.tf"]
+    on: [edit, create]
+    when: after
+
+  - content: "tfvars files are environment-specific configuration. Never commit secrets here. Use SSM Parameter Store references for sensitive values."
+    match: ["**/*.tfvars"]
+    on: [edit, create]
+    when: before
+
+decisions:
+  - decision: "Modules over inline resources for anything used more than once"
+    rationale: "Consistent patterns, testable units, version-pinned interfaces"
+    alternatives:
+      - option: "Copy-paste resources across environments"
+        reason_rejected: "Drift between environments, maintenance burden"
+      - option: "Terragrunt wrappers"
+        reason_rejected: "Extra tool, extra abstraction layer, team doesn't know it"
+    date: 2025-07-10
+    match: ["**/*.tf"]
+```
+
+## Monorepo with shared conventions
+
+Some context applies everywhere. Some only applies to specific packages. Structured Context handles this through directory inheritance.
+
+```
+monorepo/
+  AGENTS.yaml              <- shared conventions
+  packages/
+    auth/
+      AGENTS.yaml          <- auth-specific
+      src/
+    payments/
+      AGENTS.yaml          <- payments-specific
+      src/
+    shared/
+      src/
+```
+
+```
+# monorepo/AGENTS.yaml (root)
+
+context:
+  - content: "All packages use ESM imports. No require() calls. No default exports."
+    match: ["**/*.ts", "**/*.tsx"]
+    on: [edit, create]
+    when: before
+
+  - content: "Error classes extend BaseError from @monorepo/shared. Never throw plain strings or generic Error."
+    match: ["**/*.ts"]
+    on: [edit, create]
+    when: before
+
+decisions:
+  - decision: "pnpm over npm or yarn"
+    rationale: "Strict dependency resolution, disk efficiency, workspace support"
+    alternatives:
+      - option: "npm"
+        reason_rejected: "Flat node_modules causes phantom dependency issues"
+      - option: "yarn berry"
+        reason_rejected: "PnP mode breaks too many tools"
+    date: 2025-06-01
+```
+
+```
+# monorepo/packages/payments/AGENTS.yaml
+
+context:
+  - content: "All monetary values are integers in cents. Never use floats for money. The Money type from @monorepo/shared handles formatting."
+    match: ["**/*.ts"]
+    on: [edit, create]
+    when: after
+
+decisions:
+  - decision: "Stripe over Braintree for payment processing"
+    rationale: "Better API design, better docs, team has experience"
+    alternatives:
+      - option: "Braintree"
+        reason_rejected: "Worse developer experience, PayPal ownership concerns"
+      - option: "Adyen"
+        reason_rejected: "Overkill for our volume, enterprise-focused onboarding"
+    revisit_when: "Stripe pricing becomes prohibitive or we need multi-PSP"
+    date: 2025-08-20
+    match: ["**/*.ts"]
+```
+
+When an agent edits `packages/payments/src/checkout.ts`, it gets the shared monorepo conventions *and* the payments-specific context. The payments context appears last, giving it stronger influence.
+
+## Writing good decisions
+
+A good decision entry answers four questions:
+
+1. **What** did you decide?
+1. **Why** did you pick this option?
+1. **What else** did you consider, and why didn't you pick those?
+1. **When** should someone revisit this?
+
+The `alternatives` field is the most underused and the most valuable. Without it, an agent might suggest switching to the exact tool you already evaluated and rejected. With it, the agent knows the option was considered and understands the tradeoffs.
+
+```
+# Weak: leaves the agent guessing
+decisions:
+  - decision: "Use PostgreSQL"
+    rationale: "Good database"
+
+# Strong: full picture
+decisions:
+  - decision: "PostgreSQL over MySQL or DynamoDB"
+    rationale: "JSONB columns for flexible metadata, strong ecosystem for our Python stack, team expertise"
+    alternatives:
+      - option: "MySQL"
+        reason_rejected: "Weaker JSON support, no array types"
+      - option: "DynamoDB"
+        reason_rejected: "Single-table design is complex, hard to run locally, vendor lock-in"
+      - option: "MongoDB"
+        reason_rejected: "Weaker consistency guarantees, team prefers SQL"
+    revisit_when: "Write throughput exceeds what a single Postgres instance can handle"
+    date: 2025-05-15
+```
+
+Dates matter too. A decision made two years ago under different constraints might be worth questioning. One made last week probably isn't.
+
+# How does sctx compare?
+
+The short version: `sctx` provides **file-targeted, action-filtered context injection**. Instead of loading all instructions all the time, it delivers only the entries that match what the agent is doing right now.
+
+| Tool         | Scope                    | Format               | Delivery              |
+| ------------ | ------------------------ | -------------------- | --------------------- |
+| AGENTS.md    | Directory                | Unstructured prose   | Always loaded         |
+| MCP          | External tools & data    | RPC protocol         | On demand via server  |
+| .cursorrules | Project root             | Monolithic prompt    | Always loaded         |
+| **sctx**     | **Per-file, per-action** | **Declarative YAML** | **JIT, glob-matched** |
+
+## AGENTS.md
+
+[AGENTS.md](https://agents.md/) is becoming the standard project-level manifest for AI coding agents, providing a dedicated place for build commands and coding conventions.
+
+**The distinction:** `AGENTS.md` is directory-scoped and largely unstructured prose. Developers must write natural language conditional logic ("If you are editing a SQL file, do X"). As the file grows, agents struggle to parse it — attention dilutes and the model quietly ignores the instruction that mattered most.
+
+Structured Context improves on this with declarative YAML glob-matching (`**/*.sql`), ensuring the LLM only ever reads the context applicable to the file it is actively touching.
+
+## Model Context Protocol (MCP)
+
+Anthropic's [MCP](https://modelcontextprotocol.io/) is an open-source client-server protocol that standardizes how AI systems integrate with external tools and data sources.
+
+**The distinction:** MCP is an **active RPC protocol** (like a USB-C cable for AI tools), whereas `sctx` is a **static declarative file format**. MCP connects the agent to the environment, while `sctx` dictates the *rules of engagement* for the codebase. They're complementary — an MCP server could be built to dynamically serve `sctx` contexts to an agent.
+
+## IDE-specific rules (.cursorrules / .windsurfrules)
+
+Project-root or directory-level markdown files where developers drop system prompts and stylistic preferences for AI IDEs like Cursor or Windsurf.
+
+**The distinction:** These rules are generally monolithic. If a `.cursorrules` file contains React, Python, and SQL guidelines, the AI is burdened with all of them simultaneously during *any* edit. `sctx`'s action-filtering (`on: read` vs `on: edit` vs `on: create`) and precise file-path scoping offer a level of granularity that these files lack.
+
+### Example: monolithic rules vs. targeted context
+
+A typical `.cursorrules` file loads everything at once:
+
+```
+# .cursorrules
+
+When editing Python files, use snake_case for all identifiers.
+When editing SQL models, use the incremental strategy macro.
+When editing React components, prefer named exports.
+When creating any file, add a license header.
+```
+
+The agent sees all four instructions regardless of which file it touches. With Structured Context, each instruction only appears when it's relevant:
+
+```
+# AGENTS.yaml
+
+context:
+  - content: "Use snake_case for all identifiers"
+    match: ["**/*.py"]
+    on: edit
+
+  - content: "Use the incremental strategy macro"
+    match: ["models/**/*.sql"]
+    on: edit
+
+  - content: "Prefer named exports"
+    match: ["src/components/**/*.tsx"]
+    on: edit
+
+  - content: "Add a license header"
+    on: create
+```
+
+When the agent edits `models/revenue.sql`, it sees one instruction instead of four. At scale — dozens of conventions across a monorepo — the difference in signal-to-noise ratio is significant.
+# Optional
+
+# Contributing
+
+## Prerequisites
+
+- Go 1.25 or later
+- [golangci-lint](https://golangci-lint.run/welcome/install/) v2+
+
+## Getting started
+
+```
+git clone https://github.com/gregology/sctx.git
+cd sctx
+make check
+```
+
+That runs formatting, vetting, linting, and tests with race detection. If it passes, you're set.
+
+## Building
+
+```
+# Build the binary
+make build
+
+# Run without building
+go run ./cmd/sctx version
+
+# Install to $GOPATH/bin
+go install ./cmd/sctx
+```
+
+## Running tests
+
+```
+# All tests with race detection
+make test
+
+# Specific package
+go test ./internal/core/...
+
+# Specific test
+go test ./internal/core/... -run TestResolve_EditBefore
+
+# With coverage
+make cover
+```
+
+## Project structure
+
+```
+cmd/sctx/              CLI entry point. Thin dispatch layer.
+internal/
+  core/                Agent-agnostic engine. Discovers, parses,
+                       filters, and merges context files.
+  adapter/             Agent-specific translation layers. Each
+                       adapter maps agent input to a ResolveRequest.
+  validator/           Schema validation for context files.
+docs/                  Documentation (you're reading it).
+```
+
+The key boundary: `internal/core` must never import from `internal/adapter`. Agent-specific logic stays in adapters.
+
+## Making changes
+
+1. Create a branch off `main`
+1. Make your changes
+1. Run `make check` -- fmt, vet, lint, and tests must all pass
+1. Open a PR
+
+### Adding a new adapter
+
+Create a new file in `internal/adapter/` (e.g., `cursor.go`). Your adapter reads whatever input the agent provides, maps it to a `core.ResolveRequest`, calls `core.Resolve`, and formats the output. Look at `claude.go` for the pattern.
+
+### Adding new context fields
+
+1. Add the field to the struct in `internal/core/schema.go`
+1. Set a default in `applyDefaults` in `engine.go` if needed
+1. If the field acts as a filter, add filtering logic in `filterContext()` or `filterDecisions()` in `engine.go`
+1. Add validation in `internal/validator/validate.go`
+1. Update testdata fixtures
+1. Update `docs/protocol.md`
+
+### Test conventions
+
+- Table-driven tests for unit logic
+- Test fixtures go in `testdata/` directories
+- Use `t.TempDir()` when the test needs dynamic file creation
+- No assertion libraries -- plain `if` + `t.Errorf`
+- Test names follow `TestFunctionName_Scenario`
+
+## Linting
+
+We use golangci-lint with a tuned config in `.golangci.yml`. Some linters are intentionally disabled with rationale in the config file. If you think the linter found a false positive, check the config before adding a `//nolint` directive. If you do add one, include the linter name and a reason:
+
+```
+data, err := os.ReadFile(path) //nolint:gosec // path comes from directory walk, not user input
+```
+
+## Validating context files
+
+The project uses its own AGENTS.yaml files. After editing them:
+
+```
+go run ./cmd/sctx validate .
+```
+
+# Roadmap
+
+## v1 (current)
+
+The foundation: file format, resolution engine, Claude Code integration.
+
+- AGENTS.yaml file discovery and parsing
+- Glob-based file matching with `match`/`exclude`
+- Action filtering (`on`: read, edit, create, all)
+- Timing filtering (`when`: before, after)
+- Directory tree merging (child merges with parent)
+- `sctx hook` -- Claude Code adapter
+- `sctx context` -- query context entries for a file
+- `sctx decisions` -- query decisions for a file
+- `sctx validate` -- schema validation
+- `sctx init` -- starter file generation
+- `alternatives` field on decisions -- record what else was considered and why it was rejected
+- `sctx claude enable/disable` -- install/remove hooks in Claude Code settings
+
+## v2 (planned)
+
+Richer context management and broader agent support.
+
+- **`ref` field** -- reference context defined in another file, maintaining a single source of truth
+- **Session-aware deduplication** -- track what context has already been delivered in a session to avoid repetition
+- **Additional agent adapters** -- Cursor, Windsurf, and others as they expose hook mechanisms
+- **Temporal filtering** -- context that activates after a date or expires before a date, for migration periods and deprecation windows
+- **Extensible filtering** -- framework for community-requested filter dimensions beyond glob, action, timing, and date
+
+## v3 (future)
+
+Advanced features for teams and organizations.
+
+- **Remote context sources** -- URL-based context that accepts parameters, for centralized guidelines or dynamic context
+- **Context versioning** -- track when entries were last updated, surface stale context
+- **Analytics** -- which context entries are delivered most and least, helping teams identify gaps and noise
+- **Context benchmarking** -- A/B test different context entries to measure which produce better agent outcomes
