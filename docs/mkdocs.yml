@@ -36,6 +36,24 @@ theme:
   icon:
     repo: fontawesome/brands/github
 
+plugins:
+  - search
+  - llmstxt:
+      markdown_description: |
+        sctx replaces monolithic instruction files with distributed AGENTS.yaml files placed throughout a codebase. When an AI agent edits a file, sctx discovers nearby AGENTS.yaml files, filters their instructions by glob patterns and action type, and delivers only the relevant context just-in-time. This ensures agents receive precise, scoped guidance instead of an overwhelming wall of instructions.
+      full_output: llms-full.txt
+      sections:
+        Getting Started:
+          - getting-started.md: Installation via Homebrew, go install, or binary download; Claude Code integration setup
+        Documentation:
+          - protocol.md: AGENTS.yaml format specification, schema, and resolution algorithm
+          - cli-reference.md: CLI commands including hook, context, decisions, validate, init, claude enable/disable
+          - examples.md: Real-world patterns for dbt, APIs, React, Terraform, and monorepos
+          - comparisons.md: How sctx differs from AGENTS.md, MCP, llms.txt, and .cursorrules
+        Optional:
+          - contributing.md: Building, testing, and contributing
+          - roadmap.md: Planned features for v2 and v3
+
 markdown_extensions:
   - admonition
   - pymdownx.details
