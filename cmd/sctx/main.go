@@ -349,7 +349,7 @@ decisions:
 // It checks if the path exists as a directory on disk, or ends with a path separator.
 // When the path doesn't exist, it falls back to the trailing slash convention.
 func isDir(absPath, originalPath string) bool {
-	info, err := os.Stat(absPath) //nolint:gosec // absPath is derived from filepath.Abs, not user-controlled taint
+	info, err := os.Stat(absPath) //nolint:gosec // os.Stat is read-only, safe on user-provided paths
 	if err == nil {
 		return info.IsDir()
 	}

@@ -61,10 +61,10 @@ func resolveFile(req ResolveRequest, root string) (*ResolveResult, []string, err
 	result := &ResolveResult{}
 
 	for _, cf := range files {
-		matchedCtx := filterContext(cf, absPath, req.Action, req.Timing)
+		matchedCtx := filterContext(cf, absPath, req.Action, req.Timing, matchesFileGlobs)
 		result.ContextEntries = append(result.ContextEntries, matchedCtx...)
 
-		matchedDec := filterDecisions(cf, absPath)
+		matchedDec := filterDecisions(cf, absPath, matchesFileGlobs)
 		result.DecisionEntries = append(result.DecisionEntries, matchedDec...)
 	}
 
@@ -84,10 +84,10 @@ func resolveDir(req ResolveRequest, root string) (*ResolveResult, []string, erro
 	result := &ResolveResult{}
 
 	for _, cf := range files {
-		matchedCtx := filterContextDir(cf, absDir, req.Action, req.Timing)
+		matchedCtx := filterContext(cf, absDir, req.Action, req.Timing, matchesDirGlobs)
 		result.ContextEntries = append(result.ContextEntries, matchedCtx...)
 
-		matchedDec := filterDecisionsDir(cf, absDir)
+		matchedDec := filterDecisions(cf, absDir, matchesDirGlobs)
 		result.DecisionEntries = append(result.DecisionEntries, matchedDec...)
 	}
 
@@ -171,12 +171,15 @@ func applyDefaults(cf *ContextFile) {
 	}
 }
 
-// filterContext returns context entries from cf that match the given file, action, and timing.
-func filterContext(cf ContextFile, absPath string, action Action, timing Timing) []MatchedContext {
+// globMatcher checks whether a path matches the given match/exclude patterns.
+type globMatcher func(sourceDir, path string, match, exclude []string) bool
+
+// filterContext returns context entries from cf that match the given path, action, and timing.
+func filterContext(cf ContextFile, absPath string, action Action, timing Timing, matcher globMatcher) []MatchedContext {
 	var matched []MatchedContext
 
 	for _, entry := range cf.Context {
-		if !matchesFileGlobs(cf.sourceDir, absPath, entry.Match, entry.Exclude) {
+		if !matcher(cf.sourceDir, absPath, entry.Match, entry.Exclude) {
 			continue
 		}
 
@@ -197,53 +200,12 @@ func filterContext(cf ContextFile, absPath string, action Action, timing Timing)
 	return matched
 }
 
-// filterContextDir returns context entries from cf that match the given directory, action, and timing.
-func filterContextDir(cf ContextFile, absDir string, action Action, timing Timing) []MatchedContext {
-	var matched []MatchedContext
-
-	for _, entry := range cf.Context {
-		if !matchesDirGlobs(cf.sourceDir, absDir, entry.Match, entry.Exclude) {
-			continue
-		}
-
-		if !matchesAction(entry.On, action) {
-			continue
-		}
-
-		if timing != TimingAll && Timing(entry.When) != TimingAll && Timing(entry.When) != timing {
-			continue
-		}
-
-		matched = append(matched, MatchedContext{
-			Content:   entry.Content,
-			SourceDir: cf.sourceDir,
-		})
-	}
-
-	return matched
-}
-
-// filterDecisions returns decision entries from cf that match the given file.
-func filterDecisions(cf ContextFile, absPath string) []DecisionEntry {
+// filterDecisions returns decision entries from cf that match the given path.
+func filterDecisions(cf ContextFile, absPath string, matcher globMatcher) []DecisionEntry {
 	var matched []DecisionEntry
 
 	for _, entry := range cf.Decisions {
-		if !matchesFileGlobs(cf.sourceDir, absPath, entry.Match, nil) {
-			continue
-		}
-
-		matched = append(matched, entry)
-	}
-
-	return matched
-}
-
-// filterDecisionsDir returns decision entries from cf that match the given directory.
-func filterDecisionsDir(cf ContextFile, absDir string) []DecisionEntry {
-	var matched []DecisionEntry
-
-	for _, entry := range cf.Decisions {
-		if !matchesDirGlobs(cf.sourceDir, absDir, entry.Match, nil) {
+		if !matcher(cf.sourceDir, absPath, entry.Match, nil) {
 			continue
 		}
 
@@ -526,17 +488,19 @@ func matchSegments(pat, dir []string, pi, di int) bool {
 
 // matchSegmentsStrict is the strict version of matchSegments, used for exclude
 // evaluation. It tracks whether at least one non-"**" pattern segment was matched
-// against a real directory segment. If not, remaining literal segments are
-// considered unvalidated and the match is rejected.
+// against a real directory segment (segmentValidated). If not, the directory
+// is not confirmed to be in scope and the match is rejected.
 //
 // Truth table:
 //
 //	Pattern          | Dir     | Result | Why
 //	*                | foo     | false  | pattern exhausted, no remaining segments
-//	foo/*            | foo     | true   | literal "foo" matched, * remains for children
-//	**/vendor/**     | src     | false  | no literal matched, ** can't validate alone
-//	**/vendor/**     | vendor  | true   | "vendor" literal matched, ** remains
-func matchSegmentsStrict(pat, dir []string, pi, di int, literalMatched bool) bool {
+//	foo/*            | foo     | true   | "foo" validated, * remains for children
+//	**/vendor/**     | src     | false  | no segment validated, ** can't confirm alone
+//	**/vendor/**     | vendor  | true   | "vendor" validated, ** remains
+//	**/*.py          | src     | false  | ** consumed src but *.py is just a filename
+//	*/*.py           | src     | true   | * validated against src, *.py remains
+func matchSegmentsStrict(pat, dir []string, pi, di int, segmentValidated bool) bool {
 	for pi < len(pat) && di < len(dir) {
 		p := pat[pi]
 
@@ -546,7 +510,7 @@ func matchSegmentsStrict(pat, dir []string, pi, di int, literalMatched bool) boo
 			}
 
 			for skip := 0; skip <= len(dir)-di; skip++ {
-				if matchSegmentsStrict(pat, dir, pi+1, di+skip, literalMatched) {
+				if matchSegmentsStrict(pat, dir, pi+1, di+skip, segmentValidated) {
 					return true
 				}
 			}
@@ -559,7 +523,7 @@ func matchSegmentsStrict(pat, dir []string, pi, di int, literalMatched bool) boo
 			return false
 		}
 
-		literalMatched = true
+		segmentValidated = true
 		pi++
 		di++
 	}
@@ -576,7 +540,7 @@ func matchSegmentsStrict(pat, dir []string, pi, di int, literalMatched bool) boo
 		// directory is in scope. For example, **/*.py has remaining ["*.py"]
 		// after ** consumes all dirs, but no directory was validated — the
 		// pattern targets files, not directories.
-		return literalMatched
+		return segmentValidated
 	}
 
 	return false

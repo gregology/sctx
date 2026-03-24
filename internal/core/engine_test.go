@@ -1546,16 +1546,35 @@ func TestResolve_DirQuery_NeverPanics(t *testing.T) {
 			}
 		}
 
-		action := genAction(rt)
-		timing := genTiming(rt)
+		// Add a catch-all entry at the root that must always appear.
+		writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "catch-all"
+    on: all
+    when: all
+`)
 
-		// Must not panic.
-		_, _, _ = Resolve(ResolveRequest{
+		// Must not panic, and the catch-all must always be present.
+		result, _, err := Resolve(ResolveRequest{
 			DirPath: dir,
-			Action:  action,
-			Timing:  timing,
+			Action:  ActionAll,
+			Timing:  TimingAll,
 			Root:    tmpDir,
 		})
+		if err != nil {
+			t.Fatalf("Resolve() error: %v", err)
+		}
+
+		found := false
+		for _, e := range result.ContextEntries {
+			if e.Content == "catch-all" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatalf("catch-all entry (match: [**], no exclude) missing for dir %s", dir)
+		}
 	})
 }
 
@@ -2011,6 +2030,40 @@ context:
 			}
 		})
 	}
+}
+
+func TestResolve_DirQuery_ExcludeSingleStarVsDoubleStar(t *testing.T) {
+	// * validates against a directory segment (it matches a specific name),
+	// while ** just bridges without validating. So exclude: ["*/*.py"] excludes
+	// top-level directories (the * confirmed the dir is in scope), but
+	// exclude: ["**/*.py"] does not (no directory was validated).
+	tmpDir := t.TempDir()
+	srcDir := filepath.Join(tmpDir, "src")
+	if err := os.MkdirAll(srcDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "excluded by star-slash"
+    exclude: ["*/*.py"]
+  - content: "not excluded by doublestar"
+    exclude: ["**/*.py"]
+`)
+
+	result, _, err := Resolve(ResolveRequest{
+		DirPath: srcDir,
+		Action:  ActionAll,
+		Timing:  TimingAll,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	// */*.py excludes src/ (single * validated against "src").
+	// **/*.py does NOT exclude src/ (** consumed "src" without validation).
+	assertContextContents(t, result.ContextEntries, []string{"not excluded by doublestar"})
 }
 
 func TestResolve_DirQuery_MixedPatternTypes(t *testing.T) {

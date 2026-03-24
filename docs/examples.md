@@ -310,7 +310,7 @@ decisions:
 
   - decision: "Webhook handlers in this package, not in the API gateway"
     rationale: "Payment webhooks need access to payment domain logic for validation"
-    match: ["./"]  # scoped to this directory only, not inherited by subdirectories
+    match: ["*"]  # files directly in this directory, not inherited by subdirectories
 ```
 
 When an agent edits `packages/payments/src/checkout.ts`, it gets the shared monorepo conventions *and* the payments-specific context. The payments context appears last, giving it stronger influence.
