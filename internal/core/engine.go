@@ -384,14 +384,13 @@ func dirSlashPatternMatches(relDir, pattern string) bool {
 		// "**/*/" to falsely match the source directory.
 		//
 		// "./" is an explicit self-reference (used in docs/examples.md).
+		// "./**/" means "self and all subdirs". Strip "./" first so the
+		// **/ loop handles the rest.
 		// Bare **/ chains mean "any directory" and match zero segments.
 		// Everything else (*/  src/  **/src/  **/*/) requires real path
 		// segments and must not match the source directory.
-		if pattern == "./" {
-			return true
-		}
+		trimmed := strings.TrimPrefix(pattern, "./")
 
-		trimmed := pattern
 		for strings.HasPrefix(trimmed, "**/") {
 			trimmed = trimmed[3:]
 		}
@@ -399,8 +398,10 @@ func dirSlashPatternMatches(relDir, pattern string) bool {
 		return trimmed == ""
 	}
 
+	// Strip "./" prefix — patterns are already relative to sourceDir,
+	// so "./" is redundant and doublestar treats "." as a literal segment.
 	dirWithSlash := relDir + "/"
-	ok, err := doublestar.Match(pattern, dirWithSlash)
+	ok, err := doublestar.Match(strings.TrimPrefix(pattern, "./"), dirWithSlash)
 
 	return err == nil && ok
 }
@@ -570,17 +571,12 @@ func matchSegmentsStrict(pat, dir []string, pi, di int, literalMatched bool) boo
 			return false
 		}
 
-		if literalMatched {
-			return true
-		}
-
-		// No literals validated. Only match for single filename segment
-		// or remaining starting with **.
-		if len(remaining) == 1 {
-			return true
-		}
-
-		return remaining[0] == "**"
+		// At least one non-** segment must have been validated against a
+		// real directory segment. Without that, we can't confirm this
+		// directory is in scope. For example, **/*.py has remaining ["*.py"]
+		// after ** consumes all dirs, but no directory was validated — the
+		// pattern targets files, not directories.
+		return literalMatched
 	}
 
 	return false

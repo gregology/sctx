@@ -1912,6 +1912,10 @@ func TestResolve_DirQuery_DirSlashPatternsAtRoot(t *testing.T) {
 		// character class patterns — must not match root
 		{"match [st]rc/ at root", "match", "[st]rc/", "", 0},
 		{"match [st]rc/ at src", "match", "[st]rc/", "src", 1},
+
+		// ./**/ — self plus all subdirectories
+		{"match ./**/ at root", "match", "./**/", "", 1},
+		{"match ./**/ at child", "match", "./**/", "src", 1},
 	}
 
 	for _, tt := range tests {
@@ -1937,6 +1941,60 @@ func TestResolve_DirQuery_DirSlashPatternsAtRoot(t *testing.T) {
 
 			result, _, err := Resolve(ResolveRequest{
 				DirPath: queryDir,
+				Action:  ActionAll,
+				Timing:  TimingAll,
+				Root:    tmpDir,
+			})
+			if err != nil {
+				t.Fatalf("Resolve() error: %v", err)
+			}
+			if len(result.ContextEntries) != tt.wantN {
+				got := make([]string, len(result.ContextEntries))
+				for i, e := range result.ContextEntries {
+					got[i] = e.Content
+				}
+				t.Errorf("got %d entries %v, want %d", len(result.ContextEntries), got, tt.wantN)
+			}
+		})
+	}
+}
+
+func TestResolve_DirQuery_ExcludeFileGlobFilename(t *testing.T) {
+	// exclude: ["**/*.py"] targets Python files, not directories.
+	// It must NOT exclude directories in directory queries.
+	tmpDir := t.TempDir()
+	srcDir := filepath.Join(tmpDir, "src")
+	apiDir := filepath.Join(tmpDir, "src", "api")
+	for _, d := range []string{apiDir} {
+		if err := os.MkdirAll(d, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "not python"
+    exclude: ["**/*.py"]
+  - content: "not tests"
+    exclude: ["**/*_test.go"]
+  - content: "not generated"
+    exclude: ["**/generated/*.js"]
+`)
+
+	tests := []struct {
+		name  string
+		dir   string
+		wantN int
+	}{
+		{"root not excluded", tmpDir, 3},
+		{"src/ not excluded", srcDir, 3},
+		{"src/api/ not excluded", apiDir, 3},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, _, err := Resolve(ResolveRequest{
+				DirPath: tt.dir,
 				Action:  ActionAll,
 				Timing:  TimingAll,
 				Root:    tmpDir,
