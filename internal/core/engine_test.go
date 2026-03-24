@@ -1054,6 +1054,545 @@ decisions:
 	})
 }
 
+// --- Directory query tests ---
+
+func TestResolve_DirQuery_TrailingSlashPattern(t *testing.T) {
+	tmpDir := t.TempDir()
+	testsDir := filepath.Join(tmpDir, "tests")
+	if err := os.MkdirAll(testsDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "dir-scoped to tests"
+    match: ["tests/"]
+    on: all
+    when: before
+  - content: "file-scoped to tests"
+    match: ["tests/**"]
+    on: all
+    when: before
+`)
+
+	// Directory query for tests/ should match the trailing-slash pattern.
+	result, _, err := Resolve(ResolveRequest{
+		DirPath: testsDir,
+		Action:  ActionAll,
+		Timing:  TimingAll,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	assertContextContents(t, result.ContextEntries, []string{
+		"dir-scoped to tests",
+		"file-scoped to tests",
+	})
+}
+
+func TestResolve_DirQuery_TrailingSlashDoesNotMatchSubdir(t *testing.T) {
+	tmpDir := t.TempDir()
+	testsDir := filepath.Join(tmpDir, "tests")
+	unitDir := filepath.Join(testsDir, "unit")
+	if err := os.MkdirAll(unitDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "dir-scoped to tests"
+    match: ["tests/"]
+    on: all
+    when: before
+`)
+
+	// Directory query for tests/unit/ should NOT match "tests/".
+	result, _, err := Resolve(ResolveRequest{
+		DirPath: unitDir,
+		Action:  ActionAll,
+		Timing:  TimingAll,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	if len(result.ContextEntries) != 0 {
+		t.Errorf("expected 0 entries for subdir query, got %d: %v",
+			len(result.ContextEntries), result.ContextEntries)
+	}
+}
+
+func TestResolve_DirQuery_TrailingSlashDoesNotMatchFileQuery(t *testing.T) {
+	tmpDir := t.TempDir()
+	testsDir := filepath.Join(tmpDir, "tests")
+	if err := os.MkdirAll(testsDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "dir-scoped to tests"
+    match: ["tests/"]
+    on: all
+    when: before
+`)
+
+	target := filepath.Join(testsDir, "conftest.py")
+	writeTestFile(t, target, "")
+
+	// File query should NOT match "tests/" pattern.
+	result, _, err := Resolve(ResolveRequest{
+		FilePath: target,
+		Action:   ActionAll,
+		Timing:   TimingAll,
+		Root:     tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	if len(result.ContextEntries) != 0 {
+		t.Errorf("expected 0 entries for file query against dir pattern, got %d", len(result.ContextEntries))
+	}
+}
+
+func TestResolve_DirQuery_GlobWithDoubleStarSlash(t *testing.T) {
+	tmpDir := t.TempDir()
+	fooTests := filepath.Join(tmpDir, "foo", "bar", "tests")
+	bazTests := filepath.Join(tmpDir, "foo", "baz", "tests")
+	fooBar := filepath.Join(tmpDir, "foo", "bar")
+	for _, d := range []string{fooTests, bazTests} {
+		if err := os.MkdirAll(d, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "any tests dir under foo"
+    match: ["foo/**/tests/"]
+    on: all
+    when: before
+`)
+
+	tests := []struct {
+		name  string
+		dir   string
+		wantN int
+	}{
+		{"foo/bar/tests matches", fooTests, 1},
+		{"foo/baz/tests matches", bazTests, 1},
+		{"foo/bar does not match", fooBar, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, _, err := Resolve(ResolveRequest{
+				DirPath: tt.dir,
+				Action:  ActionAll,
+				Timing:  TimingAll,
+				Root:    tmpDir,
+			})
+			if err != nil {
+				t.Fatalf("Resolve() error: %v", err)
+			}
+
+			if len(result.ContextEntries) != tt.wantN {
+				t.Errorf("expected %d entries, got %d", tt.wantN, len(result.ContextEntries))
+			}
+		})
+	}
+}
+
+func TestResolve_DirQuery_FileGlobMatchesContainingDir(t *testing.T) {
+	tmpDir := t.TempDir()
+	srcDir := filepath.Join(tmpDir, "src")
+	testsDir := filepath.Join(tmpDir, "tests")
+	for _, d := range []string{srcDir, testsDir} {
+		if err := os.MkdirAll(d, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "all python files"
+    match: ["**/*.py"]
+    on: all
+    when: before
+  - content: "src only"
+    match: ["src/**"]
+    on: all
+    when: before
+`)
+
+	tests := []struct {
+		name string
+		dir  string
+		want []string
+	}{
+		{"src gets both", srcDir, []string{"all python files", "src only"}},
+		{"tests gets wildcard only", testsDir, []string{"all python files"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, _, err := Resolve(ResolveRequest{
+				DirPath: tt.dir,
+				Action:  ActionAll,
+				Timing:  TimingAll,
+				Root:    tmpDir,
+			})
+			if err != nil {
+				t.Fatalf("Resolve() error: %v", err)
+			}
+
+			assertContextContents(t, result.ContextEntries, tt.want)
+		})
+	}
+}
+
+func TestResolve_DirQuery_DecisionsWithTrailingSlash(t *testing.T) {
+	tmpDir := t.TempDir()
+	apiDir := filepath.Join(tmpDir, "src", "api")
+	modelsDir := filepath.Join(tmpDir, "src", "models")
+	for _, d := range []string{apiDir, modelsDir} {
+		if err := os.MkdirAll(d, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+decisions:
+  - decision: "REST over GraphQL"
+    rationale: "Team expertise"
+    match: ["src/api/"]
+  - decision: "PostgreSQL over DynamoDB"
+    rationale: "JSONB support"
+`)
+
+	// api dir gets both (dir-scoped + default **)
+	result, _, err := Resolve(ResolveRequest{
+		DirPath: apiDir,
+		Action:  ActionAll,
+		Timing:  TimingAll,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	if len(result.DecisionEntries) != 2 {
+		t.Fatalf("expected 2 decisions for api dir, got %d", len(result.DecisionEntries))
+	}
+
+	// models dir only gets the default ** decision
+	result, _, err = Resolve(ResolveRequest{
+		DirPath: modelsDir,
+		Action:  ActionAll,
+		Timing:  TimingAll,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	if len(result.DecisionEntries) != 1 {
+		t.Fatalf("expected 1 decision for models dir, got %d", len(result.DecisionEntries))
+	}
+	if result.DecisionEntries[0].Decision != "PostgreSQL over DynamoDB" {
+		t.Errorf("wrong decision: %q", result.DecisionEntries[0].Decision)
+	}
+}
+
+func TestResolve_DirQuery_MutuallyExclusive(t *testing.T) {
+	_, _, err := Resolve(ResolveRequest{
+		FilePath: "/some/file.go",
+		DirPath:  "/some/dir",
+		Root:     "/some",
+	})
+	if err == nil {
+		t.Fatal("expected error when both FilePath and DirPath are set")
+	}
+}
+
+func TestResolve_DirQuery_SelfDirectory(t *testing.T) {
+	// Query the directory that contains the AGENTS.yaml itself.
+	tmpDir := t.TempDir()
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "applies to everything"
+    on: all
+    when: before
+decisions:
+  - decision: "some decision"
+    rationale: "some reason"
+`)
+
+	result, _, err := Resolve(ResolveRequest{
+		DirPath: tmpDir,
+		Action:  ActionAll,
+		Timing:  TimingAll,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	assertContextContents(t, result.ContextEntries, []string{"applies to everything"})
+	if len(result.DecisionEntries) != 1 {
+		t.Fatalf("expected 1 decision, got %d", len(result.DecisionEntries))
+	}
+}
+
+func TestResolve_DirQuery_ParentMergesWithChild(t *testing.T) {
+	tmpDir := t.TempDir()
+	childDir := filepath.Join(tmpDir, "child")
+	if err := os.MkdirAll(childDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "from parent"
+`)
+	writeTestFile(t, filepath.Join(childDir, "AGENTS.yaml"), `
+context:
+  - content: "from child"
+`)
+
+	result, _, err := Resolve(ResolveRequest{
+		DirPath: childDir,
+		Action:  ActionAll,
+		Timing:  TimingAll,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	assertContextContents(t, result.ContextEntries, []string{"from parent", "from child"})
+}
+
+func TestResolve_DirQuery_ActionAndTimingFiltering(t *testing.T) {
+	tmpDir := t.TempDir()
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "edit-before"
+    on: edit
+    when: before
+  - content: "read-after"
+    on: read
+    when: after
+  - content: "all-all"
+    on: all
+    when: all
+`)
+
+	result, _, err := Resolve(ResolveRequest{
+		DirPath: tmpDir,
+		Action:  ActionEdit,
+		Timing:  TimingBefore,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	assertContextContents(t, result.ContextEntries, []string{"edit-before", "all-all"})
+}
+
+func TestResolve_DirQuery_ExcludeWithTrailingSlash(t *testing.T) {
+	tmpDir := t.TempDir()
+	vendorDir := filepath.Join(tmpDir, "vendor")
+	srcDir := filepath.Join(tmpDir, "src")
+	for _, d := range []string{vendorDir, srcDir} {
+		if err := os.MkdirAll(d, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "everywhere except vendor"
+    exclude: ["vendor/"]
+`)
+
+	// src should match
+	result, _, err := Resolve(ResolveRequest{
+		DirPath: srcDir,
+		Action:  ActionAll,
+		Timing:  TimingAll,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+	assertContextContents(t, result.ContextEntries, []string{"everywhere except vendor"})
+
+	// vendor should be excluded
+	result, _, err = Resolve(ResolveRequest{
+		DirPath: vendorDir,
+		Action:  ActionAll,
+		Timing:  TimingAll,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+	if len(result.ContextEntries) != 0 {
+		t.Errorf("expected 0 entries for vendor dir, got %d", len(result.ContextEntries))
+	}
+}
+
+func TestResolve_DirQuery_SingleStarPattern(t *testing.T) {
+	tmpDir := t.TempDir()
+	fooDir := filepath.Join(tmpDir, "foo")
+	fooBarDir := filepath.Join(tmpDir, "foo", "bar")
+	for _, d := range []string{fooDir, fooBarDir} {
+		if err := os.MkdirAll(d, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "direct children only"
+    match: ["foo/*"]
+`)
+
+	// foo/ should match (foo/* can match files in foo/)
+	result, _, err := Resolve(ResolveRequest{
+		DirPath: fooDir,
+		Action:  ActionAll,
+		Timing:  TimingAll,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+	assertContextContents(t, result.ContextEntries, []string{"direct children only"})
+
+	// foo/bar/ should NOT match (foo/* only matches direct children)
+	result, _, err = Resolve(ResolveRequest{
+		DirPath: fooBarDir,
+		Action:  ActionAll,
+		Timing:  TimingAll,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+	if len(result.ContextEntries) != 0 {
+		t.Errorf("expected 0 entries for foo/bar/, got %d", len(result.ContextEntries))
+	}
+}
+
+func TestResolve_DirQuery_NeverPanics(t *testing.T) {
+	rapid.Check(t, func(rt *rapid.T) {
+		tmpDir := t.TempDir()
+
+		depth := rapid.IntRange(0, 3).Draw(rt, "depth")
+		dir := tmpDir
+
+		for i := range depth {
+			dir = filepath.Join(dir, genDirName(rt))
+			if err := os.MkdirAll(dir, 0o750); err != nil {
+				t.Fatalf("mkdir: %v", err)
+			}
+
+			numEntries := rapid.IntRange(0, 4).Draw(rt, "numEntries")
+			var entries []ContextEntry
+
+			for j := range numEntries {
+				numMatch := rapid.IntRange(0, 2).Draw(rt, "numMatch")
+				var match []string
+				for range numMatch {
+					// Include directory patterns in the mix.
+					if rapid.Bool().Draw(rt, "isDirPattern") {
+						match = append(match, genGlob(rt)+"/")
+					} else {
+						match = append(match, genGlob(rt))
+					}
+				}
+
+				entries = append(entries, ContextEntry{
+					Content: fmt.Sprintf("content-%d-%d", i, j),
+					Match:   match,
+					On:      FlexList{genOnValue(rt)},
+					When:    genWhenValue(rt),
+				})
+			}
+
+			if len(entries) > 0 {
+				writeAgentsYAML(t, dir, entries)
+			}
+		}
+
+		action := genAction(rt)
+		timing := genTiming(rt)
+
+		// Must not panic.
+		_, _, _ = Resolve(ResolveRequest{
+			DirPath: dir,
+			Action:  action,
+			Timing:  timing,
+			Root:    tmpDir,
+		})
+	})
+}
+
+func TestResolve_DirQuery_DeepPatternFromParentDir(t *testing.T) {
+	tmpDir := t.TempDir()
+	srcDir := filepath.Join(tmpDir, "src")
+	apiDir := filepath.Join(tmpDir, "src", "api")
+	handlersDir := filepath.Join(tmpDir, "src", "api", "handlers")
+	otherDir := filepath.Join(tmpDir, "other")
+	for _, d := range []string{handlersDir, otherDir} {
+		if err := os.MkdirAll(d, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "handler context"
+    match: ["src/api/handlers/*.py"]
+`)
+
+	tests := []struct {
+		name  string
+		dir   string
+		wantN int
+	}{
+		{"handlers dir matches", handlersDir, 1},
+		{"api dir matches (pattern goes through it)", apiDir, 1},
+		{"src dir matches (pattern goes through it)", srcDir, 1},
+		{"other dir does not match", otherDir, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, _, err := Resolve(ResolveRequest{
+				DirPath: tt.dir,
+				Action:  ActionAll,
+				Timing:  TimingAll,
+				Root:    tmpDir,
+			})
+			if err != nil {
+				t.Fatalf("Resolve() error: %v", err)
+			}
+
+			if len(result.ContextEntries) != tt.wantN {
+				t.Errorf("expected %d entries, got %d", tt.wantN, len(result.ContextEntries))
+			}
+		})
+	}
+}
+
 // assertContextContents checks that the matched context entries have exactly
 // the expected content strings, in order.
 func assertContextContents(t *testing.T, got []MatchedContext, want []string) {
