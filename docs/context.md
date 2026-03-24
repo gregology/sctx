@@ -22,8 +22,8 @@ When an agent edits a Python file, it sees that instruction. When it edits a SQL
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `content` | string | yes | -- | The guidance to deliver |
-| `match` | list of globs | no | `["**"]` | File patterns this applies to |
-| `exclude` | list of globs | no | `[]` | File patterns to skip |
+| `match` | list of globs | no | `["**"]` | File or directory patterns this applies to |
+| `exclude` | list of globs | no | `[]` | File or directory patterns to skip |
 | `on` | string or list | no | `all` | Action filter: `read`, `edit`, `create`, or `all` |
 | `when` | string | no | `before` | Prompt positioning: `before`, `after`, or `all` |
 
@@ -80,6 +80,31 @@ exclude: ["**/vendor/**"]
 ```
 
 The default match is `["**"]` (recursive, everything). `exclude` is applied after `match`. A file must match at least one `match` pattern and zero `exclude` patterns.
+
+### Directory patterns
+
+A pattern ending with `/` targets a directory instead of files. This follows the same convention as `.gitignore` and `rsync`.
+
+```yaml
+# Applies to the tests/ directory itself, not its subdirectories
+match: ["tests/"]
+
+# Matches any tests/ directory anywhere under src/
+match: ["src/**/tests/"]
+
+# Matches any directory named api/ at any depth
+match: ["**/api/"]
+```
+
+Directory patterns never match file queries. They only match when an agent (or the CLI) queries a directory directly:
+
+```bash
+sctx context tests/          # directory query -- tests/ pattern matches
+sctx context tests/unit/     # directory query -- tests/ pattern does NOT match
+sctx context tests/foo.py    # file query -- tests/ pattern does NOT match
+```
+
+This gives you precision that recursive file globs can't. A decision like "test fixtures live in conftest.py at this level" can target `tests/` without leaking into `tests/unit/` or `tests/integration/`.
 
 ## on
 

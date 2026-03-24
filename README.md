@@ -69,7 +69,7 @@ Parent directory context merges with child directory context. Entries from paren
 
 Each entry has a `content` string and optional filters:
 
-- **match** - glob patterns for files this applies to (default: `["**"]`, everything)
+- **match** - glob patterns for files or directories this applies to (default: `["**"]`, everything). Patterns ending with `/` target directories.
 - **exclude** - glob patterns to skip
 - **on** - when the file is being `read`, `edit`ed, `create`d, or `all` (default)
 - **when** - deliver `before` or `after` the file content in the prompt, or `all` for both (default: `before`)
@@ -183,9 +183,9 @@ Response without New Zealand reference.
 
 **sctx hook** - Reads agent hook input from stdin, returns matching context entries. This is the main integration point. Decisions are excluded from hook output.
 
-**sctx context \<path\>** - Query context entries for a file. Supports `--on <action>`, `--when <timing>`, and `--json`.
+**sctx context \<path\>** - Query context entries for a file or directory. Supports `--on <action>`, `--when <timing>`, and `--json`.
 
-**sctx decisions \<path\>** - Query decisions for a file. Supports `--json`.
+**sctx decisions \<path\>** - Query decisions for a file or directory. Supports `--json`.
 
 **sctx validate [\<dir\>]** - Checks all context files in a directory tree for schema errors and invalid globs.
 
@@ -232,6 +232,6 @@ sctx pi disable
 
 ## Agent-agnostic design
 
-The core engine knows nothing about Claude Code, pi, or any other agent. It takes a file path, an action, and a timing, and returns matched context. Agent-specific bits live in thin adapter layers that translate stdin JSON into those universal inputs.
+The core engine knows nothing about Claude Code, pi, or any other agent. It takes a file or directory path, an action, and a timing, and returns matched context. Agent-specific bits live in thin adapter layers that translate stdin JSON into those universal inputs.
 
 Other agents can use `sctx context` directly, or new adapters can be added without touching the core.

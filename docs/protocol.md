@@ -58,8 +58,8 @@ See [Context entries](context.md) and [Decisions](decisions.md) for field detail
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `content` | string | yes | -- | The guidance to deliver |
-| `match` | list of globs | no | `["**"]` | File patterns this applies to |
-| `exclude` | list of globs | no | `[]` | File patterns to skip |
+| `match` | list of globs | no | `["**"]` | File or directory patterns this applies to |
+| `exclude` | list of globs | no | `[]` | File or directory patterns to skip |
 | `on` | string or list | no | `all` | Action filter: `read`, `edit`, `create`, `all` |
 | `when` | string | no | `before` | Prompt positioning: `before`, `after`, `all` |
 
@@ -72,19 +72,28 @@ See [Context entries](context.md) and [Decisions](decisions.md) for field detail
 | `alternatives` | list | no | -- | Rejected options and constraints |
 | `revisit_when` | string | no | -- | Condition to reconsider |
 | `date` | date | no | -- | When decided (YYYY-MM-DD) |
-| `match` | list of globs | no | `["**"]` | Scope to specific files |
+| `match` | list of globs | no | `["**"]` | Scope to specific files or directories |
 
 ## Resolution algorithm
+
+### File queries
 
 Given a file path, an action, and a timing:
 
 1. **Discover** -- Walk from the target file's directory up to the project root, collecting all context files at each level
 2. **Parse** -- Parse each file. Emit warnings for invalid files but continue processing valid ones
-3. **Filter by match/exclude** -- Test each entry's glob patterns against the target file path. Globs are relative to the context file's directory
+3. **Filter by match/exclude** -- Test each entry's glob patterns against the target file path. Globs are relative to the context file's directory. Directory patterns (trailing `/`) are skipped during file queries.
 4. **Filter by action** -- Keep entries where `on` includes the requested action (or is `all`)
 5. **Filter by timing** -- Keep entries where `when` matches the requested timing
 6. **Merge** -- Combine all matching entries. Parent directory entries come first, child directory entries come last
 7. **Return** -- The ordered list of matching context entries and decisions
+
+### Directory queries
+
+Given a directory path, an action, and a timing. The algorithm is the same with two differences:
+
+- **Discovery starts from the directory itself**, not its parent. This ensures entries in the queried directory's own `AGENTS.yaml` are included.
+- **Matching handles two pattern types.** Directory patterns (trailing `/`) match if the queried directory matches the pattern exactly. File-glob patterns match if they could produce hits inside the queried directory (e.g. `src/**` matches a query for `src/` but not for `tests/`).
 
 ## Merge order
 
