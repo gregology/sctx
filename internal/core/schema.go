@@ -79,7 +79,8 @@ const (
 // ResolveRequest contains the universal inputs for context resolution.
 // This is the agent-agnostic interface between adapters and the core engine.
 type ResolveRequest struct {
-	FilePath string
+	FilePath string // Resolve for a specific file. Mutually exclusive with DirPath.
+	DirPath  string // Resolve for a directory. Mutually exclusive with FilePath.
 	Action   Action
 	Timing   Timing
 	Root     string // Project root directory; walk stops here.

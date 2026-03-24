@@ -19,8 +19,8 @@ const usage = `sctx — Structured Context CLI
 Usage:
   sctx hook                                Read agent hook input from stdin, return matching context
   sctx context <path> [--on <action>] [--when <timing>] [--json]
-                                           Query context entries for a file
-  sctx decisions <path> [--json]           Query decisions for a file
+                                           Query context entries for a file or directory
+  sctx decisions <path> [--json]           Query decisions for a file or directory
   sctx validate [<dir>]                    Validate all context files in a directory tree
   sctx init                                Create a starter AGENTS.yaml in the current directory
   sctx claude enable                       Enable sctx hooks in Claude Code
@@ -148,11 +148,18 @@ func cmdContext(args []string, out, errOut io.Writer) error {
 		return fmt.Errorf("resolving path: %w", err)
 	}
 
-	result, warnings, err := core.Resolve(core.ResolveRequest{
-		FilePath: absPath,
-		Action:   action,
-		Timing:   timing,
-	})
+	req := core.ResolveRequest{
+		Action: action,
+		Timing: timing,
+	}
+
+	if isDir(absPath, filePath) {
+		req.DirPath = absPath
+	} else {
+		req.FilePath = absPath
+	}
+
+	result, warnings, err := core.Resolve(req)
 	if err != nil {
 		return err
 	}
@@ -199,11 +206,18 @@ func cmdDecisions(args []string, out, errOut io.Writer) error {
 		return fmt.Errorf("resolving path: %w", err)
 	}
 
-	result, warnings, err := core.Resolve(core.ResolveRequest{
-		FilePath: absPath,
-		Action:   core.ActionAll,
-		Timing:   core.TimingBefore,
-	})
+	req := core.ResolveRequest{
+		Action: core.ActionAll,
+		Timing: core.TimingBefore,
+	}
+
+	if isDir(absPath, filePath) {
+		req.DirPath = absPath
+	} else {
+		req.FilePath = absPath
+	}
+
+	result, warnings, err := core.Resolve(req)
 	if err != nil {
 		return err
 	}
@@ -329,6 +343,19 @@ decisions:
 	_, _ = fmt.Fprintf(out, "Created %s\n", filename)
 
 	return nil
+}
+
+// isDir reports whether the path refers to a directory.
+// It checks if the path exists as a directory on disk, or ends with a path separator.
+// When the path doesn't exist, it falls back to the trailing slash convention.
+func isDir(absPath, originalPath string) bool {
+	info, err := os.Stat(absPath) //nolint:gosec // os.Stat is read-only, safe on user-provided paths
+	if err == nil {
+		return info.IsDir()
+	}
+
+	// Path doesn't exist on disk. Use trailing slash as the signal.
+	return strings.HasSuffix(originalPath, "/") || strings.HasSuffix(originalPath, string(filepath.Separator))
 }
 
 func cmdClaude(args []string) error {

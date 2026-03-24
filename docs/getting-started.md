@@ -92,10 +92,11 @@ You can also test from the command line:
 sctx context README.md --on read --when before
 ```
 
-Check what decisions apply:
+Check what decisions apply to a file or directory:
 
 ```bash
 sctx decisions src/main.py
+sctx decisions src/api/          # directory query
 ```
 
 Validate all context files in your project:

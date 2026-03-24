@@ -26,7 +26,7 @@ The most expensive agent mistake isn't writing bad code. It's confidently propos
 | `alternatives` | list | no | -- | Options that were considered and rejected |
 | `revisit_when` | string | no | -- | Condition under which this should be reconsidered |
 | `date` | date | no | -- | When it was made (YYYY-MM-DD) |
-| `match` | list of globs | no | `["**"]` | Scope to specific files |
+| `match` | list of globs | no | `["**"]` | Scope to specific files or directories |
 
 ```yaml
 decisions:
@@ -116,5 +116,18 @@ decisions:
 ```
 
 This decision only shows up when an agent is working in `src/api/`. It won't clutter context for someone editing frontend code.
+
+### Directory-scoped decisions
+
+A pattern ending with `/` targets a directory without leaking into its subdirectories. This is useful when a decision applies to a specific level of the project but not to everything underneath it.
+
+```yaml
+decisions:
+  - decision: "Test fixtures live in conftest.py at this level"
+    rationale: "Subdirectories import from here, don't duplicate fixtures"
+    match: ["tests/"]
+```
+
+This decision shows up when querying `tests/` but not when querying `tests/unit/` or editing `tests/unit/test_thing.py`. Full glob syntax works too: `match: ["**/tests/"]` targets any `tests/` directory at any depth.
 
 See [Examples](examples.md) for complete `AGENTS.yaml` files showing decisions alongside context entries in real projects.
