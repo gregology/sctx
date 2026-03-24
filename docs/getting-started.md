@@ -181,6 +181,7 @@ Child directories inherit and merge with parent context. No need to repeat yours
 
 ## What's next
 
-- [Examples](examples.md) -- patterns for dbt, React, Terraform, and more
-- [Protocol spec](protocol.md) -- the full schema reference
+- [Context entries](context.md) -- how to write and scope context entries
+- [Decisions](decisions.md) -- recording rejected alternatives and when to revisit
+- [Examples](examples.md) -- complete AGENTS.yaml files for dbt, React, Terraform, and more
 - [CLI reference](cli-reference.md) -- all commands and flags

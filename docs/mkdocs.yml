@@ -45,10 +45,13 @@ plugins:
       sections:
         Getting Started:
           - getting-started.md: Installation via Homebrew, go install, or binary download; Claude Code integration setup
+        Core Concepts:
+          - context.md: How to write context entries with match, exclude, on, and when filters
+          - decisions.md: Recording rejected alternatives, constraints, and revisit conditions
         Documentation:
-          - protocol.md: AGENTS.yaml format specification, schema, and resolution algorithm
+          - examples.md: Complete AGENTS.yaml files for dbt, APIs, React, Terraform, and monorepos
+          - protocol.md: File discovery, resolution algorithm, merge behavior, and validation rules for implementors
           - cli-reference.md: CLI commands including hook, context, decisions, validate, init, claude enable/disable
-          - examples.md: Real-world patterns for dbt, APIs, React, Terraform, and monorepos
           - comparisons.md: How sctx differs from AGENTS.md, MCP, llms.txt, and .cursorrules
         Optional:
           - contributing.md: Building, testing, and contributing
@@ -76,8 +79,10 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting started: getting-started.md
-  - Protocol: protocol.md
+  - Context entries: context.md
+  - Decisions: decisions.md
   - Examples: examples.md
+  - Protocol: protocol.md
   - CLI reference: cli-reference.md
   - Comparisons: comparisons.md
   - Contributing: contributing.md
