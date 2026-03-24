@@ -1828,6 +1828,128 @@ context:
 	assertContextContents(t, result.ContextEntries, []string{"vendor-scoped"})
 }
 
+func TestResolve_DirQuery_WildcardDirPatternsAtRoot(t *testing.T) {
+	// Trailing-slash dir patterns with wildcards must behave correctly when
+	// querying the source directory itself (relDir=""). The "*" glob matches
+	// "." in doublestar, so a naive "./" stand-in breaks patterns like "*/".
+	tests := []struct {
+		name   string
+		yaml   string
+		relDir string // relative to tmpDir; "" = query tmpDir itself
+		wantN  int
+	}{
+		// */ means "any immediate child directory" — must NOT match source
+		{"match */ at root", `
+context:
+  - content: "x"
+    match: ["*/"]
+`, "", 0},
+		{"match */ at child", `
+context:
+  - content: "x"
+    match: ["*/"]
+`, "src", 1},
+		{"match */ at grandchild", `
+context:
+  - content: "x"
+    match: ["*/"]
+`, "src/api", 0},
+
+		// **/ means "any directory at any depth" — should match everything including root
+		{"match **/ at root", `
+context:
+  - content: "x"
+    match: ["**/"]
+`, "", 1},
+		{"match **/ at child", `
+context:
+  - content: "x"
+    match: ["**/"]
+`, "src", 1},
+
+		// **/src/ should match src but not root
+		{"match **/src/ at root", `
+context:
+  - content: "x"
+    match: ["**/src/"]
+`, "", 0},
+		{"match **/src/ at src", `
+context:
+  - content: "x"
+    match: ["**/src/"]
+`, "src", 1},
+
+		// **/*/ has the same problem as */ — the trailing * must not match "."
+		{"match **/*/ at root", `
+context:
+  - content: "x"
+    match: ["**/*/"]
+`, "", 0},
+		{"match **/*/ at child", `
+context:
+  - content: "x"
+    match: ["**/*/"]
+`, "src", 1},
+
+		// exclude: ["*/"] must NOT exclude root
+		{"exclude */ at root", `
+context:
+  - content: "x"
+    exclude: ["*/"]
+`, "", 1},
+		{"exclude */ at child", `
+context:
+  - content: "x"
+    exclude: ["*/"]
+`, "src", 0},
+
+		// exclude: ["**/*/"] must NOT exclude root
+		{"exclude **/*/ at root", `
+context:
+  - content: "x"
+    exclude: ["**/*/"]
+`, "", 1},
+		{"exclude **/*/ at child", `
+context:
+  - content: "x"
+    exclude: ["**/*/"]
+`, "src", 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			if err := os.MkdirAll(filepath.Join(tmpDir, "src", "api"), 0o750); err != nil {
+				t.Fatal(err)
+			}
+
+			writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), tt.yaml)
+
+			queryDir := tmpDir
+			if tt.relDir != "" {
+				queryDir = filepath.Join(tmpDir, tt.relDir)
+			}
+
+			result, _, err := Resolve(ResolveRequest{
+				DirPath: queryDir,
+				Action:  ActionAll,
+				Timing:  TimingAll,
+				Root:    tmpDir,
+			})
+			if err != nil {
+				t.Fatalf("Resolve() error: %v", err)
+			}
+			if len(result.ContextEntries) != tt.wantN {
+				got := make([]string, len(result.ContextEntries))
+				for i, e := range result.ContextEntries {
+					got[i] = e.Content
+				}
+				t.Errorf("got %d entries %v, want %d", len(result.ContextEntries), got, tt.wantN)
+			}
+		})
+	}
+}
+
 // assertContextContents checks that the matched context entries have exactly
 // the expected content strings, in order.
 func assertContextContents(t *testing.T, got []MatchedContext, want []string) {

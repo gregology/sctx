@@ -377,11 +377,21 @@ func anyDirPatternExcludes(relDir string, patterns []string) bool {
 
 // dirSlashPatternMatches checks a trailing-slash pattern against a directory path.
 func dirSlashPatternMatches(relDir, pattern string) bool {
-	dirWithSlash := relDir + "/"
 	if relDir == "" {
-		dirWithSlash = "./"
+		// Source directory (relDir="") should only match patterns that can
+		// match zero path segments. Using "./" as a stand-in is incorrect
+		// because "*" matches "." in glob semantics, causing "*/" and
+		// "**/*/" to falsely match the source directory.
+		// Only bare **/ chains (meaning "any directory") match zero segments.
+		trimmed := pattern
+		for strings.HasPrefix(trimmed, "**/") {
+			trimmed = trimmed[3:]
+		}
+
+		return trimmed == ""
 	}
 
+	dirWithSlash := relDir + "/"
 	ok, err := doublestar.Match(pattern, dirWithSlash)
 
 	return err == nil && ok
