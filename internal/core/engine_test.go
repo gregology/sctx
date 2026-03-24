@@ -518,6 +518,10 @@ func genGlob(t *rapid.T) string {
 	return rapid.SampledFrom([]string{
 		"**", "**/*.go", "**/*.py", "*.txt", "src/**", "**/*.js",
 		"docs/**", "*.md", "**/*_test.go", "vendor/**",
+		// Directory-targeting patterns (without trailing slash — callers add it).
+		// These exercise the dirSlashPatternMatches code paths.
+		".", "*", "src", "src/*", "src/**",
+		"**/src", "**/src/**", "**/*",
 	}).Draw(t, "glob")
 }
 
@@ -1828,92 +1832,86 @@ context:
 	assertContextContents(t, result.ContextEntries, []string{"vendor-scoped"})
 }
 
-func TestResolve_DirQuery_WildcardDirPatternsAtRoot(t *testing.T) {
-	// Trailing-slash dir patterns with wildcards must behave correctly when
-	// querying the source directory itself (relDir=""). The "*" glob matches
-	// "." in doublestar, so a naive "./" stand-in breaks patterns like "*/".
+func TestResolve_DirQuery_DirSlashPatternsAtRoot(t *testing.T) {
+	// Systematic coverage of every trailing-slash pattern form when querying
+	// the source directory (relDir="") vs child directories. This prevents
+	// regressions in dirSlashPatternMatches which has tricky edge cases:
+	//   - "*" matches "." in glob semantics (so "./" stand-in is dangerous)
+	//   - "./" is a valid explicit self-reference (from docs/examples.md)
+	//   - "**/" can match zero segments (so it includes self)
+	//
+	// Each row tests one pattern in either match or exclude position.
+	// "field" is "match" or "exclude". For match: wantN=1 means matched,
+	// wantN=0 means not matched. For exclude: wantN=0 means excluded,
+	// wantN=1 means not excluded.
 	tests := []struct {
 		name   string
-		yaml   string
-		relDir string // relative to tmpDir; "" = query tmpDir itself
+		field  string // "match" or "exclude"
+		pat    string // trailing-slash pattern
+		relDir string // "" = source dir, else relative path
 		wantN  int
 	}{
-		// */ means "any immediate child directory" — must NOT match source
-		{"match */ at root", `
-context:
-  - content: "x"
-    match: ["*/"]
-`, "", 0},
-		{"match */ at child", `
-context:
-  - content: "x"
-    match: ["*/"]
-`, "src", 1},
-		{"match */ at grandchild", `
-context:
-  - content: "x"
-    match: ["*/"]
-`, "src/api", 0},
+		// ./ — explicit self-reference (documented in examples.md)
+		{"match ./ at root", "match", "./", "", 1},
+		{"match ./ at child", "match", "./", "src", 0},
+		{"exclude ./ at root", "exclude", "./", "", 0},
+		{"exclude ./ at child", "exclude", "./", "src", 1},
 
-		// **/ means "any directory at any depth" — should match everything including root
-		{"match **/ at root", `
-context:
-  - content: "x"
-    match: ["**/"]
-`, "", 1},
-		{"match **/ at child", `
-context:
-  - content: "x"
-    match: ["**/"]
-`, "src", 1},
+		// */ — any immediate child directory
+		{"match */ at root", "match", "*/", "", 0},
+		{"match */ at child", "match", "*/", "src", 1},
+		{"match */ at grandchild", "match", "*/", "src/api", 0},
+		{"exclude */ at root", "exclude", "*/", "", 1},
+		{"exclude */ at child", "exclude", "*/", "src", 0},
 
-		// **/src/ should match src but not root
-		{"match **/src/ at root", `
-context:
-  - content: "x"
-    match: ["**/src/"]
-`, "", 0},
-		{"match **/src/ at src", `
-context:
-  - content: "x"
-    match: ["**/src/"]
-`, "src", 1},
+		// **/ — any directory at any depth (includes self)
+		{"match **/ at root", "match", "**/", "", 1},
+		{"match **/ at child", "match", "**/", "src", 1},
+		{"exclude **/ at root", "exclude", "**/", "", 0},
+		{"exclude **/ at child", "exclude", "**/", "src", 0},
 
-		// **/*/ has the same problem as */ — the trailing * must not match "."
-		{"match **/*/ at root", `
-context:
-  - content: "x"
-    match: ["**/*/"]
-`, "", 0},
-		{"match **/*/ at child", `
-context:
-  - content: "x"
-    match: ["**/*/"]
-`, "src", 1},
+		// src/ — named literal child
+		{"match src/ at root", "match", "src/", "", 0},
+		{"match src/ at src", "match", "src/", "src", 1},
+		{"match src/ at api", "match", "src/", "src/api", 0},
+		{"exclude src/ at root", "exclude", "src/", "", 1},
+		{"exclude src/ at src", "exclude", "src/", "src", 0},
 
-		// exclude: ["*/"] must NOT exclude root
-		{"exclude */ at root", `
-context:
-  - content: "x"
-    exclude: ["*/"]
-`, "", 1},
-		{"exclude */ at child", `
-context:
-  - content: "x"
-    exclude: ["*/"]
-`, "src", 0},
+		// **/src/ — named at any depth
+		{"match **/src/ at root", "match", "**/src/", "", 0},
+		{"match **/src/ at src", "match", "**/src/", "src", 1},
+		{"exclude **/src/ at root", "exclude", "**/src/", "", 1},
+		{"exclude **/src/ at src", "exclude", "**/src/", "src", 0},
 
-		// exclude: ["**/*/"] must NOT exclude root
-		{"exclude **/*/ at root", `
-context:
-  - content: "x"
-    exclude: ["**/*/"]
-`, "", 1},
-		{"exclude **/*/ at child", `
-context:
-  - content: "x"
-    exclude: ["**/*/"]
-`, "src", 0},
+		// **/*/ — any named dir at any depth (must not match root)
+		{"match **/*/ at root", "match", "**/*/", "", 0},
+		{"match **/*/ at child", "match", "**/*/", "src", 1},
+		{"exclude **/*/ at root", "exclude", "**/*/", "", 1},
+		{"exclude **/*/ at child", "exclude", "**/*/", "src", 0},
+
+		// src/*/ — child of a named dir
+		{"match src/*/ at root", "match", "src/*/", "", 0},
+		{"match src/*/ at src", "match", "src/*/", "src", 0},
+		{"match src/*/ at src/api", "match", "src/*/", "src/api", 1},
+
+		// src/**/ — anything under src
+		{"match src/**/ at root", "match", "src/**/", "", 0},
+		{"match src/**/ at src", "match", "src/**/", "src", 1},
+		{"match src/**/ at src/api", "match", "src/**/", "src/api", 1},
+
+		// **/**/ — consecutive double-star chains (equivalent to **/)
+		{"match **/**/ at root", "match", "**/**/", "", 1},
+		{"match **/**/ at child", "match", "**/**/", "src", 1},
+
+		// **/src/**/ — double-star + literal + double-star
+		{"match **/src/**/ at root", "match", "**/src/**/", "", 0},
+		{"match **/src/**/ at src", "match", "**/src/**/", "src", 1},
+		{"match **/src/**/ at src/api", "match", "**/src/**/", "src/api", 1},
+		{"match **/src/**/ at other", "match", "**/src/**/", "other", 0},
+
+		// character class patterns — must not match root
+		{"match [st]rc/ at root", "match", "[st]rc/", "", 0},
+		{"match [st]rc/ at src", "match", "[st]rc/", "src", 1},
 	}
 
 	for _, tt := range tests {
@@ -1923,7 +1921,14 @@ context:
 				t.Fatal(err)
 			}
 
-			writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), tt.yaml)
+			var yaml string
+			if tt.field == "exclude" {
+				yaml = fmt.Sprintf("context:\n  - content: \"x\"\n    exclude: [\"%s\"]", tt.pat)
+			} else {
+				yaml = fmt.Sprintf("context:\n  - content: \"x\"\n    match: [\"%s\"]", tt.pat)
+			}
+
+			writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), yaml)
 
 			queryDir := tmpDir
 			if tt.relDir != "" {
@@ -1947,6 +1952,59 @@ context:
 				t.Errorf("got %d entries %v, want %d", len(result.ContextEntries), got, tt.wantN)
 			}
 		})
+	}
+}
+
+func TestResolve_DirQuery_MixedPatternTypes(t *testing.T) {
+	// Verify that dir-slash match patterns and file-glob exclude patterns
+	// (or vice versa) interact correctly.
+	tmpDir := t.TempDir()
+	testsDir := filepath.Join(tmpDir, "tests")
+	srcDir := filepath.Join(tmpDir, "src")
+	for _, d := range []string{testsDir, srcDir} {
+		if err := os.MkdirAll(d, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "dir match with file-glob exclude"
+    match: ["tests/"]
+    exclude: ["tests/**"]
+  - content: "file-glob match with dir exclude"
+    match: ["src/**"]
+    exclude: ["src/"]
+`)
+
+	// tests/ matches the dir pattern, but the file-glob exclude "tests/**"
+	// goes through fileGlobExcludesDir — it should exclude since tests/ is
+	// within its scope.
+	result, _, err := Resolve(ResolveRequest{
+		DirPath: testsDir,
+		Action:  ActionAll,
+		Timing:  TimingAll,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+	if len(result.ContextEntries) != 0 {
+		t.Errorf("tests/: expected 0 entries (excluded by file-glob), got %d", len(result.ContextEntries))
+	}
+
+	// src/ matches the file-glob "src/**", but is excluded by the dir pattern "src/".
+	result, _, err = Resolve(ResolveRequest{
+		DirPath: srcDir,
+		Action:  ActionAll,
+		Timing:  TimingAll,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+	if len(result.ContextEntries) != 0 {
+		t.Errorf("src/: expected 0 entries (excluded by dir pattern), got %d", len(result.ContextEntries))
 	}
 }
 

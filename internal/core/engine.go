@@ -382,7 +382,15 @@ func dirSlashPatternMatches(relDir, pattern string) bool {
 		// match zero path segments. Using "./" as a stand-in is incorrect
 		// because "*" matches "." in glob semantics, causing "*/" and
 		// "**/*/" to falsely match the source directory.
-		// Only bare **/ chains (meaning "any directory") match zero segments.
+		//
+		// "./" is an explicit self-reference (used in docs/examples.md).
+		// Bare **/ chains mean "any directory" and match zero segments.
+		// Everything else (*/  src/  **/src/  **/*/) requires real path
+		// segments and must not match the source directory.
+		if pattern == "./" {
+			return true
+		}
+
 		trimmed := pattern
 		for strings.HasPrefix(trimmed, "**/") {
 			trimmed = trimmed[3:]
