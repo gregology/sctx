@@ -9,11 +9,16 @@ sctx replaces monolithic instruction files with distributed AGENTS.yaml files pl
 
 - [Getting started](https://sctx.dev/getting-started/index.md): Installation via Homebrew, go install, or binary download; Claude Code integration setup
 
+## Core Concepts
+
+- [Context entries](https://sctx.dev/context/index.md): How to write context entries with match, exclude, on, and when filters
+- [Decisions](https://sctx.dev/decisions/index.md): Recording rejected alternatives, constraints, and revisit conditions
+
 ## Documentation
 
-- [Protocol](https://sctx.dev/protocol/index.md): AGENTS.yaml format specification, schema, and resolution algorithm
+- [Examples](https://sctx.dev/examples/index.md): Complete AGENTS.yaml files for dbt, APIs, React, Terraform, and monorepos
+- [Protocol](https://sctx.dev/protocol/index.md): File discovery, resolution algorithm, merge behavior, and validation rules for implementors
 - [CLI reference](https://sctx.dev/cli-reference/index.md): CLI commands including hook, context, decisions, validate, init, claude enable/disable
-- [Examples](https://sctx.dev/examples/index.md): Real-world patterns for dbt, APIs, React, Terraform, and monorepos
 - [Comparisons](https://sctx.dev/comparisons/index.md): How sctx differs from AGENTS.md, MCP, llms.txt, and .cursorrules
 
 ## Optional

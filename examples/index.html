@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Real-world patterns for using Structured Context in dbt, API, React, Terraform, and monorepo projects">
+        <meta name="description" content="Real-world AGENTS.yaml files for dbt, API, React, Terraform, and monorepo projects">
       
       
       
         <link rel="canonical" href="https://sctx.dev/examples/">
       
       
-        <link rel="prev" href="../protocol/">
+        <link rel="prev" href="../decisions/">
       
       
-        <link rel="next" href="../cli-reference/">
+        <link rel="next" href="../protocol/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -299,11 +299,32 @@
   
   
     <li class="md-nav__item">
-      <a href="../protocol/" class="md-nav__link">
+      <a href="../context/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Protocol
+    Context entries
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decisions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Decisions
     
   </span>
   
@@ -412,19 +433,31 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#writing-good-decisions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Writing good decisions
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../protocol/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Protocol
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -584,15 +617,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#writing-good-decisions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Writing good decisions
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -618,7 +642,8 @@
 
 
 <h1 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h1>
-<p>Real-world patterns for using Structured Context. Each example shows the problem, the file structure, and the AGENTS.yaml that solves it.</p>
+<p>Complete <code>AGENTS.yaml</code> files for real project types. Each example shows context entries and decisions working together.</p>
+<p>If you need to understand individual fields first, see <a href="../context/">Context entries</a> and <a href="../decisions/">Decisions</a>.</p>
 <h2 id="dbt-project">dbt project<a class="headerlink" href="#dbt-project" title="Permanent link">&para;</a></h2>
 <p>A dbt <code>models/</code> directory contains SQL models, YAML schema files, and markdown docs. An agent editing a SQL model needs completely different context than one editing a YAML schema.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>models/
@@ -887,35 +912,6 @@
 <a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="w">    </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/*.ts&quot;</span><span class="p p-Indicator">]</span>
 </code></pre></div>
 <p>When an agent edits <code>packages/payments/src/checkout.ts</code>, it gets the shared monorepo conventions <em>and</em> the payments-specific context. The payments context appears last, giving it stronger influence.</p>
-<h2 id="writing-good-decisions">Writing good decisions<a class="headerlink" href="#writing-good-decisions" title="Permanent link">&para;</a></h2>
-<p>A good decision entry answers four questions:</p>
-<ol>
-<li><strong>What</strong> did you decide?</li>
-<li><strong>Why</strong> did you pick this option?</li>
-<li><strong>What else</strong> did you consider, and why didn't you pick those?</li>
-<li><strong>When</strong> should someone revisit this?</li>
-</ol>
-<p>The <code>alternatives</code> field is the most underused and the most valuable. Without it, an agent might suggest switching to the exact tool you already evaluated and rejected. With it, the agent knows the option was considered and understands the tradeoffs.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Weak: leaves the agent guessing</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nt">decisions</span><span class="p">:</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">decision</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Use</span><span class="nv"> </span><span class="s">PostgreSQL&quot;</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span><span class="nt">rationale</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Good</span><span class="nv"> </span><span class="s">database&quot;</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="c1"># Strong: full picture</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="nt">decisions</span><span class="p">:</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">decision</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;PostgreSQL</span><span class="nv"> </span><span class="s">over</span><span class="nv"> </span><span class="s">MySQL</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">DynamoDB&quot;</span>
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="w">    </span><span class="nt">rationale</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;JSONB</span><span class="nv"> </span><span class="s">columns</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">flexible</span><span class="nv"> </span><span class="s">metadata,</span><span class="nv"> </span><span class="s">strong</span><span class="nv"> </span><span class="s">ecosystem</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">our</span><span class="nv"> </span><span class="s">Python</span><span class="nv"> </span><span class="s">stack,</span><span class="nv"> </span><span class="s">team</span><span class="nv"> </span><span class="s">expertise&quot;</span>
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="w">    </span><span class="nt">alternatives</span><span class="p">:</span>
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">option</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;MySQL&quot;</span>
-<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="w">        </span><span class="nt">reason_rejected</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Weaker</span><span class="nv"> </span><span class="s">JSON</span><span class="nv"> </span><span class="s">support,</span><span class="nv"> </span><span class="s">no</span><span class="nv"> </span><span class="s">array</span><span class="nv"> </span><span class="s">types&quot;</span>
-<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">option</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;DynamoDB&quot;</span>
-<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="w">        </span><span class="nt">reason_rejected</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Single-table</span><span class="nv"> </span><span class="s">design</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">complex,</span><span class="nv"> </span><span class="s">hard</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">run</span><span class="nv"> </span><span class="s">locally,</span><span class="nv"> </span><span class="s">vendor</span><span class="nv"> </span><span class="s">lock-in&quot;</span>
-<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">option</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;MongoDB&quot;</span>
-<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="w">        </span><span class="nt">reason_rejected</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Weaker</span><span class="nv"> </span><span class="s">consistency</span><span class="nv"> </span><span class="s">guarantees,</span><span class="nv"> </span><span class="s">team</span><span class="nv"> </span><span class="s">prefers</span><span class="nv"> </span><span class="s">SQL&quot;</span>
-<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="w">    </span><span class="nt">revisit_when</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Write</span><span class="nv"> </span><span class="s">throughput</span><span class="nv"> </span><span class="s">exceeds</span><span class="nv"> </span><span class="s">what</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">single</span><span class="nv"> </span><span class="s">Postgres</span><span class="nv"> </span><span class="s">instance</span><span class="nv"> </span><span class="s">can</span><span class="nv"> </span><span class="s">handle&quot;</span>
-<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="w">    </span><span class="nt">date</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2025-05-15</span>
-</code></pre></div>
-<p>Dates matter too. A decision made two years ago under different constraints might be worth questioning. One made last week probably isn't.</p>
 
 
 

@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="File format, resolution algorithm, and merge behavior for implementors">
+        <meta name="description" content="How to write context entries that give agents the right guidance for the right files">
       
       
       
-        <link rel="canonical" href="https://sctx.dev/protocol/">
+        <link rel="canonical" href="https://sctx.dev/context/">
       
       
-        <link rel="prev" href="../examples/">
+        <link rel="prev" href="../getting-started/">
       
       
-        <link rel="next" href="../cli-reference/">
+        <link rel="next" href="../decisions/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -24,7 +24,7 @@
     
     
       
-        <title>Protocol specification - Structured Context</title>
+        <title>Context entries - Structured Context</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#protocol-specification" class="md-skip">
+        <a href="#context-entries" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Protocol specification
+              Context entries
             
           </span>
         </div>
@@ -296,10 +296,31 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../context/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Context entries
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -309,6 +330,89 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fields
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#content" class="md-nav__link">
+    <span class="md-ellipsis">
+      content
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#match-and-exclude" class="md-nav__link">
+    <span class="md-ellipsis">
+      match and exclude
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#on" class="md-nav__link">
+    <span class="md-ellipsis">
+      on
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when" class="md-nav__link">
+    <span class="md-ellipsis">
+      when
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#writing-good-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Writing good entries
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#directory-inheritance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Directory inheritance
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -359,31 +463,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Protocol
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../protocol/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -393,137 +476,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#context-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      Context files
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Context files">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#recognized-filenames" class="md-nav__link">
-    <span class="md-ellipsis">
-      Recognized filenames
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#placement" class="md-nav__link">
-    <span class="md-ellipsis">
-      Placement
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#project-root" class="md-nav__link">
-    <span class="md-ellipsis">
-      Project root
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#missing-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      Missing files
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#schema" class="md-nav__link">
-    <span class="md-ellipsis">
-      Schema
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Schema">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#context-entry-fields-summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      Context entry fields (summary)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#decision-entry-fields-summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      Decision entry fields (summary)
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#resolution-algorithm" class="md-nav__link">
-    <span class="md-ellipsis">
-      Resolution algorithm
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#merge-order" class="md-nav__link">
-    <span class="md-ellipsis">
-      Merge order
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#validation-rules" class="md-nav__link">
-    <span class="md-ellipsis">
-      Validation rules
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -639,111 +591,63 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#context-files" class="md-nav__link">
+  <a href="#fields" class="md-nav__link">
     <span class="md-ellipsis">
-      Context files
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Context files">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#recognized-filenames" class="md-nav__link">
-    <span class="md-ellipsis">
-      Recognized filenames
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#placement" class="md-nav__link">
-    <span class="md-ellipsis">
-      Placement
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#project-root" class="md-nav__link">
-    <span class="md-ellipsis">
-      Project root
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#missing-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      Missing files
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#schema" class="md-nav__link">
-    <span class="md-ellipsis">
-      Schema
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Schema">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#context-entry-fields-summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      Context entry fields (summary)
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#decision-entry-fields-summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      Decision entry fields (summary)
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#resolution-algorithm" class="md-nav__link">
-    <span class="md-ellipsis">
-      Resolution algorithm
+      Fields
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#merge-order" class="md-nav__link">
+  <a href="#content" class="md-nav__link">
     <span class="md-ellipsis">
-      Merge order
+      content
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#validation-rules" class="md-nav__link">
+  <a href="#match-and-exclude" class="md-nav__link">
     <span class="md-ellipsis">
-      Validation rules
+      match and exclude
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#on" class="md-nav__link">
+    <span class="md-ellipsis">
+      on
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when" class="md-nav__link">
+    <span class="md-ellipsis">
+      when
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#writing-good-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Writing good entries
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#directory-inheritance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Directory inheritance
     </span>
   </a>
   
@@ -765,7 +669,7 @@
 
 
   
-    <a href="https://github.com/gregology/sctx/edit/main/docs/protocol.md" title="Edit this page" class="md-content__button md-icon">
+    <a href="https://github.com/gregology/sctx/edit/main/docs/context.md" title="Edit this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -773,52 +677,16 @@
   
 
 
-<h1 id="protocol-specification">Protocol specification<a class="headerlink" href="#protocol-specification" title="Permanent link">&para;</a></h1>
-<p>This is the spec for the Structured Context file format. It covers file discovery, resolution, merge behavior, and validation. It's aimed at people building tools that read or write <code>AGENTS.yaml</code> files.</p>
-<p>If you're writing <code>AGENTS.yaml</code> files for your project (not building a tool), start with <a href="../context/">Context entries</a> and <a href="../decisions/">Decisions</a> instead.</p>
-<h2 id="context-files">Context files<a class="headerlink" href="#context-files" title="Permanent link">&para;</a></h2>
-<h3 id="recognized-filenames">Recognized filenames<a class="headerlink" href="#recognized-filenames" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Filename</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>AGENTS.yaml</code></td>
-<td>Primary name</td>
-</tr>
-<tr>
-<td><code>AGENTS.yml</code></td>
-<td>Alternate extension</td>
-</tr>
-</tbody>
-</table>
-<p>Both are standard YAML extensions. The protocol accepts both. If multiple context files exist in the same directory, all are loaded and their contents merged.</p>
-<h3 id="placement">Placement<a class="headerlink" href="#placement" title="Permanent link">&para;</a></h3>
-<p>Context files can appear in any directory. Tools discover them by walking up from the target file to the project root, collecting every context file found along the way.</p>
-<h3 id="project-root">Project root<a class="headerlink" href="#project-root" title="Permanent link">&para;</a></h3>
-<p>The project root is the working directory where the tool was launched. Not detected via file markers. This is deliberate: marker-based detection (<code>.git</code>, <code>pyproject.toml</code>, etc.) breaks in monorepos where subdirectories contain their own project markers.</p>
-<ul>
-<li><strong>Hook mode</strong> (<code>sctx hook</code>): The root is the <code>cwd</code> field from the agent's JSON input. For Claude Code, this is the directory where <code>claude</code> was started.</li>
-<li><strong>CLI mode</strong> (<code>sctx context</code>, <code>sctx decisions</code>): The root is the current working directory where <code>sctx</code> is run.</li>
-</ul>
-<p>Only <code>AGENTS.yaml</code> files at or below the root are considered. Files above the root are never seen.</p>
-<h3 id="missing-files">Missing files<a class="headerlink" href="#missing-files" title="Permanent link">&para;</a></h3>
-<p>If no context files exist in the project, tools should emit a warning and return gracefully. Missing files are not errors.</p>
-<h2 id="schema">Schema<a class="headerlink" href="#schema" title="Permanent link">&para;</a></h2>
-<p>A context file has two optional top-level keys:</p>
+<h1 id="context-entries">Context entries<a class="headerlink" href="#context-entries" title="Permanent link">&para;</a></h1>
+<p>Context entries are the core building block of an <code>AGENTS.yaml</code> file. Each one is a piece of guidance scoped to specific files and actions.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">context</span><span class="p">:</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="c1"># ... context entries</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nt">decisions</span><span class="p">:</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="c1"># ... decision entries</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Use</span><span class="nv"> </span><span class="s">snake_case</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">all</span><span class="nv"> </span><span class="s">identifiers&quot;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/*.py&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">edit</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">before</span>
 </code></pre></div>
-<p>Both are lists. Both are optional.</p>
-<p>See <a href="../context/">Context entries</a> and <a href="../decisions/">Decisions</a> for field details and writing guidance.</p>
-<h3 id="context-entry-fields-summary">Context entry fields (summary)<a class="headerlink" href="#context-entry-fields-summary" title="Permanent link">&para;</a></h3>
+<p>When an agent edits a Python file, it sees that instruction. When it edits a SQL file, it doesn't. That's the whole idea.</p>
+<h2 id="fields">Fields<a class="headerlink" href="#fields" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -856,101 +724,141 @@
 <td>string or list</td>
 <td>no</td>
 <td><code>all</code></td>
-<td>Action filter: <code>read</code>, <code>edit</code>, <code>create</code>, <code>all</code></td>
+<td>Action filter: <code>read</code>, <code>edit</code>, <code>create</code>, or <code>all</code></td>
 </tr>
 <tr>
 <td><code>when</code></td>
 <td>string</td>
 <td>no</td>
 <td><code>before</code></td>
-<td>Prompt positioning: <code>before</code>, <code>after</code>, <code>all</code></td>
+<td>Prompt positioning: <code>before</code>, <code>after</code>, or <code>all</code></td>
 </tr>
 </tbody>
 </table>
-<h3 id="decision-entry-fields-summary">Decision entry fields (summary)<a class="headerlink" href="#decision-entry-fields-summary" title="Permanent link">&para;</a></h3>
+<h2 id="content">content<a class="headerlink" href="#content" title="Permanent link">&para;</a></h2>
+<p>The actual instruction. Keep each entry focused on one concern. If you're writing a paragraph that covers naming conventions <em>and</em> error handling <em>and</em> testing patterns, split it into separate entries. Each entry should make sense on its own.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Too much in one entry</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">context</span><span class="p">:</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="no">Use snake_case. Always handle errors with Result types.</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">      </span><span class="no">Tests go in _test.go files and use table-driven patterns.</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">      </span><span class="no">Never use globals.</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/*.go&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># Better: one concern per entry, each independently scoped</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="nt">context</span><span class="p">:</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Use</span><span class="nv"> </span><span class="s">snake_case</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">all</span><span class="nv"> </span><span class="s">identifiers&quot;</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/*.go&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">edit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">create</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Handle</span><span class="nv"> </span><span class="s">errors</span><span class="nv"> </span><span class="s">with</span><span class="nv"> </span><span class="s">Result</span><span class="nv"> </span><span class="s">types,</span><span class="nv"> </span><span class="s">never</span><span class="nv"> </span><span class="s">panic</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">library</span><span class="nv"> </span><span class="s">code&quot;</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">    </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/*.go&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="nt">exclude</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/*_test.go&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">edit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">create</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Table-driven</span><span class="nv"> </span><span class="s">tests.</span><span class="nv"> </span><span class="s">No</span><span class="nv"> </span><span class="s">assertion</span><span class="nv"> </span><span class="s">libraries.&quot;</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">    </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/*_test.go&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">    </span><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">edit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">create</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>Splitting entries matters because each one can have its own <code>match</code>, <code>on</code>, and <code>when</code> filters. The error handling guidance doesn't apply to test files. The testing guidance only applies to test files. You can't express that with one big entry.</p>
+<h2 id="match-and-exclude">match and exclude<a class="headerlink" href="#match-and-exclude" title="Permanent link">&para;</a></h2>
+<p>Standard glob patterns. Same syntax as <code>.gitignore</code> and <code>.editorconfig</code>.</p>
+<p>Globs resolve relative to the directory containing the <code>AGENTS.yaml</code> file, not the project root. A pattern <code>**/*.py</code> in <code>src/api/AGENTS.yaml</code> matches Python files under <code>src/api/</code>, not the entire project.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Matches all Python files in this directory tree</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/*.py&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Matches only direct children, not nested files</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;*.py&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Multiple patterns</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/*.ts&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;**/*.tsx&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># Match everything except vendor code</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/*.py&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="nt">exclude</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/vendor/**&quot;</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>The default match is <code>["**"]</code> (recursive, everything). <code>exclude</code> is applied after <code>match</code>. A file must match at least one <code>match</code> pattern and zero <code>exclude</code> patterns.</p>
+<h2 id="on">on<a class="headerlink" href="#on" title="Permanent link">&para;</a></h2>
+<p>What the agent is doing with the file.</p>
 <table>
 <thead>
 <tr>
-<th>Field</th>
-<th>Type</th>
-<th>Required</th>
-<th>Default</th>
-<th>Description</th>
+<th>Value</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>decision</code></td>
-<td>string</td>
-<td>yes</td>
-<td>--</td>
-<td>What was decided</td>
+<td><code>read</code></td>
+<td>Agent is reading the file</td>
 </tr>
 <tr>
-<td><code>rationale</code></td>
-<td>string</td>
-<td>yes</td>
-<td>--</td>
-<td>Why this was chosen</td>
+<td><code>edit</code></td>
+<td>Agent is modifying an existing file</td>
 </tr>
 <tr>
-<td><code>alternatives</code></td>
-<td>list</td>
-<td>no</td>
-<td>--</td>
-<td>Rejected options and constraints</td>
+<td><code>create</code></td>
+<td>Agent is creating a new file</td>
 </tr>
 <tr>
-<td><code>revisit_when</code></td>
-<td>string</td>
-<td>no</td>
-<td>--</td>
-<td>Condition to reconsider</td>
-</tr>
-<tr>
-<td><code>date</code></td>
-<td>date</td>
-<td>no</td>
-<td>--</td>
-<td>When decided (YYYY-MM-DD)</td>
-</tr>
-<tr>
-<td><code>match</code></td>
-<td>list of globs</td>
-<td>no</td>
-<td><code>["**"]</code></td>
-<td>Scope to specific files</td>
+<td><code>all</code></td>
+<td>Any action (default)</td>
 </tr>
 </tbody>
 </table>
-<h2 id="resolution-algorithm">Resolution algorithm<a class="headerlink" href="#resolution-algorithm" title="Permanent link">&para;</a></h2>
-<p>Given a file path, an action, and a timing:</p>
-<ol>
-<li><strong>Discover</strong> -- Walk from the target file's directory up to the project root, collecting all context files at each level</li>
-<li><strong>Parse</strong> -- Parse each file. Emit warnings for invalid files but continue processing valid ones</li>
-<li><strong>Filter by match/exclude</strong> -- Test each entry's glob patterns against the target file path. Globs are relative to the context file's directory</li>
-<li><strong>Filter by action</strong> -- Keep entries where <code>on</code> includes the requested action (or is <code>all</code>)</li>
-<li><strong>Filter by timing</strong> -- Keep entries where <code>when</code> matches the requested timing</li>
-<li><strong>Merge</strong> -- Combine all matching entries. Parent directory entries come first, child directory entries come last</li>
-<li><strong>Return</strong> -- The ordered list of matching context entries and decisions</li>
-</ol>
-<h2 id="merge-order">Merge order<a class="headerlink" href="#merge-order" title="Permanent link">&para;</a></h2>
-<p>Parent directories come before child directories.</p>
-<ul>
-<li>General project-level context appears first (lower specificity)</li>
-<li>Directory-specific context appears last (higher specificity, stronger recency in the prompt)</li>
-</ul>
-<p>This ordering is intentional. The most specific context gets the strongest position in the LLM's attention window.</p>
-<h2 id="validation-rules">Validation rules<a class="headerlink" href="#validation-rules" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>content</code> is required on every context entry</li>
-<li><code>decision</code> and <code>rationale</code> are required on every decision entry</li>
-<li><code>on</code> values must be: <code>read</code>, <code>edit</code>, <code>create</code>, <code>all</code>, or a list of these</li>
-<li><code>when</code> values must be: <code>before</code>, <code>after</code>, or <code>all</code></li>
-<li><code>match</code> and <code>exclude</code> must be valid glob patterns</li>
-<li><code>date</code> must be YYYY-MM-DD if present</li>
-<li>Unknown fields produce warnings, not errors (forward compatibility)</li>
-</ul>
+<p>Accepts a single string or a list:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">edit</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">edit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">create</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>This filter is useful because reading and writing need different guidance. When an agent reads a file, you might want it to understand the architecture. When it edits, you want it to follow conventions. When it creates, you might want it to include boilerplate like license headers or module docstrings.</p>
+<h2 id="when">when<a class="headerlink" href="#when" title="Permanent link">&para;</a></h2>
+<p>Where the context appears relative to the file content in the agent's prompt.</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>before</code></td>
+<td>Context appears before file content (default)</td>
+</tr>
+<tr>
+<td><code>after</code></td>
+<td>Context appears after file content</td>
+</tr>
+<tr>
+<td><code>all</code></td>
+<td>Both positions</td>
+</tr>
+</tbody>
+</table>
+<p>This matters because LLMs have primacy and recency bias. They pay more attention to the beginning and end of their context window. If the file is large (hundreds of lines) and you have a critical instruction, putting it <code>after</code> means it lands right before the model generates its response. That gives it stronger influence.</p>
+<p>General guidelines work fine as <code>before</code>. High-priority rules that agents keep ignoring should go <code>after</code>.</p>
+<h2 id="writing-good-entries">Writing good entries<a class="headerlink" href="#writing-good-entries" title="Permanent link">&para;</a></h2>
+<p><strong>Be specific.</strong> "Follow best practices" is useless. "Prefix staging models with <code>stg_</code>, intermediate with <code>int_</code>, marts with <code>fct_</code> or <code>dim_</code>" is actionable.</p>
+<p><strong>Be self-contained.</strong> Each entry should make sense without reading other entries. An agent might only see two of your ten entries for a given file. Don't write entry #4 assuming the agent has already read entries #1-3.</p>
+<p><strong>Scope tightly.</strong> The more specific your <code>match</code> pattern, the less noise the agent sees. <code>match: ["handlers/**/*.py"]</code> is better than <code>match: ["**/*.py"]</code> when the guidance only applies to handlers.</p>
+<p><strong>Use <code>exclude</code> for exceptions.</strong> Test files, generated code, vendor directories. If a convention applies to your code but not to third-party code, exclude it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">context</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;All</span><span class="nv"> </span><span class="s">functions</span><span class="nv"> </span><span class="s">need</span><span class="nv"> </span><span class="s">docstrings&quot;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/*.py&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">exclude</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/vendor/**&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;**/*_pb2.py&quot;</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<h2 id="directory-inheritance">Directory inheritance<a class="headerlink" href="#directory-inheritance" title="Permanent link">&para;</a></h2>
+<p>Context files at different levels merge together. Parent entries come first, child entries come last.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>project/
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  AGENTS.yaml           &lt;- &quot;Use ESM imports everywhere&quot;
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  src/
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    payments/
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>      AGENTS.yaml       &lt;- &quot;Money values are integers in cents&quot;
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>      checkout.ts
+</code></pre></div>
+<p>When an agent edits <code>checkout.ts</code>, it sees the project-level ESM rule first, then the payments-specific money rule. The payments context appears last, giving it stronger recency in the prompt.</p>
+<p>You don't need to repeat parent context in child files. It's inherited automatically.</p>
+<p>See <a href="../examples/">Examples</a> for complete <code>AGENTS.yaml</code> files showing context entries in real projects.</p>
 
 
 

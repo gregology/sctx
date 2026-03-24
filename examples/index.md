@@ -1,6 +1,8 @@
 # Examples
 
-Real-world patterns for using Structured Context. Each example shows the problem, the file structure, and the AGENTS.yaml that solves it.
+Complete `AGENTS.yaml` files for real project types. Each example shows context entries and decisions working together.
+
+If you need to understand individual fields first, see [Context entries](https://sctx.dev/context/index.md) and [Decisions](https://sctx.dev/decisions/index.md).
 
 ## dbt project
 
@@ -303,37 +305,3 @@ decisions:
 ```
 
 When an agent edits `packages/payments/src/checkout.ts`, it gets the shared monorepo conventions *and* the payments-specific context. The payments context appears last, giving it stronger influence.
-
-## Writing good decisions
-
-A good decision entry answers four questions:
-
-1. **What** did you decide?
-1. **Why** did you pick this option?
-1. **What else** did you consider, and why didn't you pick those?
-1. **When** should someone revisit this?
-
-The `alternatives` field is the most underused and the most valuable. Without it, an agent might suggest switching to the exact tool you already evaluated and rejected. With it, the agent knows the option was considered and understands the tradeoffs.
-
-```
-# Weak: leaves the agent guessing
-decisions:
-  - decision: "Use PostgreSQL"
-    rationale: "Good database"
-
-# Strong: full picture
-decisions:
-  - decision: "PostgreSQL over MySQL or DynamoDB"
-    rationale: "JSONB columns for flexible metadata, strong ecosystem for our Python stack, team expertise"
-    alternatives:
-      - option: "MySQL"
-        reason_rejected: "Weaker JSON support, no array types"
-      - option: "DynamoDB"
-        reason_rejected: "Single-table design is complex, hard to run locally, vendor lock-in"
-      - option: "MongoDB"
-        reason_rejected: "Weaker consistency guarantees, team prefers SQL"
-    revisit_when: "Write throughput exceeds what a single Postgres instance can handle"
-    date: 2025-05-15
-```
-
-Dates matter too. A decision made two years ago under different constraints might be worth questioning. One made last week probably isn't.

@@ -166,6 +166,8 @@ Child directories inherit and merge with parent context. No need to repeat yours
 
 ## What's next
 
-- [Examples](https://sctx.dev/examples/index.md) -- patterns for dbt, React, Terraform, and more
-- [Protocol spec](https://sctx.dev/protocol/index.md) -- the full schema reference
+- [Context entries](https://sctx.dev/context/index.md) -- how to write and scope context entries
+- [Decisions](https://sctx.dev/decisions/index.md) -- recording rejected alternatives and when to revisit
+- [Examples](https://sctx.dev/examples/index.md) -- complete AGENTS.yaml files for dbt, React, Terraform, and more
 - [CLI reference](https://sctx.dev/cli-reference/index.md) -- all commands and flags
+- [Protocol spec](https://sctx.dev/protocol/index.md) -- file format and resolution algorithm for tool implementors
