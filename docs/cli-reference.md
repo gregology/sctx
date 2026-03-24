@@ -25,7 +25,7 @@ The Write tool gets special treatment: `sctx` checks whether the target file exi
 
 Query context entries for a file or directory. Useful for debugging and testing your context files. The current working directory is used as the project root — only `AGENTS.yaml` files at or below it are considered.
 
-If the path is a directory (or ends with `/`), sctx runs a directory query. Directory patterns like `match: ["tests/"]` only match directory queries, not file queries. File-glob patterns like `match: ["**/*.py"]` match a directory query if they could produce hits inside that directory.
+If the path exists on disk as a directory, sctx automatically runs a directory query. For paths that don't exist on disk, append a trailing `/` to force a directory query. Directory patterns like `match: ["tests/"]` only match directory queries, not file queries. File-glob patterns like `match: ["**/*.py"]` match a directory query if they could produce hits inside that directory.
 
 ```bash
 sctx context src/api/handler.py

@@ -310,6 +310,9 @@ func matchesFileGlobs(sourceDir, absPath string, match, exclude []string) bool {
 // For directory patterns (trailing /), the directory must match exactly.
 // For file-glob patterns, the pattern must be capable of matching files inside the directory.
 // Globs are resolved relative to sourceDir.
+//
+// Match and exclude use different strictness levels. Match is generous (extra context
+// is acceptable). Exclude is strict (must not remove context that should be shown).
 func matchesDirGlobs(sourceDir, absDir string, match, exclude []string) bool {
 	relDir, err := filepath.Rel(sourceDir, absDir)
 	if err != nil {
@@ -322,7 +325,6 @@ func matchesDirGlobs(sourceDir, absDir string, match, exclude []string) bool {
 		return false
 	}
 
-	// "." means the directory is the sourceDir itself.
 	if relDir == "." {
 		relDir = ""
 	}
@@ -331,13 +333,18 @@ func matchesDirGlobs(sourceDir, absDir string, match, exclude []string) bool {
 		return false
 	}
 
-	return !anyDirPatternMatches(relDir, exclude)
+	return !anyDirPatternExcludes(relDir, exclude)
 }
 
-// anyDirPatternMatches reports whether any pattern in the list matches the directory.
+// anyDirPatternMatches reports whether any match pattern applies to the directory.
+// Uses generous matching.
 func anyDirPatternMatches(relDir string, patterns []string) bool {
 	for _, pattern := range patterns {
-		if dirPatternMatches(relDir, pattern) {
+		if isDirPattern(pattern) {
+			if dirSlashPatternMatches(relDir, pattern) {
+				return true
+			}
+		} else if fileGlobMatchesDir(pattern, relDir) {
 			return true
 		}
 	}
@@ -345,13 +352,20 @@ func anyDirPatternMatches(relDir string, patterns []string) bool {
 	return false
 }
 
-// dirPatternMatches checks a single pattern against a directory.
-func dirPatternMatches(relDir, pattern string) bool {
-	if isDirPattern(pattern) {
-		return dirSlashPatternMatches(relDir, pattern)
+// anyDirPatternExcludes reports whether any exclude pattern applies to the directory.
+// Uses strict matching to avoid over-excluding.
+func anyDirPatternExcludes(relDir string, patterns []string) bool {
+	for _, pattern := range patterns {
+		if isDirPattern(pattern) {
+			if dirSlashPatternMatches(relDir, pattern) {
+				return true
+			}
+		} else if fileGlobExcludesDir(pattern, relDir) {
+			return true
+		}
 	}
 
-	return fileGlobMatchesDir(pattern, relDir)
+	return false
 }
 
 // dirSlashPatternMatches checks a trailing-slash pattern against a directory path.
@@ -367,62 +381,83 @@ func dirSlashPatternMatches(relDir, pattern string) bool {
 }
 
 // fileGlobMatchesDir reports whether a file-glob pattern could match files inside relDir.
-// For example, "tests/**" matches directory "tests", "**/*.py" matches any directory,
-// and "src/**" does not match directory "tests".
+// This is used for match evaluation and is intentionally generous: if the pattern
+// could possibly produce hits inside the directory, it returns true. Extra context
+// is acceptable; missing context is not.
 func fileGlobMatchesDir(pattern, relDir string) bool {
-	// Pattern "**" or "**/*" matches any directory.
 	if pattern == "**" || pattern == "**/*" {
 		return true
 	}
 
-	// If the queried directory is the sourceDir itself (relDir is empty),
-	// any pattern could match files directly in it.
+	// Any pattern could match files in the sourceDir itself.
 	if relDir == "" {
 		return true
 	}
 
-	// Split both the pattern and the directory into segments and walk them
-	// together. A pattern segment can be a literal ("src"), a wildcard ("*"),
-	// or a recursive wildcard ("**"). We need to determine whether files
-	// matching this pattern could exist inside relDir.
+	// Patterns starting with **/ can match at any depth, so they're relevant
+	// to any directory.
+	if strings.HasPrefix(pattern, "**/") {
+		return true
+	}
+
 	patParts := strings.Split(pattern, "/")
 	dirParts := strings.Split(relDir, "/")
 
 	return dirCouldContainMatch(patParts, dirParts)
 }
 
-// dirCouldContainMatch reports whether a directory (dirParts) could contain files
-// matching the given pattern (patParts). Both are split by "/".
-//
-// The key insight: we walk the pattern and directory segments together.
-// If the directory is deeper than the pattern's directory portion, we need "**"
-// somewhere in the pattern to bridge the gap. If the directory is shallower,
-// the pattern's deeper segments might produce files under the directory.
-func dirCouldContainMatch(patParts, dirParts []string) bool {
-	return matchSegments(patParts, dirParts, 0, 0, false)
+// fileGlobExcludesDir reports whether a file-glob exclude pattern should exclude relDir.
+// This is stricter than fileGlobMatchesDir: it only returns true when the directory
+// is clearly within the exclude pattern's scope. This prevents patterns like
+// "vendor/**" from excluding the root directory, and "**/vendor/**" from
+// excluding every directory.
+func fileGlobExcludesDir(pattern, relDir string) bool {
+	if pattern == "**" || pattern == "**/*" {
+		return true
+	}
+
+	if relDir == "" {
+		// Only exclude the root for patterns that genuinely target everything.
+		// Patterns like "vendor/**" don't target the root.
+		return false
+	}
+
+	patParts := strings.Split(pattern, "/")
+	dirParts := strings.Split(relDir, "/")
+
+	return dirCouldExclude(patParts, dirParts)
 }
 
-// matchSegments walks pattern and directory segments together to determine if
-// the pattern could match files inside the directory.
-//
-// literalMatched tracks whether at least one non-"**" pattern segment has been
-// successfully matched against a real directory segment. This matters at the
-// terminal case: if no literals ever matched, the directory is not "on the
-// pattern's path" and remaining literal segments are unvalidated guesses.
-func matchSegments(pat, dir []string, pi, di int, literalMatched bool) bool {
+// dirCouldContainMatch reports whether a directory (dirParts) could contain files
+// matching the given pattern (patParts). Both are split by "/".
+// Used for match evaluation (generous).
+func dirCouldContainMatch(patParts, dirParts []string) bool {
+	return matchSegments(patParts, dirParts, 0, 0)
+}
+
+// dirCouldExclude reports whether a directory should be excluded by the pattern.
+// Stricter than dirCouldContainMatch: requires that at least one literal segment
+// in the pattern has been validated against an actual directory segment.
+// This prevents "**/vendor/**" from excluding directories that don't contain "vendor"
+// in their path.
+func dirCouldExclude(patParts, dirParts []string) bool {
+	return matchSegmentsStrict(patParts, dirParts, 0, 0, false)
+}
+
+// matchSegments walks pattern and directory segments to determine if the pattern
+// could produce file matches inside the directory. This is the generous version
+// used for match evaluation.
+func matchSegments(pat, dir []string, pi, di int) bool {
 	for pi < len(pat) && di < len(dir) {
 		p := pat[pi]
 
 		if p == "**" {
-			// If "**" is the last segment, it matches zero or more directories
-			// and any files below. The directory always matches.
 			if pi == len(pat)-1 {
 				return true
 			}
 
-			// "**" can match zero or more directory segments.
 			for skip := 0; skip <= len(dir)-di; skip++ {
-				if matchSegments(pat, dir, pi+1, di+skip, literalMatched) {
+				if matchSegments(pat, dir, pi+1, di+skip) {
 					return true
 				}
 			}
@@ -430,7 +465,44 @@ func matchSegments(pat, dir []string, pi, di int, literalMatched bool) bool {
 			return false
 		}
 
-		// Literal or wildcard segment: must match the directory segment.
+		ok, err := doublestar.Match(p, dir[di])
+		if err != nil || !ok {
+			return false
+		}
+
+		pi++
+		di++
+	}
+
+	if di == len(dir) {
+		return pi < len(pat)
+	}
+
+	return false
+}
+
+// matchSegmentsStrict is the strict version of matchSegments, used for exclude
+// evaluation. It tracks whether at least one non-"**" pattern segment was matched
+// against a real directory segment. If not, remaining literal segments are
+// considered unvalidated and the match is rejected.
+func matchSegmentsStrict(pat, dir []string, pi, di int, literalMatched bool) bool {
+	for pi < len(pat) && di < len(dir) {
+		p := pat[pi]
+
+		if p == "**" {
+			if pi == len(pat)-1 {
+				return true
+			}
+
+			for skip := 0; skip <= len(dir)-di; skip++ {
+				if matchSegmentsStrict(pat, dir, pi+1, di+skip, literalMatched) {
+					return true
+				}
+			}
+
+			return false
+		}
+
 		ok, err := doublestar.Match(p, dir[di])
 		if err != nil || !ok {
 			return false
@@ -442,24 +514,18 @@ func matchSegments(pat, dir []string, pi, di int, literalMatched bool) bool {
 	}
 
 	if di == len(dir) {
-		// All directory segments consumed. Check remaining pattern.
 		remaining := pat[pi:]
 
 		if len(remaining) == 0 {
-			// Pattern fully consumed matching directories. Nothing left for files.
 			return false
 		}
 
-		// If at least one literal was validated against a real dir segment,
-		// the directory is on the pattern's path. Remaining segments describe
-		// a subpath from here that could contain matching files.
 		if literalMatched {
 			return true
 		}
 
-		// No literals were ever validated (pattern started with "**" and "**"
-		// consumed all dir segments). Remaining segments are unvalidated.
-		// Only match if remaining is a single filename segment or starts with "**".
+		// No literals validated. Only match for single filename segment
+		// or remaining starting with **.
 		if len(remaining) == 1 {
 			return true
 		}
@@ -467,7 +533,6 @@ func matchSegments(pat, dir []string, pi, di int, literalMatched bool) bool {
 		return remaining[0] == "**"
 	}
 
-	// Pattern exhausted but directory segments remain. Pattern doesn't reach.
 	return false
 }
 

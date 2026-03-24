@@ -1697,9 +1697,13 @@ context:
 	}
 }
 
-func TestResolve_DirQuery_DoubleStarPrefixMatchIsSelective(t *testing.T) {
-	// Patterns like **/api/*.py should match directories containing api/ but not all directories.
+func TestResolve_DirQuery_DoubleStarPrefixMatch(t *testing.T) {
+	// **/api/*.py matches any directory because ** can bridge to any depth.
+	// src/models/api/foo.py is a valid match, so src/models/ should match.
+	// The pattern is generous for match: if files matching the pattern could
+	// exist anywhere under the directory, it matches.
 	tmpDir := t.TempDir()
+	srcDir := filepath.Join(tmpDir, "src")
 	apiDir := filepath.Join(tmpDir, "src", "api")
 	modelsDir := filepath.Join(tmpDir, "src", "models")
 	for _, d := range []string{apiDir, modelsDir} {
@@ -1720,7 +1724,8 @@ context:
 		wantN int
 	}{
 		{"src/api/ matches", apiDir, 1},
-		{"src/models/ does not match", modelsDir, 0},
+		{"src/models/ matches (could contain api/ subdir)", modelsDir, 1},
+		{"src/ matches", srcDir, 1},
 	}
 
 	for _, tt := range tests {
@@ -1741,7 +1746,79 @@ context:
 	}
 }
 
-// assertContextContents checks that the matched context entries have exactly
+func TestResolve_DirQuery_ExcludeDoesNotPoisonRoot(t *testing.T) {
+	// Querying the directory that contains the AGENTS.yaml (relDir=="")
+	// must not be excluded by file-glob exclude patterns.
+	tmpDir := t.TempDir()
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "not vendor"
+    exclude: ["vendor/**"]
+  - content: "not generated"
+    exclude: ["**/generated/**"]
+`)
+
+	result, _, err := Resolve(ResolveRequest{
+		DirPath: tmpDir,
+		Action:  ActionAll,
+		Timing:  TimingAll,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+
+	assertContextContents(t, result.ContextEntries, []string{"not vendor", "not generated"})
+}
+
+func TestResolve_DirQuery_ExcludeStrictVsMatchGenerous(t *testing.T) {
+	// match is generous: **/vendor/** matches any directory (vendor/ could be nested).
+	// exclude is strict: **/vendor/** only excludes directories with "vendor" in their path.
+	tmpDir := t.TempDir()
+	srcDir := filepath.Join(tmpDir, "src")
+	vendorDir := filepath.Join(tmpDir, "vendor")
+	for _, d := range []string{srcDir, vendorDir} {
+		if err := os.MkdirAll(d, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// match uses **/vendor/** — should match src/ (generous)
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "vendor-scoped"
+    match: ["**/vendor/**"]
+  - content: "everything except vendor"
+    exclude: ["**/vendor/**"]
+`)
+
+	// src/ should get "vendor-scoped" (generous match) and "everything except vendor" (not excluded)
+	result, _, err := Resolve(ResolveRequest{
+		DirPath: srcDir,
+		Action:  ActionAll,
+		Timing:  TimingAll,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+	assertContextContents(t, result.ContextEntries, []string{"vendor-scoped", "everything except vendor"})
+
+	// vendor/ should get "vendor-scoped" (match) but NOT "everything except vendor" (excluded)
+	result, _, err = Resolve(ResolveRequest{
+		DirPath: vendorDir,
+		Action:  ActionAll,
+		Timing:  TimingAll,
+		Root:    tmpDir,
+	})
+	if err != nil {
+		t.Fatalf("Resolve() error: %v", err)
+	}
+	assertContextContents(t, result.ContextEntries, []string{"vendor-scoped"})
+}
+
+// assertContextContents checks// assertContextContents checks that the matched context entries have exactly
 // the expected content strings, in order.
 func assertContextContents(t *testing.T, got []MatchedContext, want []string) {
 	t.Helper()
