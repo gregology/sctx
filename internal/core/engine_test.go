@@ -1319,6 +1319,16 @@ func TestResolve_DirQuery_MutuallyExclusive(t *testing.T) {
 	}
 }
 
+func TestResolve_EmptyPaths(t *testing.T) {
+	_, _, err := Resolve(ResolveRequest{
+		Action: ActionAll,
+		Timing: TimingAll,
+	})
+	if err == nil {
+		t.Fatal("expected error when both FilePath and DirPath are empty")
+	}
+}
+
 func TestResolve_DirQuery_SelfDirectory(t *testing.T) {
 	// Query the directory that contains the AGENTS.yaml itself.
 	tmpDir := t.TempDir()
@@ -1818,7 +1828,7 @@ context:
 	assertContextContents(t, result.ContextEntries, []string{"vendor-scoped"})
 }
 
-// assertContextContents checks// assertContextContents checks that the matched context entries have exactly
+// assertContextContents checks that the matched context entries have exactly
 // the expected content strings, in order.
 func assertContextContents(t *testing.T, got []MatchedContext, want []string) {
 	t.Helper()

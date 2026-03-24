@@ -96,6 +96,8 @@ match: ["src/**/tests/"]
 match: ["**/api/"]
 ```
 
+When a file-glob pattern (like `**/*.py`) appears in a directory query, `match` and `exclude` use different strictness levels. Match is **generous**: if the pattern *could* produce hits inside the directory, the entry is included. Exclude is **strict**: it only removes the directory when the pattern clearly targets it. This means `exclude: ["**/vendor/**"]` won't exclude `src/` (good — vendor files aren't in `src/`), but `match: ["**/vendor/**"]` *will* match `src/` (acceptable — it errs on the side of showing extra context). The asymmetry prevents accidental over-exclusion.
+
 Directory patterns never match file queries. They only match when an agent (or the CLI) queries a directory directly:
 
 ```bash

@@ -11,7 +11,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var errMutuallyExclusive = errors.New("FilePath and DirPath are mutually exclusive")
+var (
+	errMutuallyExclusive = errors.New("FilePath and DirPath are mutually exclusive")
+	errPathRequired      = errors.New("FilePath or DirPath is required")
+)
 
 // AgentsFileNames are the recognized filenames, in priority order.
 var AgentsFileNames = []string{
@@ -25,6 +28,10 @@ var AgentsFileNames = []string{
 func Resolve(req ResolveRequest) (*ResolveResult, []string, error) {
 	if req.FilePath != "" && req.DirPath != "" {
 		return nil, nil, errMutuallyExclusive
+	}
+
+	if req.FilePath == "" && req.DirPath == "" {
+		return nil, nil, errPathRequired
 	}
 
 	root := req.Root
@@ -428,11 +435,28 @@ func fileGlobExcludesDir(pattern, relDir string) bool {
 	return dirCouldExclude(patParts, dirParts)
 }
 
+// collapseDoubleStars removes consecutive "**" segments from a pattern.
+// Multiple adjacent "**" segments are semantically equivalent to a single "**"
+// but cause exponential branching in the recursive matcher.
+func collapseDoubleStars(parts []string) []string {
+	out := make([]string, 0, len(parts))
+
+	for _, p := range parts {
+		if p == "**" && len(out) > 0 && out[len(out)-1] == "**" {
+			continue
+		}
+
+		out = append(out, p)
+	}
+
+	return out
+}
+
 // dirCouldContainMatch reports whether a directory (dirParts) could contain files
 // matching the given pattern (patParts). Both are split by "/".
 // Used for match evaluation (generous).
 func dirCouldContainMatch(patParts, dirParts []string) bool {
-	return matchSegments(patParts, dirParts, 0, 0)
+	return matchSegments(collapseDoubleStars(patParts), dirParts, 0, 0)
 }
 
 // dirCouldExclude reports whether a directory should be excluded by the pattern.
@@ -441,7 +465,7 @@ func dirCouldContainMatch(patParts, dirParts []string) bool {
 // This prevents "**/vendor/**" from excluding directories that don't contain "vendor"
 // in their path.
 func dirCouldExclude(patParts, dirParts []string) bool {
-	return matchSegmentsStrict(patParts, dirParts, 0, 0, false)
+	return matchSegmentsStrict(collapseDoubleStars(patParts), dirParts, 0, 0, false)
 }
 
 // matchSegments walks pattern and directory segments to determine if the pattern
@@ -485,6 +509,14 @@ func matchSegments(pat, dir []string, pi, di int) bool {
 // evaluation. It tracks whether at least one non-"**" pattern segment was matched
 // against a real directory segment. If not, remaining literal segments are
 // considered unvalidated and the match is rejected.
+//
+// Truth table:
+//
+//	Pattern          | Dir     | Result | Why
+//	*                | foo     | false  | pattern exhausted, no remaining segments
+//	foo/*            | foo     | true   | literal "foo" matched, * remains for children
+//	**/vendor/**     | src     | false  | no literal matched, ** can't validate alone
+//	**/vendor/**     | vendor  | true   | "vendor" literal matched, ** remains
 func matchSegmentsStrict(pat, dir []string, pi, di int, literalMatched bool) bool {
 	for pi < len(pat) && di < len(dir) {
 		p := pat[pi]
