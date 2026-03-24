@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,7 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var errMutuallyExclusive = fmt.Errorf("FilePath and DirPath are mutually exclusive")
+var errMutuallyExclusive = errors.New("FilePath and DirPath are mutually exclusive")
 
 // AgentsFileNames are the recognized filenames, in priority order.
 var AgentsFileNames = []string{
@@ -374,12 +375,6 @@ func fileGlobMatchesDir(pattern, relDir string) bool {
 		return true
 	}
 
-	// If the pattern starts with "**/" it can match at any depth,
-	// so it potentially matches any directory.
-	if strings.HasPrefix(pattern, "**/") {
-		return true
-	}
-
 	// If the queried directory is the sourceDir itself (relDir is empty),
 	// any pattern could match files directly in it.
 	if relDir == "" {
@@ -404,49 +399,75 @@ func fileGlobMatchesDir(pattern, relDir string) bool {
 // somewhere in the pattern to bridge the gap. If the directory is shallower,
 // the pattern's deeper segments might produce files under the directory.
 func dirCouldContainMatch(patParts, dirParts []string) bool {
-	return matchSegments(patParts, dirParts, 0, 0)
+	return matchSegments(patParts, dirParts, 0, 0, false)
 }
 
-func matchSegments(pat, dir []string, pi, di int) bool {
+// matchSegments walks pattern and directory segments together to determine if
+// the pattern could match files inside the directory.
+//
+// literalMatched tracks whether at least one non-"**" pattern segment has been
+// successfully matched against a real directory segment. This matters at the
+// terminal case: if no literals ever matched, the directory is not "on the
+// pattern's path" and remaining literal segments are unvalidated guesses.
+func matchSegments(pat, dir []string, pi, di int, literalMatched bool) bool {
 	for pi < len(pat) && di < len(dir) {
 		p := pat[pi]
 
 		if p == "**" {
+			// If "**" is the last segment, it matches zero or more directories
+			// and any files below. The directory always matches.
+			if pi == len(pat)-1 {
+				return true
+			}
+
 			// "**" can match zero or more directory segments.
-			// Try consuming 0..len(dir)-di segments from dir.
 			for skip := 0; skip <= len(dir)-di; skip++ {
-				if matchSegments(pat, dir, pi+1, di+skip) {
+				if matchSegments(pat, dir, pi+1, di+skip, literalMatched) {
 					return true
 				}
 			}
+
 			return false
 		}
 
-		// Check if this pattern segment matches the directory segment.
+		// Literal or wildcard segment: must match the directory segment.
 		ok, err := doublestar.Match(p, dir[di])
 		if err != nil || !ok {
 			return false
 		}
 
+		literalMatched = true
 		pi++
 		di++
 	}
 
 	if di == len(dir) {
-		// We've consumed all directory segments. The pattern still has remaining
-		// segments (pi < len(pat)). Those remaining segments would match files
-		// inside this directory, so the pattern is relevant.
-		//
-		// But if we also consumed the entire pattern (pi == len(pat)), the pattern
-		// was fully used up matching directory segments. There's nothing left to
-		// match files, so the pattern doesn't produce hits *inside* the directory.
-		// Example: pattern "foo/*", dir "foo/bar" -> pattern consumed matching
-		// "foo" and "bar", nothing left to match files in foo/bar/.
-		return pi < len(pat)
+		// All directory segments consumed. Check remaining pattern.
+		remaining := pat[pi:]
+
+		if len(remaining) == 0 {
+			// Pattern fully consumed matching directories. Nothing left for files.
+			return false
+		}
+
+		// If at least one literal was validated against a real dir segment,
+		// the directory is on the pattern's path. Remaining segments describe
+		// a subpath from here that could contain matching files.
+		if literalMatched {
+			return true
+		}
+
+		// No literals were ever validated (pattern started with "**" and "**"
+		// consumed all dir segments). Remaining segments are unvalidated.
+		// Only match if remaining is a single filename segment or starts with "**".
+		if len(remaining) == 1 {
+			return true
+		}
+
+		return remaining[0] == "**"
 	}
 
-	// If we've consumed all pattern segments but there are directory segments left,
-	// the directory is deeper than the pattern reaches. No match.
+	// Pattern exhausted but directory segments remain. Pattern doesn't reach.
 	return false
 }
 

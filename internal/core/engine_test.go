@@ -1421,30 +1421,30 @@ context:
     exclude: ["vendor/"]
 `)
 
-	// src should match
-	result, _, err := Resolve(ResolveRequest{
-		DirPath: srcDir,
-		Action:  ActionAll,
-		Timing:  TimingAll,
-		Root:    tmpDir,
-	})
-	if err != nil {
-		t.Fatalf("Resolve() error: %v", err)
+	tests := []struct {
+		name  string
+		dir   string
+		wantN int
+	}{
+		{"src/ not excluded", srcDir, 1},
+		{"vendor/ excluded", vendorDir, 0},
 	}
-	assertContextContents(t, result.ContextEntries, []string{"everywhere except vendor"})
 
-	// vendor should be excluded
-	result, _, err = Resolve(ResolveRequest{
-		DirPath: vendorDir,
-		Action:  ActionAll,
-		Timing:  TimingAll,
-		Root:    tmpDir,
-	})
-	if err != nil {
-		t.Fatalf("Resolve() error: %v", err)
-	}
-	if len(result.ContextEntries) != 0 {
-		t.Errorf("expected 0 entries for vendor dir, got %d", len(result.ContextEntries))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, _, err := Resolve(ResolveRequest{
+				DirPath: tt.dir,
+				Action:  ActionAll,
+				Timing:  TimingAll,
+				Root:    tmpDir,
+			})
+			if err != nil {
+				t.Fatalf("Resolve() error: %v", err)
+			}
+			if len(result.ContextEntries) != tt.wantN {
+				t.Errorf("expected %d entries, got %d", tt.wantN, len(result.ContextEntries))
+			}
+		})
 	}
 }
 
@@ -1545,13 +1545,16 @@ func TestResolve_DirQuery_NeverPanics(t *testing.T) {
 	})
 }
 
-func TestResolve_DirQuery_DeepPatternFromParentDir(t *testing.T) {
+func TestResolve_DirQuery_FileGlobDepthMatching(t *testing.T) {
+	// Tests that file-glob patterns correctly match directories at various depths,
+	// including the trailing-** regression (src/** must match src/api/).
 	tmpDir := t.TempDir()
 	srcDir := filepath.Join(tmpDir, "src")
 	apiDir := filepath.Join(tmpDir, "src", "api")
 	handlersDir := filepath.Join(tmpDir, "src", "api", "handlers")
+	testsDir := filepath.Join(tmpDir, "tests")
 	otherDir := filepath.Join(tmpDir, "other")
-	for _, d := range []string{handlersDir, otherDir} {
+	for _, d := range []string{handlersDir, testsDir, otherDir} {
 		if err := os.MkdirAll(d, 0o750); err != nil {
 			t.Fatal(err)
 		}
@@ -1559,19 +1562,22 @@ func TestResolve_DirQuery_DeepPatternFromParentDir(t *testing.T) {
 
 	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
 context:
+  - content: "src everything"
+    match: ["src/**"]
   - content: "handler context"
     match: ["src/api/handlers/*.py"]
 `)
 
 	tests := []struct {
-		name  string
-		dir   string
-		wantN int
+		name      string
+		dir       string
+		wantNames []string
 	}{
-		{"handlers dir matches", handlersDir, 1},
-		{"api dir matches (pattern goes through it)", apiDir, 1},
-		{"src dir matches (pattern goes through it)", srcDir, 1},
-		{"other dir does not match", otherDir, 0},
+		{"src/ gets both", srcDir, []string{"src everything", "handler context"}},
+		{"src/api/ gets both", apiDir, []string{"src everything", "handler context"}},
+		{"src/api/handlers/ gets both", handlersDir, []string{"src everything", "handler context"}},
+		{"tests/ gets neither", testsDir, nil},
+		{"other/ gets neither", otherDir, nil},
 	}
 
 	for _, tt := range tests {
@@ -1585,7 +1591,149 @@ context:
 			if err != nil {
 				t.Fatalf("Resolve() error: %v", err)
 			}
+			if len(result.ContextEntries) != len(tt.wantNames) {
+				got := make([]string, len(result.ContextEntries))
+				for i, e := range result.ContextEntries {
+					got[i] = e.Content
+				}
+				t.Errorf("expected %d entries %v, got %d %v",
+					len(tt.wantNames), tt.wantNames, len(result.ContextEntries), got)
+			}
+		})
+	}
+}
 
+func TestResolve_DirQuery_ExcludeFileGlobPattern(t *testing.T) {
+	tmpDir := t.TempDir()
+	srcDir := filepath.Join(tmpDir, "src")
+	vendorDir := filepath.Join(tmpDir, "vendor")
+	vendorDeepDir := filepath.Join(tmpDir, "vendor", "github.com", "pkg")
+	srcVendorDir := filepath.Join(tmpDir, "src", "vendor")
+	for _, d := range []string{srcDir, vendorDeepDir, srcVendorDir} {
+		if err := os.MkdirAll(d, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "everywhere except vendor"
+    exclude: ["**/vendor/**"]
+`)
+
+	tests := []struct {
+		name  string
+		dir   string
+		wantN int
+	}{
+		{"src/ not excluded", srcDir, 1},
+		{"vendor/ excluded", vendorDir, 0},
+		{"vendor/deep excluded", vendorDeepDir, 0},
+		{"src/vendor/ excluded", srcVendorDir, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, _, err := Resolve(ResolveRequest{
+				DirPath: tt.dir,
+				Action:  ActionAll,
+				Timing:  TimingAll,
+				Root:    tmpDir,
+			})
+			if err != nil {
+				t.Fatalf("Resolve() error: %v", err)
+			}
+			if len(result.ContextEntries) != tt.wantN {
+				t.Errorf("expected %d entries, got %d", tt.wantN, len(result.ContextEntries))
+			}
+		})
+	}
+}
+
+func TestResolve_DirQuery_DoubleStarMiddlePattern(t *testing.T) {
+	tmpDir := t.TempDir()
+	srcTests := filepath.Join(tmpDir, "src", "api", "tests")
+	srcApi := filepath.Join(tmpDir, "src", "api")
+	srcDir := filepath.Join(tmpDir, "src")
+	otherTests := filepath.Join(tmpDir, "other", "tests")
+	for _, d := range []string{srcTests, otherTests} {
+		if err := os.MkdirAll(d, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "src test files"
+    match: ["src/**/tests/*.py"]
+`)
+
+	tests := []struct {
+		name  string
+		dir   string
+		wantN int
+	}{
+		{"src/api/tests/ matches", srcTests, 1},
+		{"src/api/ matches (pattern goes through)", srcApi, 1},
+		{"src/ matches (pattern starts here)", srcDir, 1},
+		{"other/tests/ does not match (wrong prefix)", otherTests, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, _, err := Resolve(ResolveRequest{
+				DirPath: tt.dir,
+				Action:  ActionAll,
+				Timing:  TimingAll,
+				Root:    tmpDir,
+			})
+			if err != nil {
+				t.Fatalf("Resolve() error: %v", err)
+			}
+			if len(result.ContextEntries) != tt.wantN {
+				t.Errorf("expected %d entries, got %d", tt.wantN, len(result.ContextEntries))
+			}
+		})
+	}
+}
+
+func TestResolve_DirQuery_DoubleStarPrefixMatchIsSelective(t *testing.T) {
+	// Patterns like **/api/*.py should match directories containing api/ but not all directories.
+	tmpDir := t.TempDir()
+	apiDir := filepath.Join(tmpDir, "src", "api")
+	modelsDir := filepath.Join(tmpDir, "src", "models")
+	for _, d := range []string{apiDir, modelsDir} {
+		if err := os.MkdirAll(d, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	writeTestFile(t, filepath.Join(tmpDir, "AGENTS.yaml"), `
+context:
+  - content: "api handlers"
+    match: ["**/api/*.py"]
+`)
+
+	tests := []struct {
+		name  string
+		dir   string
+		wantN int
+	}{
+		{"src/api/ matches", apiDir, 1},
+		{"src/models/ does not match", modelsDir, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, _, err := Resolve(ResolveRequest{
+				DirPath: tt.dir,
+				Action:  ActionAll,
+				Timing:  TimingAll,
+				Root:    tmpDir,
+			})
+			if err != nil {
+				t.Fatalf("Resolve() error: %v", err)
+			}
 			if len(result.ContextEntries) != tt.wantN {
 				t.Errorf("expected %d entries, got %d", tt.wantN, len(result.ContextEntries))
 			}
