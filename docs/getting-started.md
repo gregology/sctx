@@ -185,3 +185,4 @@ Child directories inherit and merge with parent context. No need to repeat yours
 - [Decisions](decisions.md) -- recording rejected alternatives and when to revisit
 - [Examples](examples.md) -- complete AGENTS.yaml files for dbt, React, Terraform, and more
 - [CLI reference](cli-reference.md) -- all commands and flags
+- [Protocol spec](protocol.md) -- file format and resolution algorithm for tool implementors

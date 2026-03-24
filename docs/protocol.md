@@ -51,7 +51,7 @@ decisions:
 
 Both are lists. Both are optional.
 
-See [Context entries](context.md) for the full context entry schema and [Decisions](decisions.md) for the full decision entry schema.
+See [Context entries](context.md) and [Decisions](decisions.md) for field details and writing guidance.
 
 ### Context entry fields (summary)
 

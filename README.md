@@ -88,7 +88,7 @@ decisions:
     rationale: "Team expertise, simpler caching"
     alternatives:
       - option: "GraphQL"
-        reason_rejected: "No team experience, complex caching"
+        reason_rejected: "Team has no GraphQL experience, caching is complex"
       - option: "gRPC"
         reason_rejected: "Public API needs browser compatibility"
     revisit_when: "We need real-time subscriptions"
@@ -97,6 +97,8 @@ decisions:
 ```
 
 `decision` and `rationale` are required. `alternatives`, `revisit_when`, `date`, and `match` are optional. The `alternatives` field is where most of the value lives as each rejected option records the specific constraint that killed it, so agents know not to suggest it again. `revisit_when` captures the condition under which the constraint might change, turning a static decision into one that can expire gracefully.
+
+See [sctx.dev/decisions](https://sctx.dev/decisions/) for the full "nos" framing and field documentation.
 
 ### Recognized filenames
 
