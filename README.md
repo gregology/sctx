@@ -76,20 +76,29 @@ Each entry has a `content` string and optional filters:
 
 The `when` field matters because LLMs weight the start and end of context more heavily. Put high-priority instructions `after` so they land close to where the model generates its response.
 
+See [sctx.dev/context](https://sctx.dev/context/) for detailed field documentation.
+
 ### Decisions
 
-Capture what you decided and why. Stops agents from re-litigating settled choices.
+The code shows what you chose. Decisions capture what you *didn't* choose and why you rejected it. That's the part that's invisible in a codebase and the part agents keep getting wrong -- suggesting tools and patterns you already evaluated and ruled out.
 
 ```yaml
 decisions:
   - decision: "REST over GraphQL for public APIs"
     rationale: "Team expertise, simpler caching"
+    alternatives:
+      - option: "GraphQL"
+        reason_rejected: "Team has no GraphQL experience, caching is complex"
+      - option: "gRPC"
+        reason_rejected: "Public API needs browser compatibility"
     revisit_when: "We need real-time subscriptions"
     date: 2025-10-20
     match: ["src/api/**"]
 ```
 
-`decision` and `rationale` are required. `revisit_when`, `date`, and `match` are optional.
+`decision` and `rationale` are required. `alternatives`, `revisit_when`, `date`, and `match` are optional. The `alternatives` field is where most of the value lives as each rejected option records the specific constraint that killed it, so agents know not to suggest it again. `revisit_when` captures the condition under which the constraint might change, turning a static decision into one that can expire gracefully.
+
+See [sctx.dev/decisions](https://sctx.dev/decisions/) for the full "nos" framing and field documentation.
 
 ### Recognized filenames
 

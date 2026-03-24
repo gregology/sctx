@@ -44,12 +44,10 @@ This pattern shows up everywhere. API directories with route handlers, middlewar
 
 ## The approach
 
-Structured Context defines a YAML-based file format (`AGENTS.yaml`) that lets you:
+Structured Context defines a YAML-based file format (`AGENTS.yaml`) with two building blocks:
 
-- **Scope context to specific files** using glob patterns (`match: ["**/*.sql"]`)
-- **Filter by action** -- different guidance for reading vs editing vs creating files
-- **Control prompt positioning** -- place context before or after file content based on importance
-- **Capture decisions** -- record what you chose, why, what else you considered, and when to revisit
+- [**Context entries**](context.md) -- scoped guidance for specific files and actions. Glob patterns control which files see which instructions. Action filters (`on: edit` vs `on: create`) control when they appear. Prompt positioning (`when: before` vs `when: after`) controls where they land in the LLM's attention window.
+- [**Decisions**](decisions.md) -- records of what you *rejected* and why. The code already shows what you chose. Decisions capture the invisible part: the alternatives you evaluated, the constraints that killed them, and the conditions under which they should be revisited.
 
 Context files are placed throughout your codebase and merge with parent directories, so you get inheritance without duplication.
 
