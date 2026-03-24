@@ -86,10 +86,11 @@ You can also test from the command line:
 sctx context README.md --on read --when before
 ```
 
-Check what decisions apply:
+Check what decisions apply to a file or directory:
 
 ```
 sctx decisions src/main.py
+sctx decisions src/api/          # directory query
 ```
 
 Validate all context files in your project:
@@ -201,8 +202,8 @@ When an agent edits a Python file, it sees that instruction. When it edits a SQL
 | Field     | Type           | Required | Default  | Description                                       |
 | --------- | -------------- | -------- | -------- | ------------------------------------------------- |
 | `content` | string         | yes      | --       | The guidance to deliver                           |
-| `match`   | list of globs  | no       | `["**"]` | File patterns this applies to                     |
-| `exclude` | list of globs  | no       | `[]`     | File patterns to skip                             |
+| `match`   | list of globs  | no       | `["**"]` | File or directory patterns this applies to        |
+| `exclude` | list of globs  | no       | `[]`     | File or directory patterns to skip                |
 | `on`      | string or list | no       | `all`    | Action filter: `read`, `edit`, `create`, or `all` |
 | `when`    | string         | no       | `before` | Prompt positioning: `before`, `after`, or `all`   |
 
@@ -259,6 +260,33 @@ exclude: ["**/vendor/**"]
 ```
 
 The default match is `["**"]` (recursive, everything). `exclude` is applied after `match`. A file must match at least one `match` pattern and zero `exclude` patterns.
+
+### Directory patterns
+
+A pattern ending with `/` targets a directory instead of files. This follows the same convention as `.gitignore` and `rsync`.
+
+```
+# Applies to the tests/ directory itself, not its subdirectories
+match: ["tests/"]
+
+# Matches any tests/ directory anywhere under src/
+match: ["src/**/tests/"]
+
+# Matches any directory named api/ at any depth
+match: ["**/api/"]
+```
+
+When a file-glob pattern (like `**/*.py`) appears in a directory query, `match` and `exclude` use different strictness levels. Match is **generous**: if the pattern *could* produce hits inside the directory, the entry is included. Exclude is **strict**: it only removes the directory when the pattern clearly targets it. This means `exclude: ["**/vendor/**"]` won't exclude `src/` (good — vendor files aren't in `src/`), but `match: ["**/vendor/**"]` *will* match `src/` (acceptable — it errs on the side of showing extra context). The asymmetry prevents accidental over-exclusion.
+
+Directory patterns never match file queries. They only match when an agent (or the CLI) queries a directory directly:
+
+```
+sctx context tests/          # directory query -- tests/ pattern matches
+sctx context tests/unit/     # directory query -- tests/ pattern does NOT match
+sctx context tests/foo.py    # file query -- tests/ pattern does NOT match
+```
+
+This gives you precision that recursive file globs can't. A decision like "test fixtures live in conftest.py at this level" can target `tests/` without leaking into `tests/unit/` or `tests/integration/`.
 
 ## on
 
@@ -353,7 +381,7 @@ The most expensive agent mistake isn't writing bad code. It's confidently propos
 | `alternatives` | list          | no       | --       | Options that were considered and rejected         |
 | `revisit_when` | string        | no       | --       | Condition under which this should be reconsidered |
 | `date`         | date          | no       | --       | When it was made (YYYY-MM-DD)                     |
-| `match`        | list of globs | no       | `["**"]` | Scope to specific files                           |
+| `match`        | list of globs | no       | `["**"]` | Scope to specific files or directories            |
 
 ```
 decisions:
@@ -443,6 +471,19 @@ decisions:
 ```
 
 This decision only shows up when an agent is working in `src/api/`. It won't clutter context for someone editing frontend code.
+
+### Directory-scoped decisions
+
+A pattern ending with `/` targets a directory without leaking into its subdirectories. This is useful when a decision applies to a specific level of the project but not to everything underneath it.
+
+```
+decisions:
+  - decision: "Test fixtures live in conftest.py at this level"
+    rationale: "Subdirectories import from here, don't duplicate fixtures"
+    match: ["tests/"]
+```
+
+This decision shows up when querying `tests/` but not when querying `tests/unit/` or editing `tests/unit/test_thing.py`. Full glob syntax works too: `match: ["**/tests/"]` targets any `tests/` directory at any depth.
 
 See [Examples](https://sctx.dev/examples/index.md) for complete `AGENTS.yaml` files showing decisions alongside context entries in real projects.
 # Documentation
@@ -751,6 +792,10 @@ decisions:
     revisit_when: "Stripe pricing becomes prohibitive or we need multi-PSP"
     date: 2025-08-20
     match: ["**/*.ts"]
+
+  - decision: "Webhook handlers in this package, not in the API gateway"
+    rationale: "Payment webhooks need access to payment domain logic for validation"
+    match: ["*"]  # files directly in this directory, not inherited by subdirectories
 ```
 
 When an agent edits `packages/payments/src/checkout.ts`, it gets the shared monorepo conventions *and* the payments-specific context. The payments context appears last, giving it stronger influence.
@@ -810,33 +855,42 @@ See [Context entries](https://sctx.dev/context/index.md) and [Decisions](https:/
 | Field     | Type           | Required | Default  | Description                                    |
 | --------- | -------------- | -------- | -------- | ---------------------------------------------- |
 | `content` | string         | yes      | --       | The guidance to deliver                        |
-| `match`   | list of globs  | no       | `["**"]` | File patterns this applies to                  |
-| `exclude` | list of globs  | no       | `[]`     | File patterns to skip                          |
+| `match`   | list of globs  | no       | `["**"]` | File or directory patterns this applies to     |
+| `exclude` | list of globs  | no       | `[]`     | File or directory patterns to skip             |
 | `on`      | string or list | no       | `all`    | Action filter: `read`, `edit`, `create`, `all` |
 | `when`    | string         | no       | `before` | Prompt positioning: `before`, `after`, `all`   |
 
 ### Decision entry fields (summary)
 
-| Field          | Type          | Required | Default  | Description                      |
-| -------------- | ------------- | -------- | -------- | -------------------------------- |
-| `decision`     | string        | yes      | --       | What was decided                 |
-| `rationale`    | string        | yes      | --       | Why this was chosen              |
-| `alternatives` | list          | no       | --       | Rejected options and constraints |
-| `revisit_when` | string        | no       | --       | Condition to reconsider          |
-| `date`         | date          | no       | --       | When decided (YYYY-MM-DD)        |
-| `match`        | list of globs | no       | `["**"]` | Scope to specific files          |
+| Field          | Type          | Required | Default  | Description                            |
+| -------------- | ------------- | -------- | -------- | -------------------------------------- |
+| `decision`     | string        | yes      | --       | What was decided                       |
+| `rationale`    | string        | yes      | --       | Why this was chosen                    |
+| `alternatives` | list          | no       | --       | Rejected options and constraints       |
+| `revisit_when` | string        | no       | --       | Condition to reconsider                |
+| `date`         | date          | no       | --       | When decided (YYYY-MM-DD)              |
+| `match`        | list of globs | no       | `["**"]` | Scope to specific files or directories |
 
 ## Resolution algorithm
+
+### File queries
 
 Given a file path, an action, and a timing:
 
 1. **Discover** -- Walk from the target file's directory up to the project root, collecting all context files at each level
 1. **Parse** -- Parse each file. Emit warnings for invalid files but continue processing valid ones
-1. **Filter by match/exclude** -- Test each entry's glob patterns against the target file path. Globs are relative to the context file's directory
+1. **Filter by match/exclude** -- Test each entry's glob patterns against the target file path. Globs are relative to the context file's directory. Directory patterns (trailing `/`) are skipped during file queries.
 1. **Filter by action** -- Keep entries where `on` includes the requested action (or is `all`)
 1. **Filter by timing** -- Keep entries where `when` matches the requested timing
 1. **Merge** -- Combine all matching entries. Parent directory entries come first, child directory entries come last
 1. **Return** -- The ordered list of matching context entries and decisions
+
+### Directory queries
+
+Given a directory path, an action, and a timing. The algorithm is the same with two differences:
+
+- **Discovery starts from the directory itself**, not its parent. This ensures entries in the queried directory's own `AGENTS.yaml` are included.
+- **Matching handles two pattern types.** Directory patterns (trailing `/`) match if the queried directory matches the pattern exactly. File-glob patterns match if they could produce hits inside the queried directory (e.g. `src/**` matches a query for `src/` but not for `tests/`).
 
 ## Merge order
 
@@ -877,11 +931,14 @@ The Write tool gets special treatment: `sctx` checks whether the target file exi
 
 ## sctx context \<path>
 
-Query context entries for a file. Useful for debugging and testing your context files. The current working directory is used as the project root — only `AGENTS.yaml` files at or below it are considered.
+Query context entries for a file or directory. Useful for debugging and testing your context files. The current working directory is used as the project root — only `AGENTS.yaml` files at or below it are considered.
+
+If the path exists on disk as a directory, sctx automatically runs a directory query. For paths that don't exist on disk, append a trailing `/` to force a directory query. Directory patterns like `match: ["tests/"]` only match directory queries, not file queries. File-glob patterns like `match: ["**/*.py"]` match a directory query if they could produce hits inside that directory.
 
 ```
 sctx context src/api/handler.py
 sctx context src/api/handler.py --on edit --when before
+sctx context src/api/                                     # directory query
 sctx context src/api/handler.py --json
 ```
 
@@ -895,10 +952,11 @@ sctx context src/api/handler.py --json
 
 ## sctx decisions \<path>
 
-Query decisions for a file. Shows architectural decisions that apply based on glob matching.
+Query decisions for a file or directory. Shows architectural decisions that apply based on glob matching. Directory queries work the same way as `sctx context` -- pass a directory path to see decisions scoped to that directory.
 
 ```
 sctx decisions src/api/handler.py
+sctx decisions src/api/                                    # directory query
 sctx decisions src/api/handler.py --json
 ```
 

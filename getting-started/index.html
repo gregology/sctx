@@ -736,8 +736,9 @@
 <p>You can also test from the command line:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>sctx<span class="w"> </span>context<span class="w"> </span>README.md<span class="w"> </span>--on<span class="w"> </span><span class="nb">read</span><span class="w"> </span>--when<span class="w"> </span>before
 </code></pre></div>
-<p>Check what decisions apply:</p>
+<p>Check what decisions apply to a file or directory:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>sctx<span class="w"> </span>decisions<span class="w"> </span>src/main.py
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>sctx<span class="w"> </span>decisions<span class="w"> </span>src/api/<span class="w">          </span><span class="c1"># directory query</span>
 </code></pre></div>
 <p>Validate all context files in your project:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>sctx<span class="w"> </span>validate

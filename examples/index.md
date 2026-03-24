@@ -302,6 +302,10 @@ decisions:
     revisit_when: "Stripe pricing becomes prohibitive or we need multi-PSP"
     date: 2025-08-20
     match: ["**/*.ts"]
+
+  - decision: "Webhook handlers in this package, not in the API gateway"
+    rationale: "Payment webhooks need access to payment domain logic for validation"
+    match: ["*"]  # files directly in this directory, not inherited by subdirectories
 ```
 
 When an agent edits `packages/payments/src/checkout.ts`, it gets the shared monorepo conventions *and* the payments-specific context. The payments context appears last, giving it stronger influence.

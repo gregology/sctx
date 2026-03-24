@@ -819,10 +819,12 @@
 <p>If no context matches, exits 0 with no output (a no-op for Claude Code).</p>
 <p>The Write tool gets special treatment: <code>sctx</code> checks whether the target file exists on disk to distinguish <code>create</code> (new file) from <code>edit</code> (existing file).</p>
 <h2 id="sctx-context-path">sctx context \&lt;path&gt;<a class="headerlink" href="#sctx-context-path" title="Permanent link">&para;</a></h2>
-<p>Query context entries for a file. Useful for debugging and testing your context files. The current working directory is used as the project root — only <code>AGENTS.yaml</code> files at or below it are considered.</p>
+<p>Query context entries for a file or directory. Useful for debugging and testing your context files. The current working directory is used as the project root — only <code>AGENTS.yaml</code> files at or below it are considered.</p>
+<p>If the path exists on disk as a directory, sctx automatically runs a directory query. For paths that don't exist on disk, append a trailing <code>/</code> to force a directory query. Directory patterns like <code>match: ["tests/"]</code> only match directory queries, not file queries. File-glob patterns like <code>match: ["**/*.py"]</code> match a directory query if they could produce hits inside that directory.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>sctx<span class="w"> </span>context<span class="w"> </span>src/api/handler.py
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>sctx<span class="w"> </span>context<span class="w"> </span>src/api/handler.py<span class="w"> </span>--on<span class="w"> </span>edit<span class="w"> </span>--when<span class="w"> </span>before
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>sctx<span class="w"> </span>context<span class="w"> </span>src/api/handler.py<span class="w"> </span>--json
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>sctx<span class="w"> </span>context<span class="w"> </span>src/api/<span class="w">                                     </span><span class="c1"># directory query</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>sctx<span class="w"> </span>context<span class="w"> </span>src/api/handler.py<span class="w"> </span>--json
 </code></pre></div>
 <h3 id="flags">Flags<a class="headerlink" href="#flags" title="Permanent link">&para;</a></h3>
 <table>
@@ -852,9 +854,10 @@
 </tbody>
 </table>
 <h2 id="sctx-decisions-path">sctx decisions \&lt;path&gt;<a class="headerlink" href="#sctx-decisions-path" title="Permanent link">&para;</a></h2>
-<p>Query decisions for a file. Shows architectural decisions that apply based on glob matching.</p>
+<p>Query decisions for a file or directory. Shows architectural decisions that apply based on glob matching. Directory queries work the same way as <code>sctx context</code> -- pass a directory path to see decisions scoped to that directory.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>sctx<span class="w"> </span>decisions<span class="w"> </span>src/api/handler.py
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>sctx<span class="w"> </span>decisions<span class="w"> </span>src/api/handler.py<span class="w"> </span>--json
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>sctx<span class="w"> </span>decisions<span class="w"> </span>src/api/<span class="w">                                    </span><span class="c1"># directory query</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>sctx<span class="w"> </span>decisions<span class="w"> </span>src/api/handler.py<span class="w"> </span>--json
 </code></pre></div>
 <h3 id="flags_1">Flags<a class="headerlink" href="#flags_1" title="Permanent link">&para;</a></h3>
 <table>

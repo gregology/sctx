@@ -18,11 +18,14 @@ The Write tool gets special treatment: `sctx` checks whether the target file exi
 
 ## sctx context \<path>
 
-Query context entries for a file. Useful for debugging and testing your context files. The current working directory is used as the project root — only `AGENTS.yaml` files at or below it are considered.
+Query context entries for a file or directory. Useful for debugging and testing your context files. The current working directory is used as the project root — only `AGENTS.yaml` files at or below it are considered.
+
+If the path exists on disk as a directory, sctx automatically runs a directory query. For paths that don't exist on disk, append a trailing `/` to force a directory query. Directory patterns like `match: ["tests/"]` only match directory queries, not file queries. File-glob patterns like `match: ["**/*.py"]` match a directory query if they could produce hits inside that directory.
 
 ```
 sctx context src/api/handler.py
 sctx context src/api/handler.py --on edit --when before
+sctx context src/api/                                     # directory query
 sctx context src/api/handler.py --json
 ```
 
@@ -36,10 +39,11 @@ sctx context src/api/handler.py --json
 
 ## sctx decisions \<path>
 
-Query decisions for a file. Shows architectural decisions that apply based on glob matching.
+Query decisions for a file or directory. Shows architectural decisions that apply based on glob matching. Directory queries work the same way as `sctx context` -- pass a directory path to see decisions scoped to that directory.
 
 ```
 sctx decisions src/api/handler.py
+sctx decisions src/api/                                    # directory query
 sctx decisions src/api/handler.py --json
 ```
 

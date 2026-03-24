@@ -371,6 +371,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="match and exclude">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#directory-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Directory patterns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -615,6 +630,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="match and exclude">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#directory-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Directory patterns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -710,14 +740,14 @@
 <td>list of globs</td>
 <td>no</td>
 <td><code>["**"]</code></td>
-<td>File patterns this applies to</td>
+<td>File or directory patterns this applies to</td>
 </tr>
 <tr>
 <td><code>exclude</code></td>
 <td>list of globs</td>
 <td>no</td>
 <td><code>[]</code></td>
-<td>File patterns to skip</td>
+<td>File or directory patterns to skip</td>
 </tr>
 <tr>
 <td><code>on</code></td>
@@ -778,6 +808,24 @@
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="nt">exclude</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/vendor/**&quot;</span><span class="p p-Indicator">]</span>
 </code></pre></div>
 <p>The default match is <code>["**"]</code> (recursive, everything). <code>exclude</code> is applied after <code>match</code>. A file must match at least one <code>match</code> pattern and zero <code>exclude</code> patterns.</p>
+<h3 id="directory-patterns">Directory patterns<a class="headerlink" href="#directory-patterns" title="Permanent link">&para;</a></h3>
+<p>A pattern ending with <code>/</code> targets a directory instead of files. This follows the same convention as <code>.gitignore</code> and <code>rsync</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Applies to the tests/ directory itself, not its subdirectories</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;tests/&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Matches any tests/ directory anywhere under src/</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;src/**/tests/&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Matches any directory named api/ at any depth</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/api/&quot;</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>When a file-glob pattern (like <code>**/*.py</code>) appears in a directory query, <code>match</code> and <code>exclude</code> use different strictness levels. Match is <strong>generous</strong>: if the pattern <em>could</em> produce hits inside the directory, the entry is included. Exclude is <strong>strict</strong>: it only removes the directory when the pattern clearly targets it. This means <code>exclude: ["**/vendor/**"]</code> won't exclude <code>src/</code> (good — vendor files aren't in <code>src/</code>), but <code>match: ["**/vendor/**"]</code> <em>will</em> match <code>src/</code> (acceptable — it errs on the side of showing extra context). The asymmetry prevents accidental over-exclusion.</p>
+<p>Directory patterns never match file queries. They only match when an agent (or the CLI) queries a directory directly:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>sctx<span class="w"> </span>context<span class="w"> </span>tests/<span class="w">          </span><span class="c1"># directory query -- tests/ pattern matches</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>sctx<span class="w"> </span>context<span class="w"> </span>tests/unit/<span class="w">     </span><span class="c1"># directory query -- tests/ pattern does NOT match</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>sctx<span class="w"> </span>context<span class="w"> </span>tests/foo.py<span class="w">    </span><span class="c1"># file query -- tests/ pattern does NOT match</span>
+</code></pre></div>
+<p>This gives you precision that recursive file globs can't. A decision like "test fixtures live in conftest.py at this level" can target <code>tests/</code> without leaking into <code>tests/unit/</code> or <code>tests/integration/</code>.</p>
 <h2 id="on">on<a class="headerlink" href="#on" title="Permanent link">&para;</a></h2>
 <p>What the agent is doing with the file.</p>
 <table>
@@ -807,8 +855,8 @@
 </tbody>
 </table>
 <p>Accepts a single string or a list:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">edit</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">edit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">create</span><span class="p p-Indicator">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">edit</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">edit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">create</span><span class="p p-Indicator">]</span>
 </code></pre></div>
 <p>This filter is useful because reading and writing need different guidance. When an agent reads a file, you might want it to understand the architecture. When it edits, you want it to follow conventions. When it creates, you might want it to include boilerplate like license headers or module docstrings.</p>
 <h2 id="when">when<a class="headerlink" href="#when" title="Permanent link">&para;</a></h2>
@@ -842,19 +890,19 @@
 <p><strong>Be self-contained.</strong> Each entry should make sense without reading other entries. An agent might only see two of your ten entries for a given file. Don't write entry #4 assuming the agent has already read entries #1-3.</p>
 <p><strong>Scope tightly.</strong> The more specific your <code>match</code> pattern, the less noise the agent sees. <code>match: ["handlers/**/*.py"]</code> is better than <code>match: ["**/*.py"]</code> when the guidance only applies to handlers.</p>
 <p><strong>Use <code>exclude</code> for exceptions.</strong> Test files, generated code, vendor directories. If a convention applies to your code but not to third-party code, exclude it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">context</span><span class="p">:</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;All</span><span class="nv"> </span><span class="s">functions</span><span class="nv"> </span><span class="s">need</span><span class="nv"> </span><span class="s">docstrings&quot;</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/*.py&quot;</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">exclude</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/vendor/**&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;**/*_pb2.py&quot;</span><span class="p p-Indicator">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">context</span><span class="p">:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;All</span><span class="nv"> </span><span class="s">functions</span><span class="nv"> </span><span class="s">need</span><span class="nv"> </span><span class="s">docstrings&quot;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/*.py&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="nt">exclude</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;**/vendor/**&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;**/*_pb2.py&quot;</span><span class="p p-Indicator">]</span>
 </code></pre></div>
 <h2 id="directory-inheritance">Directory inheritance<a class="headerlink" href="#directory-inheritance" title="Permanent link">&para;</a></h2>
 <p>Context files at different levels merge together. Parent entries come first, child entries come last.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>project/
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  AGENTS.yaml           &lt;- &quot;Use ESM imports everywhere&quot;
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  src/
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    payments/
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>      AGENTS.yaml       &lt;- &quot;Money values are integers in cents&quot;
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>      checkout.ts
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>project/
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  AGENTS.yaml           &lt;- &quot;Use ESM imports everywhere&quot;
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  src/
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    payments/
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>      AGENTS.yaml       &lt;- &quot;Money values are integers in cents&quot;
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>      checkout.ts
 </code></pre></div>
 <p>When an agent edits <code>checkout.ts</code>, it sees the project-level ESM rule first, then the payments-specific money rule. The payments context appears last, giving it stronger recency in the prompt.</p>
 <p>You don't need to repeat parent context in child files. It's inherited automatically.</p>

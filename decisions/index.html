@@ -428,6 +428,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Scoping with match">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#directory-scoped-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Directory-scoped decisions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -651,6 +666,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Scoping with match">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#directory-scoped-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Directory-scoped decisions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -736,7 +766,7 @@
 <td>list of globs</td>
 <td>no</td>
 <td><code>["**"]</code></td>
-<td>Scope to specific files</td>
+<td>Scope to specific files or directories</td>
 </tr>
 </tbody>
 </table>
@@ -825,6 +855,14 @@
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;src/api/**&quot;</span><span class="p p-Indicator">]</span>
 </code></pre></div>
 <p>This decision only shows up when an agent is working in <code>src/api/</code>. It won't clutter context for someone editing frontend code.</p>
+<h3 id="directory-scoped-decisions">Directory-scoped decisions<a class="headerlink" href="#directory-scoped-decisions" title="Permanent link">&para;</a></h3>
+<p>A pattern ending with <code>/</code> targets a directory without leaking into its subdirectories. This is useful when a decision applies to a specific level of the project but not to everything underneath it.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">decisions</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">decision</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Test</span><span class="nv"> </span><span class="s">fixtures</span><span class="nv"> </span><span class="s">live</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">conftest.py</span><span class="nv"> </span><span class="s">at</span><span class="nv"> </span><span class="s">this</span><span class="nv"> </span><span class="s">level&quot;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">rationale</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Subdirectories</span><span class="nv"> </span><span class="s">import</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">here,</span><span class="nv"> </span><span class="s">don&#39;t</span><span class="nv"> </span><span class="s">duplicate</span><span class="nv"> </span><span class="s">fixtures&quot;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;tests/&quot;</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>This decision shows up when querying <code>tests/</code> but not when querying <code>tests/unit/</code> or editing <code>tests/unit/test_thing.py</code>. Full glob syntax works too: <code>match: ["**/tests/"]</code> targets any <code>tests/</code> directory at any depth.</p>
 <p>See <a href="../examples/">Examples</a> for complete <code>AGENTS.yaml</code> files showing decisions alongside context entries in real projects.</p>
 
 

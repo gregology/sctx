@@ -500,6 +500,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Resolution algorithm">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      File queries
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#directory-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Directory queries
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -729,6 +753,30 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Resolution algorithm">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      File queries
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#directory-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Directory queries
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -842,14 +890,14 @@
 <td>list of globs</td>
 <td>no</td>
 <td><code>["**"]</code></td>
-<td>File patterns this applies to</td>
+<td>File or directory patterns this applies to</td>
 </tr>
 <tr>
 <td><code>exclude</code></td>
 <td>list of globs</td>
 <td>no</td>
 <td><code>[]</code></td>
-<td>File patterns to skip</td>
+<td>File or directory patterns to skip</td>
 </tr>
 <tr>
 <td><code>on</code></td>
@@ -919,21 +967,28 @@
 <td>list of globs</td>
 <td>no</td>
 <td><code>["**"]</code></td>
-<td>Scope to specific files</td>
+<td>Scope to specific files or directories</td>
 </tr>
 </tbody>
 </table>
 <h2 id="resolution-algorithm">Resolution algorithm<a class="headerlink" href="#resolution-algorithm" title="Permanent link">&para;</a></h2>
+<h3 id="file-queries">File queries<a class="headerlink" href="#file-queries" title="Permanent link">&para;</a></h3>
 <p>Given a file path, an action, and a timing:</p>
 <ol>
 <li><strong>Discover</strong> -- Walk from the target file's directory up to the project root, collecting all context files at each level</li>
 <li><strong>Parse</strong> -- Parse each file. Emit warnings for invalid files but continue processing valid ones</li>
-<li><strong>Filter by match/exclude</strong> -- Test each entry's glob patterns against the target file path. Globs are relative to the context file's directory</li>
+<li><strong>Filter by match/exclude</strong> -- Test each entry's glob patterns against the target file path. Globs are relative to the context file's directory. Directory patterns (trailing <code>/</code>) are skipped during file queries.</li>
 <li><strong>Filter by action</strong> -- Keep entries where <code>on</code> includes the requested action (or is <code>all</code>)</li>
 <li><strong>Filter by timing</strong> -- Keep entries where <code>when</code> matches the requested timing</li>
 <li><strong>Merge</strong> -- Combine all matching entries. Parent directory entries come first, child directory entries come last</li>
 <li><strong>Return</strong> -- The ordered list of matching context entries and decisions</li>
 </ol>
+<h3 id="directory-queries">Directory queries<a class="headerlink" href="#directory-queries" title="Permanent link">&para;</a></h3>
+<p>Given a directory path, an action, and a timing. The algorithm is the same with two differences:</p>
+<ul>
+<li><strong>Discovery starts from the directory itself</strong>, not its parent. This ensures entries in the queried directory's own <code>AGENTS.yaml</code> are included.</li>
+<li><strong>Matching handles two pattern types.</strong> Directory patterns (trailing <code>/</code>) match if the queried directory matches the pattern exactly. File-glob patterns match if they could produce hits inside the queried directory (e.g. <code>src/**</code> matches a query for <code>src/</code> but not for <code>tests/</code>).</li>
+</ul>
 <h2 id="merge-order">Merge order<a class="headerlink" href="#merge-order" title="Permanent link">&para;</a></h2>
 <p>Parent directories come before child directories.</p>
 <ul>
