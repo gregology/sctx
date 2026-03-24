@@ -118,9 +118,3 @@ decisions:
 This decision only shows up when an agent is working in `src/api/`. It won't clutter context for someone editing frontend code.
 
 See [Examples](examples.md) for complete `AGENTS.yaml` files showing decisions alongside context entries in real projects.
-
-## Structured Context
-
-- This is a Go project. Follow idiomatic Go conventions: short variable names, table-driven tests, no assertion libraries.
-- The core engine (internal/core) must have zero knowledge of any specific AI agent. Agent-specific logic lives in internal/adapter.
-- Both AGENTS.yaml and AGENTS.yml are recognized. If both exist in the same directory, they are loaded and merged.

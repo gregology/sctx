@@ -76,6 +76,8 @@ Each entry has a `content` string and optional filters:
 
 The `when` field matters because LLMs weight the start and end of context more heavily. Put high-priority instructions `after` so they land close to where the model generates its response.
 
+See [sctx.dev/context](https://sctx.dev/context/) for detailed field documentation.
+
 ### Decisions
 
 The code shows what you chose. Decisions capture what you *didn't* choose and why you rejected it. That's the part that's invisible in a codebase and the part agents keep getting wrong -- suggesting tools and patterns you already evaluated and ruled out.

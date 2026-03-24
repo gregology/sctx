@@ -150,9 +150,3 @@ When an agent edits `checkout.ts`, it sees the project-level ESM rule first, the
 You don't need to repeat parent context in child files. It's inherited automatically.
 
 See [Examples](examples.md) for complete `AGENTS.yaml` files showing context entries in real projects.
-
-## Structured Context
-
-- This is a Go project. Follow idiomatic Go conventions: short variable names, table-driven tests, no assertion libraries.
-- The core engine (internal/core) must have zero knowledge of any specific AI agent. Agent-specific logic lives in internal/adapter.
-- Both AGENTS.yaml and AGENTS.yml are recognized. If both exist in the same directory, they are loaded and merged.

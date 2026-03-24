@@ -310,8 +310,3 @@ decisions:
 ```
 
 When an agent edits `packages/payments/src/checkout.ts`, it gets the shared monorepo conventions *and* the payments-specific context. The payments context appears last, giving it stronger influence.
-
-## Structured Context
-
-- This is a Go project. Follow idiomatic Go conventions: short variable names, table-driven tests, no assertion libraries.
-- Both AGENTS.yaml and AGENTS.yml are recognized. If both exist in the same directory, they are loaded and merged.

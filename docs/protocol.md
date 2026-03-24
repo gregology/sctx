@@ -55,24 +55,24 @@ See [Context entries](context.md) for the full context entry schema and [Decisio
 
 ### Context entry fields (summary)
 
-| Field | Type | Required | Default |
-|---|---|---|---|
-| `content` | string | yes | -- |
-| `match` | list of globs | no | `["**"]` |
-| `exclude` | list of globs | no | `[]` |
-| `on` | string or list | no | `all` |
-| `when` | string | no | `before` |
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `content` | string | yes | -- | The guidance to deliver |
+| `match` | list of globs | no | `["**"]` | File patterns this applies to |
+| `exclude` | list of globs | no | `[]` | File patterns to skip |
+| `on` | string or list | no | `all` | Action filter: `read`, `edit`, `create`, `all` |
+| `when` | string | no | `before` | Prompt positioning: `before`, `after`, `all` |
 
 ### Decision entry fields (summary)
 
-| Field | Type | Required | Default |
-|---|---|---|---|
-| `decision` | string | yes | -- |
-| `rationale` | string | yes | -- |
-| `alternatives` | list | no | -- |
-| `revisit_when` | string | no | -- |
-| `date` | date | no | -- |
-| `match` | list of globs | no | `["**"]` |
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `decision` | string | yes | -- | What was decided |
+| `rationale` | string | yes | -- | Why this was chosen |
+| `alternatives` | list | no | -- | Rejected options and constraints |
+| `revisit_when` | string | no | -- | Condition to reconsider |
+| `date` | date | no | -- | When decided (YYYY-MM-DD) |
+| `match` | list of globs | no | `["**"]` | Scope to specific files |
 
 ## Resolution algorithm
 
@@ -104,9 +104,3 @@ This ordering is intentional. The most specific context gets the strongest posit
 - `match` and `exclude` must be valid glob patterns
 - `date` must be YYYY-MM-DD if present
 - Unknown fields produce warnings, not errors (forward compatibility)
-
-## Structured Context
-
-- This is a Go project. Follow idiomatic Go conventions: short variable names, table-driven tests, no assertion libraries.
-- The core engine (internal/core) must have zero knowledge of any specific AI agent. Agent-specific logic lives in internal/adapter.
-- Both AGENTS.yaml and AGENTS.yml are recognized. If both exist in the same directory, they are loaded and merged.
