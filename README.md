@@ -183,9 +183,9 @@ Response without New Zealand reference.
 
 **sctx hook** - Reads agent hook input from stdin, returns matching context entries. This is the main integration point. Decisions are excluded from hook output.
 
-**sctx context \<path\>** - Query context entries for a file or directory. Supports `--on <action>`, `--when <timing>`, and `--json`.
+**sctx context \<path\>** - Query context entries for a file or directory. Supports `--on <action>`, `--when <timing>`, `--json`, and `--all` to dump every entry from every AGENTS.yaml.
 
-**sctx decisions \<path\>** - Query decisions for a file or directory. Supports `--json`.
+**sctx decisions \<path\>** - Query decisions for a file or directory. Supports `--json` and `--all`.
 
 **sctx validate [\<dir\>]** - Checks all context files in a directory tree for schema errors and invalid globs.
 

@@ -2136,3 +2136,249 @@ func assertContextContents(t *testing.T, got []MatchedContext, want []string) {
 		}
 	}
 }
+
+func TestResolveAll_CollectsAllEntries(t *testing.T) {
+	root := t.TempDir()
+
+	// Root AGENTS.yaml: one context, one decision
+	writeRawAgentsYAML(t, root, `
+context:
+  - content: "Root context"
+    match: ["*.go"]
+decisions:
+  - decision: "Use Go"
+    rationale: "Performance"
+`)
+
+	// Subdirectory AGENTS.yaml: one context, one decision with different globs
+	sub := filepath.Join(root, "sub")
+	mkdirAll(t, sub)
+	writeRawAgentsYAML(t, sub, `
+context:
+  - content: "Sub context"
+    match: ["*.py"]
+decisions:
+  - decision: "Use Python here"
+    rationale: "Data science"
+`)
+
+	result, warnings, err := ResolveAll(ResolveAllRequest{Root: root})
+	if err != nil {
+		t.Fatalf("ResolveAll() error: %v", err)
+	}
+
+	// Should not warn about missing files
+	for _, w := range warnings {
+		if strings.Contains(w, "no AGENTS.yaml") {
+			t.Errorf("unexpected warning: %s", w)
+		}
+	}
+
+	if len(result.ContextEntries) != 2 {
+		t.Fatalf("want 2 context entries, got %d", len(result.ContextEntries))
+	}
+	if len(result.DecisionEntries) != 2 {
+		t.Fatalf("want 2 decision entries, got %d", len(result.DecisionEntries))
+	}
+
+	// Verify all entries present regardless of glob
+	contents := map[string]bool{}
+	for _, e := range result.ContextEntries {
+		contents[e.Content] = true
+	}
+	for _, want := range []string{"Root context", "Sub context"} {
+		if !contents[want] {
+			t.Errorf("missing context entry %q", want)
+		}
+	}
+
+	decisions := map[string]bool{}
+	for _, e := range result.DecisionEntries {
+		decisions[e.Decision] = true
+	}
+	for _, want := range []string{"Use Go", "Use Python here"} {
+		if !decisions[want] {
+			t.Errorf("missing decision entry %q", want)
+		}
+	}
+}
+
+func TestResolveAll_FiltersActionAndTiming(t *testing.T) {
+	root := t.TempDir()
+
+	writeRawAgentsYAML(t, root, `
+context:
+  - content: "Edit only"
+    on: edit
+    when: before
+  - content: "Read only"
+    on: read
+    when: after
+  - content: "All actions"
+    on: all
+    when: before
+`)
+
+	tests := []struct {
+		name   string
+		action Action
+		timing Timing
+		want   []string
+	}{
+		{"edit+before", ActionEdit, TimingBefore, []string{"Edit only", "All actions"}},
+		{"read+after", ActionRead, TimingAfter, []string{"Read only"}},
+		{"all+all", ActionAll, TimingAll, []string{"Edit only", "Read only", "All actions"}},
+		{"edit+after", ActionEdit, TimingAfter, nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, _, err := ResolveAll(ResolveAllRequest{
+				Root:   root,
+				Action: tt.action,
+				Timing: tt.timing,
+			})
+			if err != nil {
+				t.Fatalf("ResolveAll() error: %v", err)
+			}
+			if len(result.ContextEntries) != len(tt.want) {
+				got := make([]string, len(result.ContextEntries))
+				for i, e := range result.ContextEntries {
+					got[i] = e.Content
+				}
+				t.Fatalf("want %d entries %v, got %d %v", len(tt.want), tt.want, len(result.ContextEntries), got)
+			}
+			gotSet := map[string]bool{}
+			for _, e := range result.ContextEntries {
+				gotSet[e.Content] = true
+			}
+			for _, w := range tt.want {
+				if !gotSet[w] {
+					t.Errorf("missing %q", w)
+				}
+			}
+		})
+	}
+}
+
+func TestResolveAll_PopulatesSourceFileAndMatch(t *testing.T) {
+	root := t.TempDir()
+
+	writeRawAgentsYAML(t, root, `
+context:
+  - content: "Root entry"
+    match: ["**/*.go"]
+decisions:
+  - decision: "Root decision"
+    match: ["src/**"]
+`)
+
+	sub := filepath.Join(root, "src", "pkg")
+	mkdirAll(t, sub)
+	writeRawAgentsYAML(t, sub, `
+context:
+  - content: "Nested entry"
+decisions:
+  - decision: "Nested decision"
+    match: ["*.rs"]
+`)
+
+	result, _, err := ResolveAll(ResolveAllRequest{Root: root})
+	if err != nil {
+		t.Fatalf("ResolveAll() error: %v", err)
+	}
+
+	// Build lookup maps for verification
+	ctxByContent := map[string]AllContextEntry{}
+	for _, e := range result.ContextEntries {
+		ctxByContent[e.Content] = e
+	}
+	decByDecision := map[string]AllDecisionEntry{}
+	for _, e := range result.DecisionEntries {
+		decByDecision[e.Decision] = e
+	}
+
+	t.Run("context", func(t *testing.T) {
+		assertSourceAndMatch(t, ctxByContent["Root entry"].SourceFile, "AGENTS.yaml",
+			ctxByContent["Root entry"].Match, []string{"**/*.go"})
+		assertSourceAndMatch(t, ctxByContent["Nested entry"].SourceFile, "src/pkg/AGENTS.yaml",
+			ctxByContent["Nested entry"].Match, []string{"**"})
+	})
+
+	t.Run("decisions", func(t *testing.T) {
+		assertSourceAndMatch(t, decByDecision["Root decision"].SourceFile, "AGENTS.yaml",
+			decByDecision["Root decision"].Match, []string{"src/**"})
+		assertSourceAndMatch(t, decByDecision["Nested decision"].SourceFile, "src/pkg/AGENTS.yaml",
+			decByDecision["Nested decision"].Match, []string{"*.rs"})
+	})
+}
+
+func TestResolveAll_WarnsOnParseFailure(t *testing.T) {
+	root := t.TempDir()
+
+	// Valid file
+	writeRawAgentsYAML(t, root, `
+decisions:
+  - decision: "Good entry"
+    rationale: "Works"
+`)
+
+	// Malformed file in subdirectory
+	bad := filepath.Join(root, "bad")
+	mkdirAll(t, bad)
+	writeRawAgentsYAML(t, bad, `{{{not valid yaml`)
+
+	result, warnings, err := ResolveAll(ResolveAllRequest{Root: root})
+	if err != nil {
+		t.Fatalf("ResolveAll() error: %v", err)
+	}
+
+	// Should still get the good entry
+	if len(result.DecisionEntries) != 1 {
+		t.Fatalf("want 1 decision entry, got %d", len(result.DecisionEntries))
+	}
+	if result.DecisionEntries[0].Decision != "Good entry" {
+		t.Errorf("got decision %q, want %q", result.DecisionEntries[0].Decision, "Good entry")
+	}
+
+	// Should have a warning about the bad file
+	found := false
+	for _, w := range warnings {
+		if strings.Contains(w, "failed to parse") && strings.Contains(w, "bad") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected parse warning, got %v", warnings)
+	}
+}
+
+func assertSourceAndMatch(t *testing.T, gotSource, wantSource string, gotMatch, wantMatch []string) {
+	t.Helper()
+	if gotSource != wantSource {
+		t.Errorf("SourceFile: got %q, want %q", gotSource, wantSource)
+	}
+	if len(gotMatch) != len(wantMatch) {
+		t.Errorf("Match: got %v, want %v", gotMatch, wantMatch)
+		return
+	}
+	for i := range wantMatch {
+		if gotMatch[i] != wantMatch[i] {
+			t.Errorf("Match[%d]: got %q, want %q", i, gotMatch[i], wantMatch[i])
+		}
+	}
+}
+
+func writeRawAgentsYAML(t *testing.T, dir, content string) {
+	t.Helper()
+	if err := os.WriteFile(filepath.Join(dir, "AGENTS.yaml"), []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func mkdirAll(t *testing.T, path string) {
+	t.Helper()
+	if err := os.MkdirAll(path, 0o750); err != nil {
+		t.Fatal(err)
+	}
+}
