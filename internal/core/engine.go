@@ -94,6 +94,111 @@ func resolveDir(req ResolveRequest, root string) (*ResolveResult, []string, erro
 	return result, warnings, nil
 }
 
+// ResolveAll walks the entire directory tree from Root, discovers all
+// AGENTS.yaml files, and returns every context and decision entry without
+// glob filtering. Action and Timing filters are still applied to context entries.
+func ResolveAll(req ResolveAllRequest) (*ResolveAllResult, []string, error) {
+	root := req.Root
+	var err error
+	if root == "" {
+		root, err = os.Getwd()
+		if err != nil {
+			return nil, nil, fmt.Errorf("getting working directory: %w", err)
+		}
+	}
+
+	root, err = filepath.Abs(root)
+	if err != nil {
+		return nil, nil, fmt.Errorf("resolving absolute path: %w", err)
+	}
+
+	result := &ResolveAllResult{}
+	var warnings []string
+
+	walkErr := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			return nil
+		}
+
+		w := collectDir(path, root, req, result)
+		warnings = append(warnings, w...)
+		return nil
+	})
+	if walkErr != nil {
+		return nil, nil, fmt.Errorf("walking directory tree: %w", walkErr)
+	}
+
+	if len(result.ContextEntries) == 0 && len(result.DecisionEntries) == 0 {
+		warnings = append(warnings, "warning: no AGENTS.yaml files found")
+	}
+
+	return result, warnings, nil
+}
+
+// collectDir parses AGENTS.yaml files in dir and appends entries to result.
+func collectDir(dir, root string, req ResolveAllRequest, result *ResolveAllResult) []string {
+	var warnings []string
+
+	for _, name := range AgentsFileNames {
+		fp := filepath.Join(dir, name)
+		data, readErr := os.ReadFile(fp) //nolint:gosec // paths come from directory walk
+		if readErr != nil {
+			continue
+		}
+
+		var cf ContextFile
+		if parseErr := yaml.Unmarshal(data, &cf); parseErr != nil {
+			warnings = append(warnings, fmt.Sprintf("warning: failed to parse %s: %v", fp, parseErr))
+			continue
+		}
+
+		cf.sourceDir = dir
+		applyDefaults(&cf)
+
+		relFile, _ := filepath.Rel(root, fp)
+		relFile = filepath.ToSlash(relFile)
+
+		collectContextEntries(cf, relFile, req, result)
+		collectDecisionEntries(cf, relFile, result)
+	}
+
+	return warnings
+}
+
+func collectContextEntries(cf ContextFile, relFile string, req ResolveAllRequest, result *ResolveAllResult) {
+	for _, entry := range cf.Context {
+		if !matchesAction(entry.On, req.Action) {
+			continue
+		}
+		if req.Timing != "" && req.Timing != TimingAll &&
+			Timing(entry.When) != TimingAll && Timing(entry.When) != req.Timing {
+			continue
+		}
+		result.ContextEntries = append(result.ContextEntries, AllContextEntry{
+			Content:    entry.Content,
+			Match:      entry.Match,
+			SourceFile: relFile,
+		})
+	}
+}
+
+func collectDecisionEntries(cf ContextFile, relFile string, result *ResolveAllResult) {
+	for _, entry := range cf.Decisions {
+		result.DecisionEntries = append(result.DecisionEntries, AllDecisionEntry{
+			Decision:     entry.Decision,
+			Rationale:    entry.Rationale,
+			Alternatives: entry.Alternatives,
+			RevisitWhen:  entry.RevisitWhen,
+			Date:         entry.Date,
+			Match:        entry.Match,
+			SourceFile:   relFile,
+		})
+	}
+}
+
 // discoverAndParse walks from startDir up to root, collecting and parsing all
 // context files. Files from parent directories come first (lower specificity).
 func discoverAndParse(startDir, root string) (files []ContextFile, warnings []string) {

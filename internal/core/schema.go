@@ -115,3 +115,35 @@ type MatchedContext struct {
 	Content   string
 	SourceDir string
 }
+
+// ResolveAllRequest contains the inputs for an unscoped resolution that
+// collects every entry from every discovered AGENTS.yaml file.
+type ResolveAllRequest struct {
+	Root   string
+	Action Action
+	Timing Timing
+}
+
+// ResolveAllResult contains every context and decision entry found in the tree.
+type ResolveAllResult struct {
+	ContextEntries  []AllContextEntry
+	DecisionEntries []AllDecisionEntry
+}
+
+// AllContextEntry is a context entry augmented with source metadata.
+type AllContextEntry struct {
+	Content    string   `json:"Content"`
+	Match      []string `json:"Match"`
+	SourceFile string   `json:"SourceFile"`
+}
+
+// AllDecisionEntry is a decision entry augmented with source metadata.
+type AllDecisionEntry struct {
+	Decision     string        `json:"Decision"`
+	Rationale    string        `json:"Rationale"`
+	Alternatives []Alternative `json:"Alternatives,omitempty"`
+	RevisitWhen  string        `json:"RevisitWhen,omitempty"`
+	Date         string        `json:"Date,omitempty"`
+	Match        []string      `json:"Match"`
+	SourceFile   string        `json:"SourceFile"`
+}
