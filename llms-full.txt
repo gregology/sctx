@@ -940,15 +940,20 @@ sctx context src/api/handler.py
 sctx context src/api/handler.py --on edit --when before
 sctx context src/api/                                     # directory query
 sctx context src/api/handler.py --json
+sctx context --all                                        # every entry from every AGENTS.yaml
+sctx context --all --on edit --json
 ```
+
+Use `--all` to dump every context entry from every `AGENTS.yaml` file in the tree, skipping glob matching entirely. Output includes the source file path and match patterns for each entry so you can see where each entry is defined and what it targets. `--all` and `<path>` are mutually exclusive. `--on` and `--when` filters still apply with `--all`.
 
 ### Flags
 
-| Flag              | Default | Description                                       |
-| ----------------- | ------- | ------------------------------------------------- |
-| `--on <action>`   | `all`   | Filter by action: `read`, `edit`, `create`, `all` |
-| `--when <timing>` | `all`   | Filter by timing: `before`, `after`, `all`        |
-| `--json`          | off     | Output as JSON instead of human-readable text     |
+| Flag              | Default | Description                                                       |
+| ----------------- | ------- | ----------------------------------------------------------------- |
+| `--all`           | off     | Return all entries from all AGENTS.yaml files, skip glob matching |
+| `--on <action>`   | `all`   | Filter by action: `read`, `edit`, `create`, `all`                 |
+| `--when <timing>` | `all`   | Filter by timing: `before`, `after`, `all`                        |
+| `--json`          | off     | Output as JSON instead of human-readable text                     |
 
 ## sctx decisions \<path>
 
@@ -958,13 +963,18 @@ Query decisions for a file or directory. Shows architectural decisions that appl
 sctx decisions src/api/handler.py
 sctx decisions src/api/                                    # directory query
 sctx decisions src/api/handler.py --json
+sctx decisions --all                                       # every decision from every AGENTS.yaml
+sctx decisions --all --json
 ```
+
+Use `--all` to dump every decision entry from every `AGENTS.yaml` file in the tree. Like `sctx context --all`, output includes source file paths and match patterns. `--all` and `<path>` are mutually exclusive.
 
 ### Flags
 
-| Flag     | Default | Description                                   |
-| -------- | ------- | --------------------------------------------- |
-| `--json` | off     | Output as JSON instead of human-readable text |
+| Flag     | Default | Description                                                       |
+| -------- | ------- | ----------------------------------------------------------------- |
+| `--all`  | off     | Return all entries from all AGENTS.yaml files, skip glob matching |
+| `--json` | off     | Output as JSON instead of human-readable text                     |
 
 ## sctx validate [\<dir>]
 
