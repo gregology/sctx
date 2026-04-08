@@ -19,8 +19,10 @@ const usage = `sctx — Structured Context CLI
 Usage:
   sctx hook                                Read agent hook input from stdin, return matching context
   sctx context <path> [--on <action>] [--when <timing>] [--json]
+  sctx context --all [--on <action>] [--when <timing>] [--json]
                                            Query context entries for a file or directory
-  sctx decisions <path> [--json]           Query decisions for a file or directory
+  sctx decisions <path> [--json]
+  sctx decisions --all [--json]            Query decisions for a file or directory
   sctx validate [<dir>]                    Validate all context files in a directory tree
   sctx init                                Create a starter AGENTS.yaml in the current directory
   sctx claude enable                       Enable sctx hooks in Claude Code
@@ -37,6 +39,7 @@ var (
 	version = "dev"
 
 	errMissingPath      = errors.New("missing required <path> argument")
+	errAllAndPath       = errors.New("--all and <path> are mutually exclusive")
 	errOnNeedsValue     = errors.New("--on requires a value")
 	errWhenNeedsValue   = errors.New("--when requires a value")
 	errInvalidAction    = errors.New("invalid --on value")
@@ -101,17 +104,16 @@ func cmdHook(in io.Reader, out, errOut io.Writer) error {
 }
 
 func cmdContext(args []string, out, errOut io.Writer) error {
-	if len(args) < 1 {
-		return errMissingPath
-	}
-
-	filePath := args[0]
 	action := core.ActionAll
 	timing := core.TimingAll
 	jsonOutput := false
+	allFlag := false
+	var filePath string
 
-	for i := 1; i < len(args); i++ {
+	for i := 0; i < len(args); i++ {
 		switch args[i] {
+		case "--all":
+			allFlag = true
 		case "--on":
 			if i+1 >= len(args) {
 				return errOnNeedsValue
@@ -140,7 +142,21 @@ func cmdContext(args []string, out, errOut io.Writer) error {
 			timing = core.Timing(v)
 		case "--json":
 			jsonOutput = true
+		default:
+			filePath = args[i]
 		}
+	}
+
+	if allFlag && filePath != "" {
+		return errAllAndPath
+	}
+
+	if allFlag {
+		return cmdContextAll(action, timing, jsonOutput, out, errOut)
+	}
+
+	if filePath == "" {
+		return errMissingPath
 	}
 
 	absPath, err := filepath.Abs(filePath)
@@ -187,18 +203,65 @@ func cmdContext(args []string, out, errOut io.Writer) error {
 	return nil
 }
 
-func cmdDecisions(args []string, out, errOut io.Writer) error {
-	if len(args) < 1 {
-		return errMissingPath
+func cmdContextAll(action core.Action, timing core.Timing, jsonOutput bool, out, errOut io.Writer) error {
+	result, warnings, err := core.ResolveAll(core.ResolveAllRequest{
+		Action: action,
+		Timing: timing,
+	})
+	if err != nil {
+		return err
 	}
 
-	filePath := args[0]
-	jsonOutput := false
+	for _, w := range warnings {
+		_, _ = fmt.Fprintln(errOut, w)
+	}
 
-	for i := 1; i < len(args); i++ {
-		if args[i] == "--json" {
+	if jsonOutput {
+		enc := json.NewEncoder(out)
+		enc.SetIndent("", "  ")
+		return enc.Encode(result.ContextEntries)
+	}
+
+	if len(result.ContextEntries) == 0 {
+		_, _ = fmt.Fprintln(out, "No matching context found.")
+		return nil
+	}
+
+	for _, entry := range result.ContextEntries {
+		_, _ = fmt.Fprintf(out, "  - %s\n", entry.Content)
+		_, _ = fmt.Fprintf(out, "    Match: %s\n", strings.Join(entry.Match, ", "))
+		_, _ = fmt.Fprintf(out, "    (from %s)\n", entry.SourceFile)
+	}
+
+	return nil
+}
+
+func cmdDecisions(args []string, out, errOut io.Writer) error {
+	jsonOutput := false
+	allFlag := false
+	var filePath string
+
+	for i := range args {
+		switch args[i] {
+		case "--all":
+			allFlag = true
+		case "--json":
 			jsonOutput = true
+		default:
+			filePath = args[i]
 		}
+	}
+
+	if allFlag && filePath != "" {
+		return errAllAndPath
+	}
+
+	if allFlag {
+		return cmdDecisionsAll(jsonOutput, out, errOut)
+	}
+
+	if filePath == "" {
+		return errMissingPath
 	}
 
 	absPath, err := filepath.Abs(filePath)
@@ -248,6 +311,46 @@ func cmdDecisions(args []string, out, errOut io.Writer) error {
 		if entry.RevisitWhen != "" {
 			_, _ = fmt.Fprintf(out, "    Revisit when: %s\n", entry.RevisitWhen)
 		}
+	}
+
+	return nil
+}
+
+func cmdDecisionsAll(jsonOutput bool, out, errOut io.Writer) error {
+	result, warnings, err := core.ResolveAll(core.ResolveAllRequest{})
+	if err != nil {
+		return err
+	}
+
+	for _, w := range warnings {
+		_, _ = fmt.Fprintln(errOut, w)
+	}
+
+	if jsonOutput {
+		enc := json.NewEncoder(out)
+		enc.SetIndent("", "  ")
+		return enc.Encode(result.DecisionEntries)
+	}
+
+	if len(result.DecisionEntries) == 0 {
+		_, _ = fmt.Fprintln(out, "No matching decisions found.")
+		return nil
+	}
+
+	for _, entry := range result.DecisionEntries {
+		_, _ = fmt.Fprintf(out, "  - %s\n", entry.Decision)
+		_, _ = fmt.Fprintf(out, "    Rationale: %s\n", entry.Rationale)
+
+		for _, alt := range entry.Alternatives {
+			_, _ = fmt.Fprintf(out, "    Considered %s, rejected: %s\n", alt.Option, alt.ReasonRejected)
+		}
+
+		if entry.RevisitWhen != "" {
+			_, _ = fmt.Fprintf(out, "    Revisit when: %s\n", entry.RevisitWhen)
+		}
+
+		_, _ = fmt.Fprintf(out, "    Match: %s\n", strings.Join(entry.Match, ", "))
+		_, _ = fmt.Fprintf(out, "    (from %s)\n", entry.SourceFile)
 	}
 
 	return nil

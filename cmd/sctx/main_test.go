@@ -259,6 +259,154 @@ func TestCmdDecisions(t *testing.T) {
 	}
 }
 
+func setupAllFixture(t *testing.T) {
+	t.Helper()
+	tmp := t.TempDir()
+	t.Chdir(tmp)
+
+	writeTestFile(t, filepath.Join(tmp, "AGENTS.yaml"), `context:
+  - content: "root guidance"
+    match: ["**"]
+    on: read
+    when: before
+
+decisions:
+  - decision: "use Go"
+    rationale: "fast"
+    match: ["**"]
+`)
+	writeTestFile(t, filepath.Join(tmp, "sub", "AGENTS.yaml"), `context:
+  - content: "sub guidance"
+    match: ["*.go"]
+    on: edit
+    when: after
+
+decisions:
+  - decision: "use Postgres"
+    rationale: "reliable"
+    match: ["*.sql"]
+`)
+}
+
+func TestCmdContext_All(t *testing.T) {
+	setupAllFixture(t)
+
+	var out, errOut bytes.Buffer
+	if err := cmdContext([]string{"--all"}, &out, &errOut); err != nil {
+		t.Fatal(err)
+	}
+
+	got := out.String()
+	for _, want := range []string{"root guidance", "sub guidance", "Match:", "(from AGENTS.yaml)", "(from sub/AGENTS.yaml)"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("output missing %q, got %q", want, got)
+		}
+	}
+}
+
+func TestCmdContext_AllJson(t *testing.T) {
+	setupAllFixture(t)
+
+	var out, errOut bytes.Buffer
+	if err := cmdContext([]string{"--all", "--json"}, &out, &errOut); err != nil {
+		t.Fatal(err)
+	}
+
+	var entries []map[string]any
+	if err := json.Unmarshal(out.Bytes(), &entries); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+
+	if len(entries) != 2 {
+		t.Fatalf("expected 2 entries, got %d", len(entries))
+	}
+
+	for _, e := range entries {
+		if _, ok := e["Content"]; !ok {
+			t.Error("missing Content field")
+		}
+		if _, ok := e["Match"]; !ok {
+			t.Error("missing Match field")
+		}
+		if _, ok := e["SourceFile"]; !ok {
+			t.Error("missing SourceFile field")
+		}
+	}
+}
+
+func TestCmdContext_AllWithPath(t *testing.T) {
+	err := cmdContext([]string{"--all", "some/path"}, nil, nil)
+	if !errors.Is(err, errAllAndPath) {
+		t.Errorf("got error %v, want %v", err, errAllAndPath)
+	}
+}
+
+func TestCmdContext_AllWithFilters(t *testing.T) {
+	setupAllFixture(t)
+
+	var out, errOut bytes.Buffer
+	if err := cmdContext([]string{"--all", "--on", "read", "--when", "before"}, &out, &errOut); err != nil {
+		t.Fatal(err)
+	}
+
+	got := out.String()
+	if !strings.Contains(got, "root guidance") {
+		t.Errorf("expected 'root guidance', got %q", got)
+	}
+	if strings.Contains(got, "sub guidance") {
+		t.Errorf("should not contain 'sub guidance' (on:edit), got %q", got)
+	}
+}
+
+func TestCmdDecisions_All(t *testing.T) {
+	setupAllFixture(t)
+
+	var out, errOut bytes.Buffer
+	if err := cmdDecisions([]string{"--all"}, &out, &errOut); err != nil {
+		t.Fatal(err)
+	}
+
+	got := out.String()
+	for _, want := range []string{"use Go", "use Postgres", "Match:", "(from AGENTS.yaml)", "(from sub/AGENTS.yaml)"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("output missing %q, got %q", want, got)
+		}
+	}
+}
+
+func TestCmdDecisions_AllJson(t *testing.T) {
+	setupAllFixture(t)
+
+	var out, errOut bytes.Buffer
+	if err := cmdDecisions([]string{"--all", "--json"}, &out, &errOut); err != nil {
+		t.Fatal(err)
+	}
+
+	var entries []map[string]any
+	if err := json.Unmarshal(out.Bytes(), &entries); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+
+	if len(entries) != 2 {
+		t.Fatalf("expected 2 entries, got %d", len(entries))
+	}
+
+	for i, e := range entries {
+		for _, field := range []string{"Decision", "Match", "SourceFile"} {
+			if _, ok := e[field]; !ok {
+				t.Errorf("entry %d: missing %s field", i, field)
+			}
+		}
+	}
+}
+
+func TestCmdDecisions_AllWithPath(t *testing.T) {
+	err := cmdDecisions([]string{"--all", "some/path"}, nil, nil)
+	if !errors.Is(err, errAllAndPath) {
+		t.Errorf("got error %v, want %v", err, errAllAndPath)
+	}
+}
+
 func TestCmdDecisions_NoMatch(t *testing.T) {
 	tmp := t.TempDir()
 	writeTestFile(t, filepath.Join(tmp, "AGENTS.yaml"), `context:
