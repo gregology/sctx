@@ -460,6 +460,163 @@ context:
 	}
 }
 
+// runPlanModeTest sets up a temp dir with the given AGENTS.yaml, runs
+// HandleClaudeHook, and returns the raw stdout output.
+func runPlanModeTest(t *testing.T, permissionMode, agentsYAML, toolName string) bytes.Buffer {
+	t.Helper()
+
+	tmpDir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(tmpDir, ".git"), []byte(""), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(tmpDir, "AGENTS.yaml"), []byte(agentsYAML), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	target := filepath.Join(tmpDir, "file.go")
+	if err := os.WriteFile(target, []byte("package main"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	inputBytes := marshalInput(t, ClaudeHookInput{
+		SessionID:      "test-session",
+		HookEventName:  "PreToolUse",
+		ToolName:       toolName,
+		ToolInput:      json.RawMessage(`{"file_path":"` + target + `"}`),
+		CWD:            tmpDir,
+		PermissionMode: permissionMode,
+	})
+
+	var out, errOut bytes.Buffer
+	if err := HandleClaudeHook(inputBytes, &out, &errOut); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	return out
+}
+
+// parseHookContext parses stdout into AdditionalContext, failing if output is missing.
+func parseHookContext(t *testing.T, out bytes.Buffer) string {
+	t.Helper()
+
+	var hookOutput ClaudeHookOutput
+	if err := json.Unmarshal(out.Bytes(), &hookOutput); err != nil {
+		t.Fatalf("failed to parse output: %v (output: %s)", err, out.String())
+	}
+
+	if hookOutput.HookSpecificOutput == nil {
+		t.Fatal("expected hookSpecificOutput to be present")
+	}
+
+	return hookOutput.HookSpecificOutput.AdditionalContext
+}
+
+func TestHandleClaudeHook_PlanModeDecisions(t *testing.T) {
+	agentsWithDecisions := `
+context:
+  - content: "Edit guidance"
+    on: edit
+    when: before
+decisions:
+  - decision: "Use Postgres over MySQL"
+    rationale: "Better JSON support"
+    alternatives:
+      - option: "MySQL"
+        reason_rejected: "Weaker JSON querying"
+    revisit_when: "MySQL adds comparable JSON support"
+`
+	agentsDecisionsOnly := `
+decisions:
+  - decision: "REST over GraphQL"
+    rationale: "Simpler client integration"
+`
+	agentsContextOnly := `
+context:
+  - content: "Style guide"
+    on: read
+    when: before
+`
+
+	t.Run("plan mode with matching decisions", func(t *testing.T) {
+		out := runPlanModeTest(t, "plan", agentsDecisionsOnly, "Read")
+		ctx := parseHookContext(t, out)
+
+		if !strings.Contains(ctx, "## Architectural Decisions") {
+			t.Errorf("expected decisions section, got: %s", ctx)
+		}
+		if !strings.Contains(ctx, "REST over GraphQL") {
+			t.Errorf("expected decision text, got: %s", ctx)
+		}
+	})
+
+	t.Run("non-plan mode ignores decisions", func(t *testing.T) {
+		out := runPlanModeTest(t, "normal", agentsDecisionsOnly, "Read")
+		if out.Len() != 0 {
+			t.Errorf("expected no output, got: %s", out.String())
+		}
+	})
+
+	t.Run("empty permission mode ignores decisions", func(t *testing.T) {
+		out := runPlanModeTest(t, "", agentsDecisionsOnly, "Read")
+		if out.Len() != 0 {
+			t.Errorf("expected no output, got: %s", out.String())
+		}
+	})
+
+	t.Run("plan mode context only no decisions section", func(t *testing.T) {
+		out := runPlanModeTest(t, "plan", agentsContextOnly, "Read")
+		ctx := parseHookContext(t, out)
+
+		if !strings.Contains(ctx, "Style guide") {
+			t.Errorf("expected context, got: %s", ctx)
+		}
+		if strings.Contains(ctx, "Architectural Decisions") {
+			t.Errorf("did not expect decisions section, got: %s", ctx)
+		}
+	})
+
+	t.Run("plan mode with both context and decisions", func(t *testing.T) {
+		out := runPlanModeTest(t, "plan", agentsWithDecisions, "Edit")
+		ctx := parseHookContext(t, out)
+
+		if !strings.Contains(ctx, "## Structured Context") {
+			t.Errorf("expected context section, got: %s", ctx)
+		}
+		if !strings.Contains(ctx, "## Architectural Decisions") {
+			t.Errorf("expected decisions section, got: %s", ctx)
+		}
+		if !strings.Contains(ctx, "Use Postgres over MySQL") {
+			t.Errorf("expected decision text, got: %s", ctx)
+		}
+	})
+
+	t.Run("plan mode decisions include full detail", func(t *testing.T) {
+		out := runPlanModeTest(t, "plan", agentsWithDecisions, "Edit")
+		ctx := parseHookContext(t, out)
+
+		if !strings.Contains(ctx, "Better JSON support") {
+			t.Errorf("expected rationale, got: %s", ctx)
+		}
+		if !strings.Contains(ctx, "Considered MySQL, rejected: Weaker JSON querying") {
+			t.Errorf("expected alternatives, got: %s", ctx)
+		}
+		if !strings.Contains(ctx, "Revisit when: MySQL adds comparable JSON support") {
+			t.Errorf("expected revisit_when, got: %s", ctx)
+		}
+	})
+
+	t.Run("plan mode decisions only still produces output", func(t *testing.T) {
+		out := runPlanModeTest(t, "plan", agentsDecisionsOnly, "Read")
+		ctx := parseHookContext(t, out)
+
+		if !strings.Contains(ctx, "Simpler client integration") {
+			t.Errorf("expected rationale, got: %s", ctx)
+		}
+	})
+}
+
 func TestHandleClaudeHook_MalformedInput(t *testing.T) {
 	var out, errOut bytes.Buffer
 
