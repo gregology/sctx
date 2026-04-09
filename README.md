@@ -146,7 +146,7 @@ Or let sctx configure it automatically:
 sctx claude enable
 ```
 
-`sctx hook` reads the hook JSON from stdin, figures out the file path and action from the tool call, resolves matching context entries, and returns them as `additionalContext` in Claude Code's expected format. Decisions are not included in hook output to keep the token cost low. If nothing matches, it exits silently.
+`sctx hook` reads the hook JSON from stdin, figures out the file path and action from the tool call, resolves matching context entries, and returns them as `additionalContext` in Claude Code's expected format. Decisions are also included when Claude Code's `permission_mode` is `"plan"`, surfacing architectural decisions during planning before the agent writes code. Outside plan mode, decisions are excluded to keep token costs low. If nothing matches, it exits silently.
 
 The Write tool gets special handling: `sctx` checks whether the file exists on disk to distinguish `create` from `edit`.
 
@@ -181,7 +181,7 @@ Response without New Zealand reference.
 
 ## CLI commands
 
-**sctx hook** - Reads agent hook input from stdin, returns matching context entries. This is the main integration point. Decisions are excluded from hook output.
+**sctx hook** - Reads agent hook input from stdin, returns matching context entries (and decisions during plan mode). This is the main integration point.
 
 **sctx context \<path\>** - Query context entries for a file or directory. Supports `--on <action>`, `--when <timing>`, `--json`, and `--all` to dump every entry from every AGENTS.yaml.
 
