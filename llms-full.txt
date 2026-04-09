@@ -923,7 +923,7 @@ echo '{"tool_name":"Edit","tool_input":{"file_path":"/project/src/main.py"},"hoo
 
 Supports Claude Code and pi JSON formats. The source is auto-detected: input with `"source": "pi"` is routed to the pi adapter; all other input is treated as Claude Code format. The `cwd` field determines the project root — only `AGENTS.yaml` files at or below this directory are considered.
 
-Only context entries are included in hook output. Decisions are excluded to keep token costs low. Use `sctx decisions` to query decisions separately.
+Context entries are always included in hook output when they match. Decisions are also included when Claude Code's `permission_mode` is `"plan"` — this surfaces architectural decisions during planning, before the agent writes any code. Outside plan mode, decisions are excluded to keep token costs low. Use `sctx decisions` to query decisions separately regardless of mode.
 
 If no context matches, exits 0 with no output (a no-op for Claude Code).
 
