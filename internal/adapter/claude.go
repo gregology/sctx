@@ -12,11 +12,12 @@ import (
 
 // ClaudeHookInput represents the JSON that Claude Code sends via stdin to hooks.
 type ClaudeHookInput struct {
-	SessionID     string          `json:"session_id"`
-	HookEventName string          `json:"hook_event_name"`
-	ToolName      string          `json:"tool_name"`
-	ToolInput     json.RawMessage `json:"tool_input"`
-	CWD           string          `json:"cwd"`
+	SessionID      string          `json:"session_id"`
+	HookEventName  string          `json:"hook_event_name"`
+	ToolName       string          `json:"tool_name"`
+	ToolInput      json.RawMessage `json:"tool_input"`
+	CWD            string          `json:"cwd"`
+	PermissionMode string          `json:"permission_mode"`
 }
 
 // claudeToolInput extracts the file_path from various tool input shapes.
@@ -93,13 +94,25 @@ func HandleClaudeHook(input []byte, out, errOut io.Writer) error {
 		_, _ = fmt.Fprintln(errOut, w) // best-effort; write failures non-fatal
 	}
 
-	if len(result.ContextEntries) == 0 {
+	inPlanMode := hookInput.PermissionMode == "plan"
+	hasContext := len(result.ContextEntries) > 0
+	hasDecisions := inPlanMode && len(result.DecisionEntries) > 0
+
+	if !hasContext && !hasDecisions {
 		return nil
+	}
+
+	var additionalContext string
+	if hasContext {
+		additionalContext = formatContext(result.ContextEntries)
+	}
+	if hasDecisions {
+		additionalContext += formatDecisions(result.DecisionEntries)
 	}
 
 	hookOutput := &ClaudeHookSpecificOutput{
 		HookEventName:     hookInput.HookEventName,
-		AdditionalContext: formatContext(result.ContextEntries),
+		AdditionalContext: additionalContext,
 	}
 
 	if hookInput.HookEventName == eventPreToolUse {
@@ -141,6 +154,31 @@ func formatContext(entries []core.MatchedContext) string {
 	for _, entry := range entries {
 		b.WriteString("\n- ")
 		b.WriteString(entry.Content)
+	}
+
+	return b.String()
+}
+
+// formatDecisions builds a markdown string from matched decision entries.
+func formatDecisions(entries []core.DecisionEntry) string {
+	var b strings.Builder
+
+	b.WriteString("\n## Architectural Decisions\n")
+
+	for _, e := range entries {
+		b.WriteString("\n- ")
+		b.WriteString(e.Decision)
+		b.WriteString("\n  Rationale: ")
+		b.WriteString(e.Rationale)
+
+		for _, alt := range e.Alternatives {
+			fmt.Fprintf(&b, "\n  Considered %s, rejected: %s", alt.Option, alt.ReasonRejected)
+		}
+
+		if e.RevisitWhen != "" {
+			b.WriteString("\n  Revisit when: ")
+			b.WriteString(e.RevisitWhen)
+		}
 	}
 
 	return b.String()
