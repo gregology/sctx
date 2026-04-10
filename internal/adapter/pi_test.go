@@ -405,7 +405,7 @@ func TestHandlePiHook_MalformedInput(t *testing.T) {
 }
 
 // runPiDecisionHook sets up a test directory, creates a target file, and runs the pi hook.
-func runPiDecisionHook(t *testing.T, yaml, tool string) *PiHookOutput {
+func runPiDecisionHook(t *testing.T, yaml, tool string, includeDecisions bool) *PiHookOutput {
 	t.Helper()
 
 	tmpDir := setupPiTestDir(t, yaml)
@@ -416,11 +416,12 @@ func runPiDecisionHook(t *testing.T, yaml, tool string) *PiHookOutput {
 	}
 
 	_, out := runPiHook(t, PiHookInput{
-		Source:   "pi",
-		Event:    "tool_call",
-		ToolName: tool,
-		Input:    json.RawMessage(`{"path":"` + target + `"}`),
-		CWD:      tmpDir,
+		Source:           "pi",
+		Event:            "tool_call",
+		ToolName:         tool,
+		Input:            json.RawMessage(`{"path":"` + target + `"}`),
+		CWD:              tmpDir,
+		IncludeDecisions: includeDecisions,
 	})
 
 	return out
@@ -452,8 +453,8 @@ context:
     when: before
 `
 
-	t.Run("decisions only produces output", func(t *testing.T) {
-		out := runPiDecisionHook(t, agentsDecisionsOnly, "read")
+	t.Run("decisions included when opted in", func(t *testing.T) {
+		out := runPiDecisionHook(t, agentsDecisionsOnly, "read", true)
 
 		if out == nil {
 			t.Fatal("expected output for decisions-only AGENTS.yaml")
@@ -466,8 +467,16 @@ context:
 		}
 	})
 
+	t.Run("decisions excluded by default", func(t *testing.T) {
+		out := runPiDecisionHook(t, agentsDecisionsOnly, "read", false)
+
+		if out != nil {
+			t.Errorf("expected no output when include_decisions is false, got: %s", out.AdditionalContext)
+		}
+	})
+
 	t.Run("both context and decisions with full detail", func(t *testing.T) {
-		out := runPiDecisionHook(t, agentsWithBoth, "edit")
+		out := runPiDecisionHook(t, agentsWithBoth, "edit", true)
 
 		if out == nil {
 			t.Fatal("expected output for both context and decisions")
@@ -493,7 +502,7 @@ context:
 	})
 
 	t.Run("context only no decisions section", func(t *testing.T) {
-		out := runPiDecisionHook(t, agentsContextOnly, "edit")
+		out := runPiDecisionHook(t, agentsContextOnly, "edit", true)
 
 		if out == nil {
 			t.Fatal("expected output for context-only")
