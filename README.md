@@ -146,7 +146,7 @@ Or let sctx configure it automatically:
 sctx claude enable
 ```
 
-`sctx hook` reads the hook JSON from stdin, figures out the file path and action from the tool call, resolves matching context entries, and returns them as `additionalContext` in Claude Code's expected format. Decisions are also included when Claude Code's `permission_mode` is `"plan"`, surfacing architectural decisions during planning before the agent writes code. Outside plan mode, decisions are excluded to keep token costs low. If nothing matches, it exits silently.
+`sctx hook` reads the hook JSON from stdin, figures out the file path and action from the tool call, resolves matching context entries, and returns them as `additionalContext` in the agent's expected format. For Claude Code, decisions are included when `permission_mode` is `"plan"`, surfacing architectural decisions during planning before the agent writes code; outside plan mode, decisions are excluded to keep token costs low. For pi, decisions are always included alongside context. If nothing matches, it exits silently.
 
 The Write tool gets special handling: `sctx` checks whether the file exists on disk to distinguish `create` from `edit`.
 
@@ -181,7 +181,7 @@ Response without New Zealand reference.
 
 ## CLI commands
 
-**sctx hook** - Reads agent hook input from stdin, returns matching context entries (and decisions during plan mode). This is the main integration point.
+**sctx hook** - Reads agent hook input from stdin, returns matching context entries and decisions. This is the main integration point.
 
 **sctx context \<path\>** - Query context entries for a file or directory. Supports `--on <action>`, `--when <timing>`, `--json`, and `--all` to dump every entry from every AGENTS.yaml.
 
@@ -222,7 +222,7 @@ Install the sctx extension into your project's `.pi/extensions/` directory:
 sctx pi enable
 ```
 
-This creates a thin TypeScript extension that hooks into pi's `tool_call` and `tool_result` events. When pi reads, writes, or edits a file, the extension forwards the event to `sctx hook` and injects any matching context into the tool result.
+This creates a thin TypeScript extension that hooks into pi's `tool_call` and `tool_result` events. When pi reads, writes, or edits a file, the extension forwards the event to `sctx hook` and injects any matching context and decisions into the tool result.
 
 To remove:
 
