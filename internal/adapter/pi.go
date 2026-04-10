@@ -100,12 +100,23 @@ func HandlePiHook(input []byte, out, errOut io.Writer) error {
 		_, _ = fmt.Fprintln(errOut, w) // best-effort; write failures non-fatal
 	}
 
-	if len(result.ContextEntries) == 0 {
+	hasContext := len(result.ContextEntries) > 0
+	hasDecisions := len(result.DecisionEntries) > 0
+
+	if !hasContext && !hasDecisions {
 		return nil
 	}
 
+	var additionalContext string
+	if hasContext {
+		additionalContext = formatContext(result.ContextEntries)
+	}
+	if hasDecisions {
+		additionalContext += formatDecisions(result.DecisionEntries)
+	}
+
 	output := PiHookOutput{
-		AdditionalContext: formatContext(result.ContextEntries),
+		AdditionalContext: additionalContext,
 	}
 
 	return json.NewEncoder(out).Encode(output)

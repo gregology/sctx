@@ -404,6 +404,109 @@ func TestHandlePiHook_MalformedInput(t *testing.T) {
 	}
 }
 
+// runPiDecisionHook sets up a test directory, creates a target file, and runs the pi hook.
+func runPiDecisionHook(t *testing.T, yaml, tool string) *PiHookOutput {
+	t.Helper()
+
+	tmpDir := setupPiTestDir(t, yaml)
+	target := filepath.Join(tmpDir, "file.go")
+
+	if err := os.WriteFile(target, []byte("package main"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	_, out := runPiHook(t, PiHookInput{
+		Source:   "pi",
+		Event:    "tool_call",
+		ToolName: tool,
+		Input:    json.RawMessage(`{"path":"` + target + `"}`),
+		CWD:      tmpDir,
+	})
+
+	return out
+}
+
+func TestHandlePiHook_Decisions(t *testing.T) {
+	agentsDecisionsOnly := `
+decisions:
+  - decision: "REST over GraphQL"
+    rationale: "Simpler client integration"
+`
+	agentsWithBoth := `
+context:
+  - content: "Edit guidance"
+    on: edit
+    when: before
+decisions:
+  - decision: "Use Postgres over MySQL"
+    rationale: "Better JSON support"
+    alternatives:
+      - option: "MySQL"
+        reason_rejected: "Weaker JSON querying"
+    revisit_when: "MySQL adds comparable JSON support"
+`
+	agentsContextOnly := `
+context:
+  - content: "Style guide"
+    on: edit
+    when: before
+`
+
+	t.Run("decisions only produces output", func(t *testing.T) {
+		out := runPiDecisionHook(t, agentsDecisionsOnly, "read")
+
+		if out == nil {
+			t.Fatal("expected output for decisions-only AGENTS.yaml")
+		}
+		if !strings.Contains(out.AdditionalContext, "## Architectural Decisions") {
+			t.Errorf("expected decisions section, got: %s", out.AdditionalContext)
+		}
+		if !strings.Contains(out.AdditionalContext, "REST over GraphQL") {
+			t.Errorf("expected decision text, got: %s", out.AdditionalContext)
+		}
+	})
+
+	t.Run("both context and decisions with full detail", func(t *testing.T) {
+		out := runPiDecisionHook(t, agentsWithBoth, "edit")
+
+		if out == nil {
+			t.Fatal("expected output for both context and decisions")
+		}
+		if !strings.Contains(out.AdditionalContext, "## Structured Context") {
+			t.Errorf("expected context section, got: %s", out.AdditionalContext)
+		}
+		if !strings.Contains(out.AdditionalContext, "## Architectural Decisions") {
+			t.Errorf("expected decisions section, got: %s", out.AdditionalContext)
+		}
+		if !strings.Contains(out.AdditionalContext, "Use Postgres over MySQL") {
+			t.Errorf("expected decision text, got: %s", out.AdditionalContext)
+		}
+		if !strings.Contains(out.AdditionalContext, "Better JSON support") {
+			t.Errorf("expected rationale, got: %s", out.AdditionalContext)
+		}
+		if !strings.Contains(out.AdditionalContext, "Considered MySQL, rejected: Weaker JSON querying") {
+			t.Errorf("expected alternatives, got: %s", out.AdditionalContext)
+		}
+		if !strings.Contains(out.AdditionalContext, "Revisit when: MySQL adds comparable JSON support") {
+			t.Errorf("expected revisit_when, got: %s", out.AdditionalContext)
+		}
+	})
+
+	t.Run("context only no decisions section", func(t *testing.T) {
+		out := runPiDecisionHook(t, agentsContextOnly, "edit")
+
+		if out == nil {
+			t.Fatal("expected output for context-only")
+		}
+		if !strings.Contains(out.AdditionalContext, "Style guide") {
+			t.Errorf("expected context, got: %s", out.AdditionalContext)
+		}
+		if strings.Contains(out.AdditionalContext, "Architectural Decisions") {
+			t.Errorf("did not expect decisions section, got: %s", out.AdditionalContext)
+		}
+	})
+}
+
 func TestIsPiHook(t *testing.T) {
 	tests := []struct {
 		name  string
