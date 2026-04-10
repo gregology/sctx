@@ -22,6 +22,16 @@ decisions:
     revisit_when: "A third adapter is introduced"
     date: 2026-03-14
 
+  - decision: "Auto-detect planning mode in pi extension via getActiveTools() with manual override (#125)"
+    rationale: "Pi has no built-in planning mode — it is an optional extension. The best proxy is checking pi.getActiveTools() for the absence of mutating tools (edit, write). The extension auto-sets include_decisions: true when in planning mode so decisions surface without manual opt-in. The Go-side include_decisions field remains the contract, meaning the extension can be swapped or overridden without Go changes. This is a heuristic dependent on the plan-mode extension being installed."
+    alternatives:
+      - option: "Manual opt-in only"
+        reason_rejected: "Requires users to configure include_decisions themselves; decisions would never surface automatically during planning"
+      - option: "Automatic detection only, no manual override"
+        reason_rejected: "No escape hatch if the heuristic misfires or users want decisions outside planning mode"
+    revisit_when: "Pi adds native planning-mode events to its event bus"
+    date: 2026-04-10
+
   - decision: "Decline speculative bashReadPath hardening for redirects, heredocs, and subshells (#81)"
     rationale: "bashReadPath already has 95.2% line coverage with 14 test cases. The proposed edge cases (heredocs, redirects, subshells) are hypothetical — no user has reported hitting them. Maintainer prefers a reactive approach: fix issues as they arise in practice rather than preemptively handling unlikely inputs."
     revisit_when: "A user reports bashReadPath returning incorrect paths for real-world commands"
