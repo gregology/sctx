@@ -12,11 +12,12 @@ import (
 
 // PiHookInput represents the JSON that the pi extension sends via stdin to sctx hook.
 type PiHookInput struct {
-	Source   string          `json:"source"`
-	Event    string          `json:"event"`
-	ToolName string          `json:"tool_name"`
-	Input    json.RawMessage `json:"input"`
-	CWD      string          `json:"cwd"`
+	Source           string          `json:"source"`
+	Event            string          `json:"event"`
+	ToolName         string          `json:"tool_name"`
+	Input            json.RawMessage `json:"input"`
+	CWD              string          `json:"cwd"`
+	IncludeDecisions bool            `json:"include_decisions,omitempty"`
 }
 
 // piToolInput extracts the path from pi tool input shapes.
@@ -100,12 +101,23 @@ func HandlePiHook(input []byte, out, errOut io.Writer) error {
 		_, _ = fmt.Fprintln(errOut, w) // best-effort; write failures non-fatal
 	}
 
-	if len(result.ContextEntries) == 0 {
+	hasContext := len(result.ContextEntries) > 0
+	hasDecisions := hookInput.IncludeDecisions && len(result.DecisionEntries) > 0
+
+	if !hasContext && !hasDecisions {
 		return nil
 	}
 
+	var additionalContext string
+	if hasContext {
+		additionalContext = formatContext(result.ContextEntries)
+	}
+	if hasDecisions {
+		additionalContext += formatDecisions(result.DecisionEntries)
+	}
+
 	output := PiHookOutput{
-		AdditionalContext: formatContext(result.ContextEntries),
+		AdditionalContext: additionalContext,
 	}
 
 	return json.NewEncoder(out).Encode(output)
